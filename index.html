@@ -22,6 +22,8 @@
   --primary:#1B4B4A;--primary-soft:#DCEAE6;--income:#376E48;--income-soft:#E1EFE3;
   --expense:#9D4A34;--expense-soft:#F5E4DE;--warning:#C98A2E;--warning-soft:#F7ECD8;
   --border:#D8E2DE;--shadow:rgba(22,48,46,0.10);color-scheme:light;
+  --on-primary:#FFFFFF;--warning-ink:#8A5A0B;--warning-line:rgba(138,90,11,0.18);
+  --hero-bg:var(--primary);--hero-ink:#FFFFFF;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -29,6 +31,8 @@
     --primary:#5BB0A8;--primary-soft:#1F413D;--income:#73BD88;--income-soft:#1E3A26;
     --expense:#E59B82;--expense-soft:#3D2620;--warning:#E7B15C;--warning-soft:#3D3018;
     --border:#274744;--shadow:rgba(0,0,0,0.4);color-scheme:dark;
+    --on-primary:var(--paper);--warning-ink:#E7B15C;--warning-line:rgba(231,177,92,0.2);
+    --hero-bg:var(--primary-soft);--hero-ink:var(--ink);
   }
 }
 :root[data-theme="dark"]{
@@ -36,6 +40,8 @@
   --primary:#5BB0A8;--primary-soft:#1F413D;--income:#73BD88;--income-soft:#1E3A26;
   --expense:#E59B82;--expense-soft:#3D2620;--warning:#E7B15C;--warning-soft:#3D3018;
   --border:#274744;--shadow:rgba(0,0,0,0.4);color-scheme:dark;
+  --on-primary:var(--paper);--warning-ink:#E7B15C;--warning-line:rgba(231,177,92,0.2);
+  --hero-bg:var(--primary-soft);--hero-ink:var(--ink);
 }
 html{background:var(--paper)}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:'Karla',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);padding-bottom:env(safe-area-inset-bottom)}
@@ -56,6 +62,12 @@ button{cursor:pointer}
 .nojs p:last-child{margin-bottom:0}
 .nojs .nojs-soft{color:var(--ink-soft);font-size:0.9375rem}
 .app-name{font-size:1.375rem}
+/* vivid palettes: the top of the app takes the palette's color */
+:root[data-vivid] .header{background:var(--hero-bg);color:var(--hero-ink);border-bottom:none;margin:0 -16px 20px;padding-left:16px;padding-right:16px;border-radius:0 0 22px 22px;box-shadow:0 6px 18px var(--shadow)}
+:root[data-vivid] .header .names{color:var(--hero-ink);opacity:.88}
+:root[data-vivid] .header .month-nav button{background:rgba(255,255,255,0.16);border-color:rgba(255,255,255,0.3);color:var(--hero-ink)}
+:root[data-vivid] .header .btn.primary{background:var(--hero-ink);color:var(--hero-bg)}
+:root[data-vivid] .header .name-input{color:var(--ink)}
 .names{color:var(--ink-soft);font-size:0.875rem;margin-top:4px}
 .names button{background:none;border:none;padding:0;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px;color:inherit;font-size:inherit}
 .name-input{border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:0.875rem;background:var(--surface)}
@@ -80,7 +92,7 @@ button{cursor:pointer}
 .card-title{font-size:1.0625rem}
 .card-meta{font-size:0.875rem;color:var(--ink-soft);font-family:'Space Mono',monospace}
 
-#sec-resumo,#sec-renda,#sec-fixas,#sec-variaveis,#sec-investimentos,#sec-historico,#sec-ajustes{scroll-margin-top:calc(var(--header-h, 120px) + 14px)}
+#sec-resumo,#sec-vencimentos,#sec-renda,#sec-filtros,#sec-fixas,#sec-variaveis,#sec-investimentos,#sec-historico,#sec-ajustes,#sec-senha{scroll-margin-top:calc(var(--header-h, 120px) + 14px)}
 @media (prefers-reduced-motion: no-preference){ html{scroll-behavior:smooth} }
 
 .quicknav{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px;margin-bottom:18px;-ms-overflow-style:none;scrollbar-width:none}
@@ -93,7 +105,7 @@ button{cursor:pointer}
 .alert-banner .alert-body{flex:1;min-width:0}
 .alert-banner .alert-title{font-weight:700;margin-bottom:2px}
 .alert-banner.danger{background:var(--expense-soft);color:var(--expense)}
-.alert-banner.warn{background:var(--warning-soft);color:var(--warning)}
+.alert-banner.warn{background:var(--warning-soft);color:var(--warning-ink)}
 .alert-banner .link-btn{color:inherit;opacity:.88}
 .alert-banner .link-btn:hover{opacity:1;color:inherit}
 
@@ -126,7 +138,7 @@ button{cursor:pointer}
 .link-btn:hover{color:var(--primary)}
 .backup-status{font-size:0.8125rem;font-weight:600}
 .backup-status.ok{color:var(--income)}
-.backup-status.warn{color:var(--warning)}
+.backup-status.warn{color:var(--warning-ink)}
 .history-list{display:flex;flex-direction:column;max-height:360px;overflow-y:auto}
 .history-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 2px;border-bottom:1px solid var(--border);text-align:left;background:none;border-left:none;border-right:none;border-top:none;width:100%;color:inherit}
 .history-row:last-child{border-bottom:none}
@@ -141,6 +153,8 @@ button{cursor:pointer}
 .row-main{flex:1;min-width:0}
 .row-title{font-size:0.9375rem;font-weight:600}
 .row-sub{font-size:0.8125rem;color:var(--ink-soft);margin-top:2px}
+.sub-part{white-space:nowrap}
+.sub-part.wrap{white-space:normal;overflow-wrap:anywhere}
 .amount-input{width:110px;text-align:right;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--paper);font-family:'Space Mono',monospace}
 .amount-input:focus{border-color:var(--primary)}
 
@@ -157,6 +171,26 @@ button{cursor:pointer}
 .carried-block .var-row:first-child,.carried-block .fixed-row:first-child{padding-top:0}
 .carried-row .fixed-due{flex-basis:100%}
 .carried-block .pill.overdue{background:var(--surface);box-shadow:inset 0 0 0 1px var(--expense)}
+
+.launch-block{background:var(--warning-soft);border-radius:12px;padding:10px 12px;margin-bottom:14px}
+.launch-block-title{font-size:0.75rem;font-weight:700;color:var(--warning-ink);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.launch-block .var-row{flex-wrap:wrap;border-bottom-color:var(--warning-line)}
+.launch-block .var-row:last-child{border-bottom:none;padding-bottom:4px}
+.launch-actions{display:flex;align-items:center;gap:2px;flex:none}
+.launch-hint{font-size:0.75rem;color:var(--ink-soft);margin-top:2px}
+.launch-options{width:100%;margin-top:4px;padding:10px 12px;border-radius:10px;background:var(--surface)}
+.launch-options-text{font-size:0.8125rem;font-weight:700;margin-bottom:8px}
+.launch-options-actions{display:flex;gap:6px;flex-wrap:wrap}
+.btn-mini{border:none;border-radius:999px;padding:8px 13px;font-size:0.8125rem;font-weight:700;background:var(--surface-2);color:var(--ink);white-space:nowrap}
+.btn-mini.primary{background:var(--primary);color:var(--on-primary)}
+.btn-mini.danger{background:var(--expense-soft);color:var(--expense)}
+.btn-mini.ghost{background:none;color:var(--ink-soft)}
+.field-hint{margin:2px 0 0;font-size:0.75rem;color:var(--ink-soft);line-height:1.45;font-weight:400}
+.sheet-note{margin:0 0 16px;font-size:0.875rem;color:var(--ink-soft)}
+.sheet-note strong{color:var(--ink)}
+.seg.status-seg button.active[data-value="paid"]{background:var(--income);color:var(--paper)}
+.seg.status-seg button.active[data-value="pending"]{background:var(--ink-soft);color:var(--paper)}
+.sheet.still{animation:none}
 
 .icon-btn{background:none;border:none;color:var(--ink-soft);padding:6px;border-radius:8px;font-size:0.875rem}
 .icon-btn:hover{background:var(--surface-2);color:var(--ink)}
@@ -203,10 +237,10 @@ button{cursor:pointer}
 .seg{display:flex;border:1px solid var(--border);border-radius:10px;overflow:hidden}
 .seg button{flex:1;padding:10px;background:var(--paper);border:none;border-right:1px solid var(--border);font-weight:600}
 .seg button:last-child{border-right:none}
-.seg button.active{background:var(--primary);color:var(--paper)}
+.seg button.active{background:var(--primary);color:var(--on-primary)}
 .sheet-actions{display:flex;gap:10px;margin-top:16px}
 .btn{flex:1;padding:13px;border-radius:12px;border:none;font-weight:700;font-size:0.9375rem}
-.btn.primary{background:var(--primary);color:var(--paper)}
+.btn.primary{background:var(--primary);color:var(--on-primary)}
 .btn.ghost{background:var(--surface-2);color:var(--ink)}
 
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:12px 18px;border-radius:12px;font-size:0.875rem;max-width:88vw;z-index:40;box-shadow:0 6px 20px var(--shadow);text-align:center;pointer-events:none}
@@ -218,12 +252,15 @@ button{cursor:pointer}
   @keyframes slideup{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
 }
 
-.palette-row{display:flex;gap:14px;flex-wrap:wrap}
-.palette-item{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:none;padding:4px;width:64px}
+.palette-row{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px 4px;max-width:440px}
+@media (max-width:359px){.palette-row{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.palette-group-label{font-size:0.75rem;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.06em;margin:0 0 8px}
+.palette-row + .palette-group-label{margin-top:16px}
+.palette-item{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:none;padding:4px 0;min-width:0}
 .palette-dot{width:36px;height:36px;border-radius:999px;border:2px solid var(--border);position:relative}
 .palette-item.active .palette-dot{border-color:var(--ink);box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--ink)}
-.palette-item.active .palette-dot::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--paper);font-weight:700;font-size:0.875rem}
-.palette-name{font-size:0.6875rem;color:var(--ink-soft);text-align:center;line-height:1.2}
+.palette-item.active .palette-dot::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#FFFFFF;font-weight:700;font-size:0.875rem}
+.palette-name{font-size:0.65rem;color:var(--ink-soft);text-align:center;line-height:1.2;max-width:100%}
 .palette-item.active .palette-name{color:var(--ink);font-weight:700}
 
 :root[data-palette="azul"]{
@@ -275,6 +312,135 @@ button{cursor:pointer}
 :root[data-palette="areia"][data-theme="dark"]{
   --paper:#201A0F;--surface:#2E2717;--surface-2:#39301C;--ink:#F3EDDC;--ink-soft:#BDAD87;
   --primary:#D8C285;--primary-soft:#4A3F22;--border:#4A3F26;--shadow:rgba(0,0,0,0.4);
+}
+/* filters for the bills lists */
+.list-tools{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px 14px;margin-bottom:18px;box-shadow:0 2px 8px var(--shadow)}
+.lt-row{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap}
+.lt-row + .lt-row{margin-top:8px}
+.lt-label{font-size:0.75rem;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;min-width:64px}
+.chip-group{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--border);background:var(--paper);color:var(--ink);border-radius:999px;padding:7px 12px;font-size:0.8125rem;font-weight:600}
+.chip.active{background:var(--primary);border-color:var(--primary);color:var(--on-primary)}
+.lt-hint{font-size:0.75rem;color:var(--ink-soft);margin:8px 0 0}
+.card-sub{font-size:0.8125rem;color:var(--ink-soft);margin:-8px 0 12px}
+.filter-note{font-size:0.8125rem;color:var(--ink-soft);margin:10px 0 0;padding:8px 10px;background:var(--surface-2);border-radius:10px}
+/* próximos vencimentos */
+.due-tools{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;flex-wrap:wrap;margin-bottom:8px}
+.due-days{font-size:0.875rem;color:var(--ink-soft);display:flex;align-items:center;gap:6px}
+.due-days select{border:1px solid var(--border);border-radius:8px;padding:6px 8px;background:var(--paper);font-weight:700;color:var(--ink)}
+.due-overdue{display:flex;align-items:center;gap:8px;font-size:0.875rem;font-weight:600;color:var(--ink);cursor:pointer}
+.due-overdue input{width:18px;height:18px;accent-color:var(--primary);margin:0;flex:none}
+.due-list{display:flex;flex-direction:column}
+.due-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.due-row:last-child{border-bottom:none}
+.due-date{flex:none;width:46px;border-radius:10px;background:var(--primary-soft);color:var(--ink);display:flex;flex-direction:column;align-items:center;padding:5px 0;line-height:1.15}
+.due-date .dd{font-weight:700;font-size:1rem}
+.due-date .mm{font-size:0.6875rem;text-transform:uppercase;letter-spacing:.04em}
+.due-row.is-overdue .due-date{background:var(--expense-soft);color:var(--expense)}
+.due-total{display:flex;justify-content:space-between;align-items:center;gap:10px;border-top:1px solid var(--border);margin-top:4px;padding-top:10px;font-size:0.875rem;font-weight:700}
+/* period image */
+.history-image{margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
+.history-image > .btn{width:100%}
+.period-preview{width:100%;border-radius:12px;border:1px solid var(--border);display:block;margin-top:10px}
+/* password screen */
+.pin-screen{position:fixed;inset:0;z-index:50;background:var(--paper);display:flex;align-items:center;justify-content:center;padding:calc(24px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));overflow-y:auto}
+.pin-box{width:100%;max-width:340px;text-align:center;margin:auto}
+.pin-lock{font-size:2rem;margin-bottom:4px}
+.pin-app{font-size:1.0625rem;margin:0 0 16px;color:var(--ink-soft)}
+.pin-title{font-size:1.375rem;margin:0 0 8px}
+.pin-text{font-size:0.9375rem;color:var(--ink-soft);margin:0 0 12px;line-height:1.5}
+.pin-dots{display:flex;justify-content:center;gap:14px;margin:18px 0 8px}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--ink-soft)}
+.pin-dot.on{background:var(--primary);border-color:var(--primary)}
+.pin-error{min-height:1.4em;color:var(--expense);font-size:0.875rem;font-weight:600;margin:0 0 10px}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:0 auto;max-width:280px}
+.pin-key{height:62px;border-radius:999px;border:1px solid var(--border);background:var(--surface);font-size:1.5rem;font-weight:600;color:var(--ink);-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.pin-key:active{background:var(--surface-2)}
+.pin-key:disabled{opacity:.4}
+.pin-del{font-size:1.25rem;background:none;border-color:transparent}
+.pin-links{margin-top:18px;display:flex;justify-content:center}
+.pin-links .link-btn{font-size:0.9375rem}
+.pin-actions{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+.pin-box .field{text-align:left}
+.btn.danger{background:var(--expense);color:var(--on-primary)}
+body.privacy-cover #app{visibility:hidden}
+body.privacy-cover::after{content:'🔒';position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-size:3rem;background:var(--paper);z-index:60}
+.pin-note{background:var(--surface-2);border-radius:12px;padding:12px 13px;font-size:0.8125rem;color:var(--ink-soft);line-height:1.55;margin:12px 0 0}
+
+/* vivid palettes */
+:root[data-palette="azul-vivo"]{
+  --paper:#EEF3FE;--surface:#FFFFFF;--surface-2:#E2EAFC;--ink:#0E1B36;--ink-soft:#485673;
+  --primary:#2563EB;--primary-soft:#DCE7FD;--border:#D2DDF6;--shadow:rgba(14,27,54,0.10);
+}
+:root[data-palette="violeta"]{
+  --paper:#F3F0FE;--surface:#FFFFFF;--surface-2:#E9E3FC;--ink:#1E1338;--ink-soft:#5A4F78;
+  --primary:#7C3AED;--primary-soft:#E7DEFD;--border:#DDD5F5;--shadow:rgba(30,19,56,0.10);
+}
+:root[data-palette="rosa"]{
+  --paper:#FDF0F5;--surface:#FFFFFF;--surface-2:#F9E1EB;--ink:#3A0F22;--ink-soft:#774A5D;
+  --primary:#CE1B63;--primary-soft:#FADBE8;--border:#F1D3E0;--shadow:rgba(58,15,34,0.10);
+}
+:root[data-palette="laranja"]{
+  --paper:#FFF3EC;--surface:#FFFFFF;--surface-2:#FCE4D6;--ink:#3A1A08;--ink-soft:#7A5340;
+  --primary:#C2410C;--primary-soft:#FDDFCB;--border:#F4D8C6;--shadow:rgba(58,26,8,0.10);
+}
+:root[data-palette="esmeralda"]{
+  --paper:#EEF8F1;--surface:#FFFFFF;--surface-2:#DDF1E3;--ink:#0D2A17;--ink-soft:#44614E;
+  --primary:#15803D;--primary-soft:#D4EEDC;--border:#CFE6D7;--shadow:rgba(13,42,23,0.10);
+}
+:root[data-palette="turquesa"]{
+  --paper:#ECF7FA;--surface:#FFFFFF;--surface-2:#DAEFF4;--ink:#0A2730;--ink-soft:#42626B;
+  --primary:#0E7490;--primary-soft:#D0EDF4;--border:#CAE3EA;--shadow:rgba(10,39,48,0.10);
+}
+@media (prefers-color-scheme: dark){
+  :root[data-palette="azul-vivo"]:not([data-theme="light"]){
+    --paper:#0B1222;--surface:#111C33;--surface-2:#172541;--ink:#E7EEFB;--ink-soft:#9DB0D3;
+    --primary:#6EA2FF;--primary-soft:#1A2C52;--border:#22355C;--shadow:rgba(0,0,0,0.4);
+  }
+  :root[data-palette="violeta"]:not([data-theme="light"]){
+    --paper:#120D22;--surface:#1B1433;--surface-2:#241B42;--ink:#EEE9FB;--ink-soft:#ADA2CF;
+    --primary:#A78BFA;--primary-soft:#2C2152;--border:#33285C;--shadow:rgba(0,0,0,0.4);
+  }
+  :root[data-palette="rosa"]:not([data-theme="light"]){
+    --paper:#1E0A14;--surface:#2A1020;--surface-2:#35152A;--ink:#FBE9F1;--ink-soft:#CC9FB3;
+    --primary:#F472B6;--primary-soft:#4A1A33;--border:#4D2238;--shadow:rgba(0,0,0,0.4);
+  }
+  :root[data-palette="laranja"]:not([data-theme="light"]){
+    --paper:#1C0F07;--surface:#28160B;--surface-2:#331D10;--ink:#FCEDE3;--ink-soft:#CFA88F;
+    --primary:#FB923C;--primary-soft:#4A2812;--border:#4B2C18;--shadow:rgba(0,0,0,0.4);
+  }
+  :root[data-palette="esmeralda"]:not([data-theme="light"]){
+    --paper:#08180E;--surface:#0E2416;--surface-2:#133020;--ink:#E4F5EA;--ink-soft:#93BBA0;
+    --primary:#4ADE80;--primary-soft:#173D26;--border:#1D4029;--shadow:rgba(0,0,0,0.4);
+  }
+  :root[data-palette="turquesa"]:not([data-theme="light"]){
+    --paper:#061A20;--surface:#0B262E;--surface-2:#10313B;--ink:#E2F4F8;--ink-soft:#8FB9C4;
+    --primary:#22D3EE;--primary-soft:#0F3D49;--border:#164651;--shadow:rgba(0,0,0,0.4);
+  }
+}
+:root[data-palette="azul-vivo"][data-theme="dark"]{
+  --paper:#0B1222;--surface:#111C33;--surface-2:#172541;--ink:#E7EEFB;--ink-soft:#9DB0D3;
+  --primary:#6EA2FF;--primary-soft:#1A2C52;--border:#22355C;--shadow:rgba(0,0,0,0.4);
+}
+:root[data-palette="violeta"][data-theme="dark"]{
+  --paper:#120D22;--surface:#1B1433;--surface-2:#241B42;--ink:#EEE9FB;--ink-soft:#ADA2CF;
+  --primary:#A78BFA;--primary-soft:#2C2152;--border:#33285C;--shadow:rgba(0,0,0,0.4);
+}
+:root[data-palette="rosa"][data-theme="dark"]{
+  --paper:#1E0A14;--surface:#2A1020;--surface-2:#35152A;--ink:#FBE9F1;--ink-soft:#CC9FB3;
+  --primary:#F472B6;--primary-soft:#4A1A33;--border:#4D2238;--shadow:rgba(0,0,0,0.4);
+}
+:root[data-palette="laranja"][data-theme="dark"]{
+  --paper:#1C0F07;--surface:#28160B;--surface-2:#331D10;--ink:#FCEDE3;--ink-soft:#CFA88F;
+  --primary:#FB923C;--primary-soft:#4A2812;--border:#4B2C18;--shadow:rgba(0,0,0,0.4);
+}
+:root[data-palette="esmeralda"][data-theme="dark"]{
+  --paper:#08180E;--surface:#0E2416;--surface-2:#133020;--ink:#E4F5EA;--ink-soft:#93BBA0;
+  --primary:#4ADE80;--primary-soft:#173D26;--border:#1D4029;--shadow:rgba(0,0,0,0.4);
+}
+:root[data-palette="turquesa"][data-theme="dark"]{
+  --paper:#061A20;--surface:#0B262E;--surface-2:#10313B;--ink:#E2F4F8;--ink-soft:#8FB9C4;
+  --primary:#22D3EE;--primary-soft:#0F3D49;--border:#164651;--shadow:rgba(0,0,0,0.4);
 }
 </style>
 </head>
@@ -331,6 +497,48 @@ function idbPutState(jsonString){
     });
   } catch(e) {}
 }
+function idbPutKey(key, value){
+  try {
+    idbOpen(function(db){
+      if (!db) return;
+      try {
+        var tx = db.transaction(IDB_STORE, 'readwrite');
+        tx.objectStore(IDB_STORE).put(value, key);
+        tx.onerror = function(){};
+      } catch(e2) {}
+    });
+  } catch(e) {}
+}
+function idbGetKey(key, cb){
+  try {
+    idbOpen(function(db){
+      if (!db){ cb(null); return; }
+      try {
+        var tx = db.transaction(IDB_STORE, 'readonly');
+        var req = tx.objectStore(IDB_STORE).get(key);
+        req.onsuccess = function(){ cb(req.result || null); };
+        req.onerror = function(){ cb(null); };
+      } catch(e2){ cb(null); }
+    });
+  } catch(e){ cb(null); }
+}
+// cb(true) only when every key is really gone
+function idbDeleteKeys(keys, cb){
+  var called = false;
+  function done(ok){ if (!called){ called = true; cb(ok); } }
+  try {
+    idbOpen(function(db){
+      if (!db){ done(!window.indexedDB); return; }
+      try {
+        var tx = db.transaction(IDB_STORE, 'readwrite');
+        var store = tx.objectStore(IDB_STORE);
+        keys.forEach(function(k){ store['delete'](k); });
+        tx.oncomplete = function(){ done(true); };
+        tx.onerror = tx.onabort = function(){ done(false); };
+      } catch(e2){ done(false); }
+    });
+  } catch(e){ done(false); }
+}
 function idbGetState(cb){
   try {
     idbOpen(function(db){
@@ -345,22 +553,29 @@ function idbGetState(cb){
   } catch(e){ cb(null); }
 }
 var PALETTES = [
-  {id:'padrao', name:'Verde-água', swatch:'#1B4B4A'},
-  {id:'azul', name:'Azul-marinho', swatch:'#24406B'},
-  {id:'ameixa', name:'Ameixa', swatch:'#5B3A6B'},
-  {id:'grafite', name:'Grafite', swatch:'#35383A'},
-  {id:'areia', name:'Areia', swatch:'#6B5A2E'}
+  {id:'padrao', name:'Verde-água', swatch:'#1B4B4A', group:'sobria'},
+  {id:'azul', name:'Azul-marinho', swatch:'#24406B', group:'sobria'},
+  {id:'ameixa', name:'Ameixa', swatch:'#5B3A6B', group:'sobria'},
+  {id:'grafite', name:'Grafite', swatch:'#35383A', group:'sobria'},
+  {id:'areia', name:'Areia', swatch:'#6B5A2E', group:'sobria'},
+  {id:'azul-vivo', name:'Azul vivo', swatch:'#2563EB', group:'viva'},
+  {id:'violeta', name:'Violeta', swatch:'#7C3AED', group:'viva'},
+  {id:'rosa', name:'Rosa', swatch:'#CE1B63', group:'viva'},
+  {id:'laranja', name:'Laranja', swatch:'#C2410C', group:'viva'},
+  {id:'esmeralda', name:'Esmeralda', swatch:'#15803D', group:'viva'},
+  {id:'turquesa', name:'Turquesa', swatch:'#0E7490', group:'viva'}
 ];
 function applyPaletteAttr(){
   try {
-    if (palette && palette !== 'padrao') document.documentElement.setAttribute('data-palette', palette);
-    else document.documentElement.removeAttribute('data-palette');
+    var root = document.documentElement;
+    if (palette && palette !== 'padrao') root.setAttribute('data-palette', palette);
+    else root.removeAttribute('data-palette');
+    var current = null;
+    for (var i=0;i<PALETTES.length;i++){ if (PALETTES[i].id === (palette || 'padrao')){ current = PALETTES[i]; break; } }
+    if (current && current.group === 'viva') root.setAttribute('data-vivid', '');
+    else root.removeAttribute('data-vivid');
     var meta = document.querySelector('meta[name="theme-color"]');
-    if (meta){
-      for (var i=0;i<PALETTES.length;i++){
-        if (PALETTES[i].id === (palette || 'padrao')){ meta.setAttribute('content', PALETTES[i].swatch); break; }
-      }
-    }
+    if (meta && current) meta.setAttribute('content', current.swatch);
   } catch(e) {}
 }
 
@@ -480,10 +695,35 @@ function uniq(arr){
   return out;
 }
 function clone(x){ return JSON.parse(JSON.stringify(x)); }
-var MONTH_KEY_RE = /^\d{4}-\d{2}$/;
+var MONTH_KEY_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 function daysInMonth(y, m1){ return new Date(y, m1, 0).getDate(); }
 function pluralDias(n){ return n + ' dia' + (n === 1 ? '' : 's'); }
 function numOr0(v){ var n = Number(v); return isFinite(n) ? n : 0; }
+var ISO_DATE_RE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+function dayOfDate(s){
+  if (!ISO_DATE_RE.test(s || '')) return null;
+  var d = parseInt(String(s).slice(8, 10), 10);
+  return (isFinite(d) && d >= 1 && d <= 31) ? d : null;
+}
+// "dia 31" in a 30-day month (or in February) means the last day of that month.
+function dateInMonth(monthKey, dueDay){
+  if (!MONTH_KEY_RE.test(monthKey || '')) return null;
+  var p = monthKey.split('-');
+  var y = parseInt(p[0],10), m1 = parseInt(p[1],10);
+  var d = Math.min(Math.max(parseInt(dueDay,10) || 1, 1), daysInMonth(y, m1));
+  return monthKey + '-' + pad2(d);
+}
+function daysFromTo(fromIso, toIso){
+  var a = fromIso.split('-'), b = toIso.split('-');
+  var da = new Date(parseInt(a[0],10), parseInt(a[1],10)-1, parseInt(a[2],10));
+  var db = new Date(parseInt(b[0],10), parseInt(b[1],10)-1, parseInt(b[2],10));
+  return Math.round((db - da) / 86400000);
+}
+// "dia 12" when the date falls in the month being shown, "12/11" when it doesn't.
+function dueLabelFor(iso, monthKey){
+  if (!iso) return null;
+  return iso.slice(0, 7) === monthKey ? 'dia ' + parseInt(iso.slice(8, 10), 10) : fmtDate(iso);
+}
 // Money typed by a person in Brazil: "1.234,56", "58,90", "58.90", "1500", "R$ 20".
 // Returns NaN when it can't be understood (never silently turns into 0).
 function parseMoneyInput(raw){
@@ -547,6 +787,20 @@ function normalizeState(s){
     var cnt = parseInt(i.installments, 10);
     i.installments = isFinite(cnt) && cnt > 0 ? cnt : 1;
   });
+  // Monthly bills whose amount changes every month (e.g. a credit card): one "template" per
+  // bill; every month from startMonth (until endMonth, if it was stopped) shows it as
+  // "a lançar" until that month's amount is entered.
+  if (!Array.isArray(h.recurring)) h.recurring = [];
+  h.recurring = h.recurring.filter(function(r){ return r && typeof r === 'object'; });
+  h.recurring.forEach(function(r){
+    if (!r.id) r.id = uid();
+    if (typeof r.desc !== 'string' || !r.desc.trim()) r.desc = String(r.desc || '').trim() || 'Conta mensal';
+    if (!MONTH_KEY_RE.test(r.startMonth || '')) r.startMonth = monthKeyOf(new Date());
+    if (r.endMonth != null && !MONTH_KEY_RE.test(r.endMonth)) r.endMonth = null;
+    var rd = parseInt(r.dueDay, 10);
+    r.dueDay = (isFinite(rd) && rd >= 1 && rd <= 31) ? rd : null;
+    r.dueOffset = clampDueOffset(r.dueOffset || 0);
+  });
   if (!s.months || typeof s.months !== 'object' || Array.isArray(s.months)) s.months = {};
   Object.keys(s.months).forEach(function(k){
     var m = s.months[k];
@@ -557,8 +811,30 @@ function normalizeState(s){
     if (!Array.isArray(m.variable)) m.variable = [];
     if (!Array.isArray(m.investments)) m.investments = [];
     if (!m.deleted || typeof m.deleted !== 'object') m.deleted = {};
+    if (!m.recSkips || typeof m.recSkips !== 'object' || Array.isArray(m.recSkips)) m.recSkips = {};
     m.variable = m.variable.filter(function(e){ return e && typeof e === 'object'; });
-    m.variable.forEach(function(e){ if (!e.id) e.id = uid(); e.amount = numOr0(e.amount); });
+    m.variable.forEach(function(e){
+      if (!e.id) e.id = uid();
+      e.amount = numOr0(e.amount);
+      if (e.sv !== 2){
+        // Before every variable expense had a status, only the ones marked "Ainda não paguei"
+        // (the ones with a due day) were followed; all the others were already paid. Keeping
+        // that means no old expense turns "Atrasada" and no total changes with the update.
+        var hadDue = e.dueDay != null && e.dueDay !== '' && isFinite(parseInt(e.dueDay, 10));
+        if (!hadDue) e.paid = true;
+        e.paid = !!e.paid;
+        var dayFromDate = dayOfDate(e.date);
+        if (hadDue && !e.paid && MONTH_KEY_RE.test(k) && e.date !== dateInMonth(k, e.dueDay)){
+          // Before, an unpaid expense was due on that day of the month it is saved in (very
+          // old entries even kept the due day apart from the purchase date). The date is the
+          // due date now ("Vencimento"), so it takes that day: nothing changes status or month.
+          e.date = dateInMonth(k, e.dueDay);
+          dayFromDate = dayOfDate(e.date);
+        }
+        e.dueDay = dayFromDate;
+        e.sv = 2;
+      }
+    });
     m.investments = m.investments.filter(function(e){ return e && typeof e === 'object'; });
     m.investments.forEach(function(e){ if (!e.id) e.id = uid(); e.amount = numOr0(e.amount); });
     ['person1', 'person2'].forEach(function(p){
@@ -604,7 +880,8 @@ function defaultState(){
         {id:'compras', name:'Compras'},
         {id:'outros', name:'Outros'}
       ],
-      installments: []
+      installments: [],
+      recurring: []
     },
     months: {},
     meta: {updatedAt:null, updatedBy:null}
@@ -655,6 +932,8 @@ var removeTimerFixed = null;
 var editingFixedId = null;
 var editingFixedDraft = null;
 var editingVariable = null;
+var launchingRecurring = null;   // {tplId, month} while entering a monthly bill's amount
+var recurringOptionsFor = null;  // 'tplId|month' whose skip/stop choices are open
 var shareTextPreview = null;
 var sharedImagePreview = null;
 var historyFilterOpen = false;
@@ -721,7 +1000,7 @@ function getMonthView(state, key){
   });
   var variableList = (existing && existing.variable) || [];
   variableList.forEach(function(e){
-    if (carriesToToday(key, e.dueDay, e.paid)) carryAway.variable[e.id] = true;
+    if (varCarries(e, key)) carryAway.variable[e.id] = true;
   });
   var mv = {
     income: {
@@ -735,6 +1014,15 @@ function getMonthView(state, key){
     carryAway: carryAway
   };
   mv.carriedIn = (key === monthKeyToday()) ? collectCarriedForward(state, key) : {fixed:[], installments:[], variable:[]};
+  return mv;
+}
+// What the screen and the summaries need on top of the month's numbers: the monthly bills
+// still waiting for this month's amount ("a lançar"), plus - in the current month - the
+// ones forgotten in earlier months.
+function getMonthViewFull(state, key){
+  var mv = getMonthView(state, key);
+  mv.toLaunch = recurringToLaunch(state, key);
+  mv.toLaunchBacklog = (key === monthKeyToday()) ? recurringBacklog(state, key) : [];
   return mv;
 }
 function computeMonthTotals(h, mv, key){
@@ -779,11 +1067,29 @@ function ensureMonth(next, key){
   if (!next.months[key]) next.months[key] = {income:{person1:0,person2:0}, fixed:{}, installments:{}, variable:[], investments:[]};
   if (!next.months[key].installments) next.months[key].installments = {};
   if (!next.months[key].investments) next.months[key].investments = [];
+  if (!next.months[key].recSkips) next.months[key].recSkips = {};
   return next.months[key];
 }
 function findCat(list, id){
   for (var i=0;i<list.length;i++){ if (list[i].id === id) return list[i]; }
   return null;
+}
+function addRecurringTemplate(next, tpl, at){
+  if (!tpl) return;
+  next.household.recurring = next.household.recurring || [];
+  if (findCat(next.household.recurring, tpl.id)) return;
+  tpl.createdAt = at;
+  tpl.updatedAt = at;
+  next.household.recurring.push(tpl);
+  next.household.updatedAt = at;
+}
+function applyRecurringPatch(next, rp, at){
+  if (!rp || !rp.tplId || !rp.patch) return;
+  var tpl = findCat(next.household.recurring || [], rp.tplId);
+  if (!tpl) return;
+  Object.keys(rp.patch).forEach(function(k){ tpl[k] = rp.patch[k]; });
+  tpl.updatedAt = at;
+  next.household.updatedAt = at;
 }
 // "Valor fixo" is a timeline: {month, amount} = "from this month on, the bill is X";
 // {month, stop:true} = "from this month on, it no longer repeats". Turning the option on
@@ -854,6 +1160,119 @@ function isPastDue(natMonth, dueDay, paid){
 function carriesToToday(natMonth, dueDay, paid){
   return isPastDue(natMonth, dueDay, paid) && natMonth < monthKeyToday();
 }
+// A variable expense is due on its own date ("Vencimento"). Entries without a valid date
+// fall back to their day number inside the month they were saved in.
+function varDueIso(e, key){
+  if (!e) return null;
+  if (ISO_DATE_RE.test(e.date || '')) return e.date;
+  return e.dueDay ? dateInMonth(key, e.dueDay) : null;
+}
+function varDaysOverdue(e, key){
+  var due = varDueIso(e, key);
+  return due ? daysFromTo(due, todayStr()) : null;
+}
+function varIsOverdue(e, key){
+  if (!e || e.paid) return false;
+  var d = varDaysOverdue(e, key);
+  return d != null && d > 0;
+}
+function varCarries(e, key){ return varIsOverdue(e, key) && key < monthKeyToday(); }
+
+/* ---------- monthly bills with a different amount every month ("a lançar") ---------- */
+function findRecurring(state, id){
+  var list = (state && state.household && state.household.recurring) || [];
+  for (var i=0;i<list.length;i++){ if (list[i] && list[i].id === id) return list[i]; }
+  return null;
+}
+function recurringCovers(tpl, key){
+  return !!tpl && key >= tpl.startMonth && (!tpl.endMonth || key <= tpl.endMonth);
+}
+// true while the bill keeps coming back in the months after `key`
+function recurringContinuesAfter(tpl, key){
+  return !!tpl && (!tpl.endMonth || tpl.endMonth > key);
+}
+function recurringEntryIn(state, tplId, key){
+  var m = state.months[key];
+  var list = (m && m.variable) || [];
+  for (var i=0;i<list.length;i++){ if (list[i] && list[i].recurringId === tplId) return list[i]; }
+  return null;
+}
+function recurringSkippedIn(state, tplId, key){
+  var m = state.months[key];
+  var s = (m && m.recSkips) ? m.recSkips[tplId] : null;
+  return !!(s && s.skip);
+}
+// the latest month (on or after the start) that already has this bill's amount
+function recurringLastLaunchedMonth(state, tpl){
+  var last = null;
+  Object.keys(state.months || {}).forEach(function(k){
+    if (MONTH_KEY_RE.test(k) && k >= tpl.startMonth && (!last || k > last) && recurringEntryIn(state, tpl.id, k)) last = k;
+  });
+  return last;
+}
+// The bill's due date for the month it belongs to. A card bill kept in October but due on
+// 05/11 has dueOffset 1, so November's one is due on 05/12. "Dia 31" in a shorter month
+// is that month's last day, without ever changing the bill's own day.
+function recurringDueIso(tpl, key){
+  if (!tpl || !tpl.dueDay) return null;
+  return dateInMonth(shiftMonth(key, tpl.dueOffset || 0), tpl.dueDay);
+}
+function clampDueOffset(n){
+  n = parseInt(n, 10);
+  if (!isFinite(n)) return 0;
+  return Math.max(-2, Math.min(2, n));
+}
+// the most recent amount entered for this bill before `key` (shown as a hint), and its month
+function recurringLastAmount(state, tpl, key){
+  var keys = Object.keys(state.months || {}).filter(function(k){ return MONTH_KEY_RE.test(k) && k < key && k >= tpl.startMonth; }).sort().reverse();
+  for (var i=0;i<keys.length;i++){
+    var e = recurringEntryIn(state, tpl.id, keys[i]);
+    if (e) return {amount: e.amount, month: keys[i]};
+  }
+  return null;
+}
+function lastAmountText(last, key){
+  if (!last) return '';
+  return (last.month === shiftMonth(key, -1) ? 'Mês anterior: ' : 'Último valor lançado (' + monthLabel(last.month) + '): ') + fmtMoney(last.amount);
+}
+function recurringItem(state, tpl, key){
+  return {
+    tplId: tpl.id, month: key, desc: tpl.desc, categoryId: tpl.categoryId,
+    dueIso: recurringDueIso(tpl, key),
+    last: recurringLastAmount(state, tpl, key)
+  };
+}
+function byDueThenName(a, b){
+  var da = a.dueIso || '', db = b.dueIso || '';
+  if (da !== db) return da < db ? -1 : 1;
+  return a.desc < b.desc ? -1 : (a.desc > b.desc ? 1 : 0);
+}
+function recurringToLaunch(state, key){
+  var out = [];
+  ((state.household && state.household.recurring) || []).forEach(function(tpl){
+    if (!recurringCovers(tpl, key)) return;
+    if (recurringEntryIn(state, tpl.id, key) || recurringSkippedIn(state, tpl.id, key)) return;
+    out.push(recurringItem(state, tpl, key));
+  });
+  return out.sort(byDueThenName);
+}
+// Earlier months (up to a year back) where a monthly bill was never entered keep being
+// reminded in the current month, the same way unpaid bills are.
+function recurringBacklog(state, todayKey){
+  var out = [];
+  var floor = shiftMonth(todayKey, -12);
+  var lastPast = shiftMonth(todayKey, -1);
+  ((state.household && state.household.recurring) || []).forEach(function(tpl){
+    var from = tpl.startMonth > floor ? tpl.startMonth : floor;
+    var to = (tpl.endMonth && tpl.endMonth < lastPast) ? tpl.endMonth : lastPast;
+    if (from > to) return;
+    monthRangeKeys(from, to).forEach(function(k){
+      if (recurringEntryIn(state, tpl.id, k) || recurringSkippedIn(state, tpl.id, k)) return;
+      out.push(recurringItem(state, tpl, k));
+    });
+  });
+  return out.sort(function(a, b){ return a.month !== b.month ? (a.month < b.month ? -1 : 1) : byDueThenName(a, b); });
+}
 function collectCarriedForward(state, todayKey){
   var out = {fixed: [], installments: [], variable: []};
   var lastKey = shiftMonth(todayKey, -1);
@@ -889,7 +1308,7 @@ function collectCarriedForward(state, todayKey){
     });
     pv.variable.forEach(function(e){
       if (pv.carryAway.variable[e.id]){
-        out.variable.push({sourceMonth:mKey, id:e.id, categoryId:e.categoryId, name:e.desc, amount:e.amount, dueDay:e.dueDay, overdueDays:daysOverdue(mKey, e.dueDay)});
+        out.variable.push({sourceMonth:mKey, id:e.id, categoryId:e.categoryId, name:e.desc, amount:e.amount, dueDay:e.dueDay, dueIso:varDueIso(e, mKey), overdueDays:varDaysOverdue(e, mKey)});
       }
     });
   });
@@ -1114,6 +1533,8 @@ function applyOp(state, op){
           next.household.updatedAt = at;
         }
       }
+      addRecurringTemplate(next, op.recurring, at);
+      applyRecurringPatch(next, op.recurringPatch, at);
       m = ensureMonth(next, op.month);
       op.entry.updatedAt = at;
       m.variable.push(op.entry);
@@ -1127,6 +1548,8 @@ function applyOp(state, op){
           next.household.updatedAt = at;
         }
       }
+      addRecurringTemplate(next, op.recurring, at);
+      applyRecurringPatch(next, op.recurringPatch, at);
       m = ensureMonth(next, op.month);
       m.variable = m.variable.map(function(e){
         if (e.id !== op.entryId) return e;
@@ -1142,6 +1565,32 @@ function applyOp(state, op){
       m.variable = m.variable.filter(function(e){ return e.id !== op.entryId; });
       addTombstone(m, 'var:' + op.entryId, at);
       m.updatedAt = at;
+      if (op.alsoRemoveRecurring){
+        next.household.recurring = (next.household.recurring || []).filter(function(r){ return r.id !== op.alsoRemoveRecurring; });
+        addTombstone(next.household, 'rec:' + op.alsoRemoveRecurring, at);
+        next.household.updatedAt = at;
+      }
+      break;
+    case 'updateRecurring':
+      applyRecurringPatch(next, {tplId:op.tplId, patch:op.patch}, at);
+      break;
+    case 'removeRecurring':
+      next.household.recurring = (next.household.recurring || []).filter(function(r){ return r.id !== op.tplId; });
+      addTombstone(next.household, 'rec:' + op.tplId, at);
+      next.household.updatedAt = at;
+      break;
+    case 'skipRecurring':
+      m = ensureMonth(next, op.month);
+      m.recSkips[op.tplId] = {skip:true, updatedAt:at};
+      m.updatedAt = at;
+      break;
+    case 'stopRecurring':
+      applyRecurringPatch(next, {tplId:op.tplId, patch:{endMonth:op.endMonth}}, at);
+      (op.skipMonths || []).forEach(function(k){
+        var ms = ensureMonth(next, k);
+        ms.recSkips[op.tplId] = {skip:true, updatedAt:at};
+        ms.updatedAt = at;
+      });
       break;
     case 'renamePerson':
       next.household[op.person + 'Name'] = op.name;
@@ -1276,18 +1725,32 @@ function mergeHousehold(lh, ih){
   out.fixedCategories = mergeFixedCategories(lh, ih, del);
   out.variableCategories = mergeListById(lh.variableCategories, ih.variableCategories, lAt, iAt, del, 'vcat:');
   out.installments = mergeListById(lh.installments, ih.installments, lAt, iAt, del, 'inst:');
+  out.recurring = mergeListById(lh.recurring, ih.recurring, lAt, iAt, del, 'rec:');
   out.updatedAt = newerOf(lAt, iAt);
   return out;
+}
+// A monthly bill has at most one amount per month. If each phone entered it before the
+// backups were swapped, the most recently changed one stays (the same on both phones).
+function keepOneEntryPerMonthlyBill(list){
+  var best = {};
+  list.forEach(function(e){
+    if (!e || !e.recurringId) return;
+    var cur = best[e.recurringId];
+    var eu = e.updatedAt || '', cu = cur ? (cur.updatedAt || '') : '';
+    if (!cur || eu > cu || (eu === cu && e.id > cur.id)) best[e.recurringId] = e;
+  });
+  return list.filter(function(e){ return !e || !e.recurringId || best[e.recurringId] === e; });
 }
 function mergeMonth(lm, im){
   var lAt = lm.updatedAt || '', iAt = im.updatedAt || '';
   var out = clone(iAt > lAt ? im : lm);
   var del = mergeTombstones(lm.deleted, im.deleted);
   out.deleted = del;
-  out.variable = mergeListById(lm.variable, im.variable, lAt, iAt, del, 'var:');
+  out.variable = keepOneEntryPerMonthlyBill(mergeListById(lm.variable, im.variable, lAt, iAt, del, 'var:'));
   out.investments = mergeListById(lm.investments, im.investments, lAt, iAt, del, 'inv:');
   out.fixed = mergeEntryMap(lm.fixed, im.fixed, lAt, iAt);
   out.installments = mergeEntryMap(lm.installments, im.installments, lAt, iAt);
+  out.recSkips = mergeEntryMap(lm.recSkips, im.recSkips, lAt, iAt);
   out.income = {
     person1: mergeIncomeSide(lm.income && lm.income.person1, im.income && im.income.person1, lAt, iAt, del, 'person1'),
     person2: mergeIncomeSide(lm.income && lm.income.person2, im.income && im.income.person2, lAt, iAt, del, 'person2')
@@ -1419,10 +1882,10 @@ function summaryFixedRows(h, mv){
     var f = mv.fixed[cat.id];
     if (!f.isSet) return;
     var overdue = isPastDue(viewMonth, cat.dueDay, f.paid);
-    rows.push({name:cat.name, amount:f.amount, paid:f.paid, status: fixedStatusLabel(f.paid, overdue), dueDay: cat.dueDay});
+    rows.push({name:cat.name, amount:f.amount, paid:f.paid, status: fixedStatusLabel(f.paid, overdue), dueLabel: cat.dueDay ? 'dia ' + cat.dueDay : null});
   });
   ((mv.carriedIn && mv.carriedIn.fixed) || []).forEach(function(c){
-    rows.push({name:c.name + ' (venceu em ' + monthLabel(c.sourceMonth) + ')', amount:c.amount, paid:false, status:'Atrasada', dueDay:c.dueDay});
+    rows.push({name:c.name + ' (venceu em ' + monthLabel(c.sourceMonth) + ')', amount:c.amount, paid:false, status:'Atrasada', dueLabel: c.dueDay ? 'dia ' + c.dueDay : null});
   });
   return rows;
 }
@@ -1434,70 +1897,106 @@ function summaryInstallmentRows(mv){
       amount: inst.amount,
       paid: inst.paid,
       status: fixedStatusLabel(inst.paid, overdue),
-      dueDay: inst.dueDay || null
+      dueLabel: inst.dueDay ? 'dia ' + inst.dueDay : null
     };
   });
   ((mv.carriedIn && mv.carriedIn.installments) || []).forEach(function(c){
-    rows.push({name:c.name + ' (venceu em ' + monthLabel(c.sourceMonth) + ')', amount:c.amount, paid:false, status:'Atrasada', dueDay:c.dueDay});
+    rows.push({name:c.name + ' (venceu em ' + monthLabel(c.sourceMonth) + ')', amount:c.amount, paid:false, status:'Atrasada', dueLabel: c.dueDay ? 'dia ' + c.dueDay : null});
   });
   return rows;
 }
 function summaryVariableRows(mv){
   var rows = mv.variable.map(function(e){
-    var hasDue = e.dueDay != null && e.dueDay !== '';
-    var overdue = hasDue && isPastDue(viewMonth, e.dueDay, e.paid);
     return {
       name: e.desc,
       amount: e.amount,
-      paid: hasDue ? !!e.paid : true,
-      status: hasDue ? fixedStatusLabel(!!e.paid, overdue) : null,
-      dueDay: hasDue ? e.dueDay : null,
+      paid: !!e.paid,
+      status: fixedStatusLabel(!!e.paid, varIsOverdue(e, viewMonth)),
+      dueLabel: dueLabelFor(varDueIso(e, viewMonth), viewMonth),
       sortKey: e.date || ''
     };
   });
   rows.sort(function(a,b){ return a.sortKey < b.sortKey ? 1 : (a.sortKey > b.sortKey ? -1 : 0); });
   ((mv.carriedIn && mv.carriedIn.variable) || []).forEach(function(c){
-    rows.push({name:c.name + ' (venceu em ' + monthLabel(c.sourceMonth) + ')', amount:c.amount, paid:false, status:'Atrasada', dueDay:c.dueDay, sortKey:''});
+    rows.push({name:c.name + ' (venceu em ' + monthLabel(c.sourceMonth) + ')', amount:c.amount, paid:false, status:'Atrasada', dueLabel: c.dueIso ? fmtDate(c.dueIso) : null, sortKey:''});
   });
   return rows;
+}
+// Monthly bills still waiting for this month's amount (and, in the current month, the ones
+// forgotten in earlier months). They have no amount yet, so they never enter any total.
+function shortMonthLabel(key){
+  var p = key.split('-');
+  return MONTH_NAMES[parseInt(p[1], 10) - 1].slice(0, 3) + '/' + p[0].slice(2);
+}
+function summaryToLaunchRows(mv){
+  return (mv.toLaunch || []).concat(mv.toLaunchBacklog || []).map(function(it){
+    var other = it.month !== viewMonth;
+    return {
+      name: it.desc + (other ? ' (de ' + monthLabel(it.month) + ')' : ''),
+      shortName: it.desc + (other ? ' (' + shortMonthLabel(it.month) + ')' : ''),
+      amount: null, paid: false, status: 'A lançar', dueIso: it.dueIso,
+      dueLabel: it.dueIso ? dueLabelFor(it.dueIso, viewMonth) : null
+    };
+  });
 }
 function statusEmoji(status){
   if (status === 'Atrasada') return '🔴 ';
   if (status === 'Pendente') return '🟡 ';
+  if (status === 'A lançar') return '⏳ ';
   return '';
 }
-function dueSuffix(dueDay){
-  return dueDay ? ' (dia ' + dueDay + ')' : '';
+function dueSuffix(label){
+  return label ? ' (' + label + ')' : '';
 }
-function collectPendingItems(fixedRows, instRows, varRows){
+var PENDING_ORDER = {'Atrasada':0, 'Pendente':1, 'A lançar':2};
+function collectPendingItems(lists){
   var items = [];
-  function add(list){
-    list.forEach(function(r){ if (r.status === 'Pendente' || r.status === 'Atrasada') items.push(r); });
-  }
-  add(fixedRows); add(instRows); add(varRows);
+  lists.forEach(function(list){
+    list.forEach(function(r){ if (PENDING_ORDER[r.status] != null) items.push(r); });
+  });
   items.sort(function(a,b){
-    if (a.status !== b.status) return a.status === 'Atrasada' ? -1 : 1;
-    return b.amount - a.amount;
+    if (a.status !== b.status) return PENDING_ORDER[a.status] - PENDING_ORDER[b.status];
+    return (b.amount || 0) - (a.amount || 0);
   });
   return items;
 }
-function buildSummaryText(){
-  var mv = getMonthView(STATE, viewMonth);
+function countPaid(rows){ return rows.filter(function(r){ return r.paid; }).length; }
+function summaryData(){
+  var mv = getMonthViewFull(STATE, viewMonth);
   var h = STATE.household;
   var totals = computeMonthTotals(h, mv, viewMonth);
   var fixedRows = summaryFixedRows(h, mv);
   var instRows = summaryInstallmentRows(mv);
-  var instPaidCount = instRows.filter(function(ir){ return ir.paid; }).length;
   var varRows = summaryVariableRows(mv);
-  var pending = collectPendingItems(fixedRows, instRows, varRows);
+  var launchRows = summaryToLaunchRows(mv);
+  return {
+    mv: mv, h: h, totals: totals,
+    fixedRows: fixedRows, instRows: instRows, varRows: varRows, launchRows: launchRows,
+    fixedPaid: countPaid(fixedRows),
+    varCount: instRows.length + varRows.length,
+    varPaid: countPaid(instRows) + countPaid(varRows),
+    totalBills: totals.totalFixed + totals.totalVariable,
+    pending: collectPendingItems([fixedRows, instRows, varRows, launchRows])
+  };
+}
+function paidCountText(paid, count){
+  return count ? ' (' + paid + ' de ' + count + ' paga' + (count === 1 ? '' : 's') + ')' : '';
+}
+function buildSummaryText(){
+  var d = summaryData();
+  var h = d.h, mv = d.mv, totals = d.totals;
+  var hasInv = totals.totalInvestments > 0;
   var lines = [];
   lines.push('📊 *Nossas Finanças — ' + monthLabel(viewMonth) + '*');
   lines.push('');
-  if (pending.length){
-    lines.push('⚠️ *Pendências (' + pending.length + ')*');
-    pending.forEach(function(p){
-      var when = p.status === 'Atrasada' ? 'venceu dia ' + p.dueDay : (p.dueDay ? 'vence dia ' + p.dueDay : 'pendente');
-      lines.push(statusEmoji(p.status) + '*' + p.name + '* — ' + fmtMoney(p.amount) + ' (' + when + ')');
+  if (d.pending.length){
+    lines.push('⚠️ *Pendências (' + d.pending.length + ')*');
+    d.pending.forEach(function(p){
+      var when;
+      if (p.status === 'Atrasada') when = p.dueLabel ? 'venceu ' + p.dueLabel : 'atrasada';
+      else if (p.status === 'A lançar') when = 'falta lançar o valor' + (p.dueLabel ? ((p.dueIso && p.dueIso < todayStr()) ? ', venceu ' : ', vence ') + p.dueLabel : '');
+      else when = p.dueLabel ? 'vence ' + p.dueLabel : 'pendente';
+      lines.push(statusEmoji(p.status) + '*' + p.name + '*' + (p.amount != null ? ' — ' + fmtMoney(p.amount) : '') + ' (' + when + ')');
     });
   } else {
     lines.push('✅ *Tudo em dia!* Nenhuma conta pendente ou atrasada.');
@@ -1508,69 +2007,113 @@ function buildSummaryText(){
   lines.push(h.person2Name + ': ' + fmtMoney(sumIncomeList(mv.income.person2)));
   lines.push('*Total: ' + fmtMoney(totals.totalIncome) + '*');
   lines.push('');
-  lines.push('*Contas fixas* (' + totals.paidCount + ' de ' + fixedRows.length + ' pagas)');
-  if (fixedRows.length){
-    fixedRows.forEach(function(fr){ lines.push(statusEmoji(fr.status) + fr.name + ' — ' + fmtMoney(fr.amount) + dueSuffix(fr.dueDay)); });
+  lines.push('*Contas fixas*' + paidCountText(d.fixedPaid, d.fixedRows.length));
+  if (d.fixedRows.length){
+    d.fixedRows.forEach(function(fr){ lines.push(statusEmoji(fr.status) + fr.name + ' — ' + fmtMoney(fr.amount) + dueSuffix(fr.dueLabel)); });
   } else {
     lines.push('(nenhuma lançada ainda)');
   }
   lines.push('*Total: ' + fmtMoney(totals.totalFixed) + '*');
   lines.push('');
-  lines.push('*Contas variáveis*');
-  if (instRows.length){
-    lines.push('_Parcelas do mês (' + instPaidCount + '/' + instRows.length + ' pagas)_');
-    instRows.forEach(function(ir){ lines.push(statusEmoji(ir.status) + ir.name + ' — ' + fmtMoney(ir.amount) + dueSuffix(ir.dueDay)); });
+  lines.push('*Contas variáveis*' + paidCountText(d.varPaid, d.varCount));
+  if (d.instRows.length){
+    lines.push('_Parcelas do mês_');
+    d.instRows.forEach(function(ir){ lines.push(statusEmoji(ir.status) + ir.name + ' — ' + fmtMoney(ir.amount) + dueSuffix(ir.dueLabel)); });
   }
-  if (varRows.length){
-    if (instRows.length) lines.push('_Outros gastos_');
-    varRows.forEach(function(vr){ lines.push(statusEmoji(vr.status) + vr.name + ' — ' + fmtMoney(vr.amount) + dueSuffix(vr.dueDay)); });
-  } else if (!instRows.length){
-    lines.push('(nenhuma lançada ainda)');
+  if (d.varRows.length){
+    if (d.instRows.length) lines.push('_Outros gastos_');
+    d.varRows.forEach(function(vr){ lines.push(statusEmoji(vr.status) + vr.name + ' — ' + fmtMoney(vr.amount) + dueSuffix(vr.dueLabel)); });
   }
+  if (d.launchRows.length){
+    lines.push('_A lançar (valor ainda não informado)_');
+    d.launchRows.forEach(function(lr){ lines.push(statusEmoji(lr.status) + lr.name + dueSuffix(lr.dueLabel)); });
+  }
+  if (!d.instRows.length && !d.varRows.length && !d.launchRows.length) lines.push('(nenhuma lançada ainda)');
   lines.push('*Total: ' + fmtMoney(totals.totalVariable) + '*');
-  if (totals.totalInvestments > 0){
-    lines.push('');
-    lines.push('*Investimentos: ' + fmtMoney(totals.totalInvestments) + '*');
-  }
   lines.push('');
-  lines.push('Total de despesas: ' + fmtMoney(totals.totalFixed + totals.totalVariable + totals.totalInvestments));
+  lines.push('*Total de contas (fixas + variáveis): ' + fmtMoney(d.totalBills) + '*');
+  if (hasInv) lines.push('*Investimentos: ' + fmtMoney(totals.totalInvestments) + '*');
+  lines.push('');
   lines.push('*SALDO FINAL: ' + fmtMoney(totals.saldo) + '*');
+  lines.push('Receitas ' + fmtMoney(totals.totalIncome) + ' − Contas ' + fmtMoney(d.totalBills) +
+    (hasInv ? ' − Investimentos ' + fmtMoney(totals.totalInvestments) : '') + ' = ' + fmtMoney(totals.saldo));
   return lines.join('\n');
 }
+function paletteSwatch(){
+  for (var pi=0; pi<PALETTES.length; pi++){
+    if (PALETTES[pi].id === (palette || 'padrao')) return PALETTES[pi].swatch;
+  }
+  return PALETTES[0].swatch;
+}
 function buildSummaryCanvas(){
-  var mv = getMonthView(STATE, viewMonth);
-  var h = STATE.household;
-  var totals = computeMonthTotals(h, mv, viewMonth);
-  var fixedRows = summaryFixedRows(h, mv);
-  var instRows = summaryInstallmentRows(mv);
-  var instPaidCount = instRows.filter(function(ir){ return ir.paid; }).length;
-  var varRows = summaryVariableRows(mv);
+  var d = summaryData();
+  var h = d.h, mv = d.mv, totals = d.totals;
   var hasInv = totals.totalInvestments > 0;
 
-  var accent = '#1B4B4A';
-  for (var pi=0; pi<PALETTES.length; pi++){
-    if (PALETTES[pi].id === (palette || 'padrao')){ accent = PALETTES[pi].swatch; break; }
-  }
-  var PAPER = '#F2F6F4', INK = '#16302E', INK_SOFT = '#4B655F', BORDER = '#D8E2DE', EXPENSE = '#9D4A34', INCOME = '#376E48', WARNING = '#C98A2E';
+  var accent = paletteSwatch();
+  var PAPER = '#F7F8F8', INK = '#1D2428', INK_SOFT = '#56626A', BORDER = '#DCE2E4', BAND = '#E9EDEF';
+  var ON_ACCENT = '#FFFFFF', NEGATIVE = '#A6402A';
+  var CHIP = {
+    'Pago': {bg:'#DCF0E2', fg:'#1F6A37'},
+    'Pendente': {bg:'#FBEBC8', fg:'#7E5207'},
+    'Atrasada': {bg:'#F8DED6', fg:'#A3361F'},
+    'A lançar': {bg:'#E3E8EE', fg:'#3A4756'}
+  };
   var SANS = 'system-ui,-apple-system,"Segoe UI",Roboto,sans-serif';
-  var MONO = "'Courier New',monospace";
-  function statusColor(status){
-    if (status === 'Pago') return INCOME;
-    if (status === 'Atrasada') return EXPENSE;
-    return WARNING;
+  var MONO = 'ui-monospace,Menlo,Consolas,"Courier New",monospace';
+
+  // 1) what goes on the page, top to bottom
+  var blocks = [];
+  function sec(t){ blocks.push({k:'sec', t:t}); }
+  function sub(t){ blocks.push({k:'sub', t:t}); }
+  function line(label, amount, o){ blocks.push({k:'row', label:label, amount:amount, o:o || {}}); }
+  function empty(t){ blocks.push({k:'empty', t:t}); }
+  function gap(){ blocks.push({k:'gap'}); }
+  function itemLine(r){ line(r.shortName || r.name, r.amount, {status:r.status, due:r.dueLabel}); }
+
+  sec('Receitas');
+  line(h.person1Name, sumIncomeList(mv.income.person1));
+  line(h.person2Name, sumIncomeList(mv.income.person2));
+  line('Total salário', totals.totalIncome, {bold:true});
+  gap();
+  sec('Contas fixas' + (d.fixedRows.length ? ' (' + d.fixedPaid + '/' + d.fixedRows.length + ' pagas)' : ''));
+  if (d.fixedRows.length) d.fixedRows.forEach(itemLine);
+  else empty('Nenhuma lançada ainda');
+  line('Total fixas', totals.totalFixed, {bold:true});
+  gap();
+  sec('Contas variáveis' + (d.varCount ? ' (' + d.varPaid + '/' + d.varCount + ' pagas)' : ''));
+  if (d.instRows.length){
+    sub('Parcelas do mês');
+    d.instRows.forEach(itemLine);
+  }
+  if (d.varRows.length){
+    if (d.instRows.length || d.launchRows.length) sub('Outros gastos');
+    d.varRows.forEach(itemLine);
+  }
+  if (d.launchRows.length){
+    sub('A lançar — valor ainda não informado');
+    d.launchRows.forEach(itemLine);
+  }
+  if (!d.instRows.length && !d.varRows.length && !d.launchRows.length) empty('Nenhuma lançada ainda');
+  line('Total variáveis', totals.totalVariable, {bold:true});
+  gap();
+  blocks.push({k:'band', label:'Total de contas (fixas + variáveis)', amount:d.totalBills});
+  if (hasInv){
+    gap();
+    line('Investimentos', totals.totalInvestments, {bold:true, noRule:true});
   }
 
+  var statement = [['', 'Receitas', totals.totalIncome], ['−', 'Contas (fixas + variáveis)', d.totalBills]];
+  if (hasInv) statement.push(['−', 'Investimentos', totals.totalInvestments]);
+
+  // 2) sizes
   var W = 640, PAD = 28;
-  var HEADER_H = 96, TOP_PAD = 30, SECTION_LABEL_H = 24, SUBLABEL_H = 22, ROW_H = 26, SECTION_GAP = 18, FOOTER_H = 70, BOTTOM_PAD = 16;
-  var fixedRowCount = fixedRows.length || 1;
-  var varSectionRows = (instRows.length ? SUBLABEL_H + instRows.length*ROW_H : 0) + (varRows.length ? (instRows.length ? SUBLABEL_H : 0) + varRows.length*ROW_H : 0);
-  if (!instRows.length && !varRows.length) varSectionRows = ROW_H;
-  var H = HEADER_H + TOP_PAD
-    + (SECTION_LABEL_H + 3*ROW_H + SECTION_GAP)
-    + (SECTION_LABEL_H + fixedRowCount*ROW_H + ROW_H + SECTION_GAP)
-    + (SECTION_LABEL_H + varSectionRows + ROW_H + SECTION_GAP)
-    + (hasInv ? (ROW_H + SECTION_GAP) : 0)
-    + FOOTER_H + BOTTOM_PAD;
+  var HEADER_H = 96, TOP_PAD = 30, SEC_H = 26, SUB_H = 22, ROW_H = 27, GAP_H = 18, BAND_H = 44, BEFORE_FOOTER = 26;
+  var STMT_H = 24, FOOTER_H = 34 + (statement.length - 1) * STMT_H + 14 + 38 + 24;
+  var CHIP_W = 74, CHIP_H = 20;
+  var heights = {sec:SEC_H, sub:SUB_H, row:ROW_H, empty:ROW_H, gap:GAP_H, band:BAND_H};
+  var H = HEADER_H + TOP_PAD + BEFORE_FOOTER + FOOTER_H;
+  blocks.forEach(function(b){ H += heights[b.k]; });
 
   var canvas = document.createElement('canvas');
   var scale = 2;
@@ -1580,12 +2123,38 @@ function buildSummaryCanvas(){
   ctx.scale(scale, scale);
   ctx.textBaseline = 'alphabetic';
 
+  function roundRect(x, y, w, hh, r){
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + hh, r);
+    ctx.arcTo(x + w, y + hh, x, y + hh, r);
+    ctx.arcTo(x, y + hh, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+  function fitText(text, maxW){
+    var s = String(text);
+    if (ctx.measureText(s).width <= maxW) return s;
+    while (s.length > 1 && ctx.measureText(s + '…').width > maxW){ s = s.slice(0, -1); }
+    return s.replace(/\s+$/, '') + '…';
+  }
+
+  // amounts share one column on the right; the status chips line up just before it
+  ctx.font = '700 15px ' + MONO;
+  var amtW = 90;
+  blocks.forEach(function(b){
+    if ((b.k === 'row' || b.k === 'band') && b.amount != null) amtW = Math.max(amtW, ctx.measureText(fmtMoney(b.amount)).width);
+  });
+  var AMT_RIGHT = W - PAD;
+  var CHIP_LEFT = AMT_RIGHT - amtW - 14 - CHIP_W;
+
   ctx.fillStyle = PAPER;
   ctx.fillRect(0, 0, W, H);
 
+  // header
   ctx.fillStyle = accent;
   ctx.fillRect(0, 0, W, HEADER_H);
-  ctx.fillStyle = PAPER;
+  ctx.fillStyle = ON_ACCENT;
   ctx.textAlign = 'left';
   ctx.font = '700 24px ' + SANS;
   ctx.fillText('Nossas Finanças', PAD, 42);
@@ -1593,97 +2162,123 @@ function buildSummaryCanvas(){
   ctx.fillText(monthLabel(viewMonth), PAD, 70);
 
   var y = HEADER_H + TOP_PAD;
-  function sectionLabel(text){
-    ctx.fillStyle = INK_SOFT;
-    ctx.font = '700 13px ' + SANS;
-    ctx.textAlign = 'left';
-    ctx.fillText(text.toUpperCase(), PAD, y);
-    y += SECTION_LABEL_H;
-  }
-  function row(label, value, opts){
-    opts = opts || {};
-    var due = opts.due;
-    ctx.fillStyle = opts.color || INK;
-    ctx.font = (opts.bold ? '700 ' : '400 ') + '15px ' + SANS;
-    ctx.textAlign = 'left';
-    var maxLabelW = W - PAD*2 - 150 - (due ? 55 : 0);
-    var lbl = String(label);
-    while (ctx.measureText(lbl).width > maxLabelW && lbl.length > 1){ lbl = lbl.slice(0, -1); }
-    if (lbl !== String(label)) lbl = lbl.replace(/\s+$/, '') + '…';
-    ctx.fillText(lbl, PAD, y);
-    if (due){
-      var lblW = ctx.measureText(lbl).width;
+  blocks.forEach(function(b){
+    if (b.k === 'sec'){
       ctx.fillStyle = INK_SOFT;
-      ctx.font = '400 11px ' + SANS;
-      ctx.fillText('dia ' + due, PAD + lblW + 8, y);
+      ctx.font = '700 13px ' + SANS;
+      ctx.textAlign = 'left';
+      ctx.fillText(b.t.toUpperCase(), PAD, y);
+      y += SEC_H;
+    } else if (b.k === 'sub'){
+      ctx.fillStyle = INK_SOFT;
+      ctx.font = '700 12px ' + SANS;
+      ctx.textAlign = 'left';
+      ctx.fillText(b.t, PAD, y);
+      y += SUB_H;
+    } else if (b.k === 'empty'){
+      ctx.fillStyle = INK_SOFT;
+      ctx.font = '400 14px ' + SANS;
+      ctx.textAlign = 'left';
+      ctx.fillText(b.t, PAD, y);
+      y += ROW_H;
+    } else if (b.k === 'gap'){
+      y += GAP_H;
+    } else if (b.k === 'band'){
+      roundRect(PAD - 12, y - 4, W - 2*PAD + 24, BAND_H - 10, 10);
+      ctx.fillStyle = BAND;
+      ctx.fill();
+      var by = y + 21;
+      ctx.fillStyle = INK;
+      ctx.textAlign = 'left';
+      ctx.font = '700 15px ' + SANS;
+      ctx.fillText(fitText(b.label, AMT_RIGHT - amtW - 20 - PAD), PAD, by);
+      ctx.textAlign = 'right';
+      ctx.font = '700 16px ' + MONO;
+      ctx.fillText(fmtMoney(b.amount), AMT_RIGHT, by);
+      y += BAND_H;
+    } else if (b.k === 'row'){
+      var o = b.o;
+      if (o.bold && !o.noRule){
+        ctx.strokeStyle = BORDER;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(PAD, y - 19.5);
+        ctx.lineTo(W - PAD, y - 19.5);
+        ctx.stroke();
+      }
+      var labelRight = o.status ? CHIP_LEFT - 12 : AMT_RIGHT - amtW - 14;
+      ctx.font = '400 11.5px ' + SANS;
+      var dueW = o.due ? ctx.measureText(o.due).width + 8 : 0;
+      ctx.fillStyle = INK;
+      ctx.textAlign = 'left';
+      ctx.font = (o.bold ? '700 ' : '400 ') + '15px ' + SANS;
+      var lbl = fitText(b.label, labelRight - PAD - dueW);
+      ctx.fillText(lbl, PAD, y);
+      if (o.due){
+        var lblW = ctx.measureText(lbl).width;
+        ctx.fillStyle = INK_SOFT;
+        ctx.font = '400 11.5px ' + SANS;
+        ctx.fillText(o.due, PAD + lblW + 8, y);
+      }
+      if (o.status){
+        var c = CHIP[o.status] || CHIP['Pendente'];
+        roundRect(CHIP_LEFT, y - 14.5, CHIP_W, CHIP_H, CHIP_H / 2);
+        ctx.fillStyle = c.bg;
+        ctx.fill();
+        ctx.fillStyle = c.fg;
+        ctx.font = '700 11px ' + SANS;
+        ctx.textAlign = 'center';
+        ctx.fillText(o.status, CHIP_LEFT + CHIP_W / 2, y - 0.5);
+      }
+      ctx.textAlign = 'right';
+      if (b.amount == null){
+        ctx.fillStyle = INK_SOFT;
+        ctx.font = '400 15px ' + MONO;
+        ctx.fillText('—', AMT_RIGHT, y);
+      } else {
+        ctx.fillStyle = INK;
+        ctx.font = (o.bold ? '700 ' : '400 ') + '15px ' + MONO;
+        ctx.fillText(fmtMoney(b.amount), AMT_RIGHT, y);
+      }
+      y += ROW_H;
     }
-    ctx.fillStyle = opts.color || INK;
-    ctx.font = (opts.bold ? '700 ' : '400 ') + '15px ' + MONO;
-    ctx.textAlign = 'right';
-    ctx.fillText(String(value), W - PAD, y);
-    y += ROW_H;
-  }
-  function emptyRow(){
-    ctx.fillStyle = INK_SOFT;
-    ctx.font = '400 14px ' + SANS;
-    ctx.textAlign = 'left';
-    ctx.fillText('Nenhuma lançada ainda', PAD, y);
-    y += ROW_H;
-  }
-  function subLabel(text){
-    ctx.fillStyle = INK_SOFT;
-    ctx.font = '700 12px ' + SANS;
-    ctx.textAlign = 'left';
-    ctx.fillText(text, PAD, y);
-    y += SUBLABEL_H;
-  }
+  });
 
-  sectionLabel('Receitas');
-  row(h.person1Name, fmtMoney(sumIncomeList(mv.income.person1)));
-  row(h.person2Name, fmtMoney(sumIncomeList(mv.income.person2)));
-  row('Total salário', fmtMoney(totals.totalIncome), {bold:true});
-  y += SECTION_GAP;
-
-  sectionLabel('Contas fixas (' + totals.paidCount + '/' + fixedRows.length + ' pagas)');
-  if (fixedRows.length){
-    fixedRows.forEach(function(fr){ row(fr.name, fmtMoney(fr.amount) + '   ' + fr.status, {color: statusColor(fr.status), due: fr.dueDay}); });
-  } else {
-    emptyRow();
-  }
-  row('Total fixas', fmtMoney(totals.totalFixed), {bold:true});
-  y += SECTION_GAP;
-
-  sectionLabel('Contas variáveis');
-  if (instRows.length){
-    subLabel('Parcelas do mês (' + instPaidCount + '/' + instRows.length + ' pagas)');
-    instRows.forEach(function(ir){ row(ir.name, fmtMoney(ir.amount) + '   ' + ir.status, {color: statusColor(ir.status), due: ir.dueDay}); });
-  }
-  if (varRows.length){
-    if (instRows.length) subLabel('Outros gastos');
-    varRows.forEach(function(vr){ row(vr.name, fmtMoney(vr.amount) + (vr.status ? '   ' + vr.status : ''), {color: vr.status ? statusColor(vr.status) : INK, due: vr.dueDay}); });
-  } else if (!instRows.length){
-    emptyRow();
-  }
-  row('Total variáveis', fmtMoney(totals.totalVariable), {bold:true});
-  y += SECTION_GAP;
-
-  if (hasInv){
-    row('Investimentos', fmtMoney(totals.totalInvestments), {bold:true});
-    y += SECTION_GAP;
-  }
-
+  // footer: how the month closes, with the actual totals
   var footerY = H - FOOTER_H;
-  ctx.fillStyle = totals.saldo >= 0 ? accent : EXPENSE;
+  ctx.fillStyle = totals.saldo >= 0 ? accent : NEGATIVE;
   ctx.fillRect(0, footerY, W, FOOTER_H);
-  ctx.fillStyle = PAPER;
+  ctx.fillStyle = ON_ACCENT;
+  var fy = footerY + 34;
+  statement.forEach(function(s){
+    ctx.textAlign = 'left';
+    ctx.font = '400 14px ' + SANS;
+    ctx.globalAlpha = 0.92;
+    if (s[0]) ctx.fillText(s[0], PAD, fy);
+    ctx.fillText(s[1], PAD + 18, fy);
+    ctx.textAlign = 'right';
+    ctx.font = '400 14px ' + MONO;
+    ctx.fillText(fmtMoney(s[2]), AMT_RIGHT, fy);
+    ctx.globalAlpha = 1;
+    fy += STMT_H;
+  });
+  var divY = fy - STMT_H + 14;
+  ctx.globalAlpha = 0.45;
+  ctx.strokeStyle = ON_ACCENT;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(PAD, divY + 0.5);
+  ctx.lineTo(W - PAD, divY + 0.5);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  var sy = divY + 38;
   ctx.textAlign = 'left';
-  ctx.font = '700 15px ' + SANS;
-  ctx.fillText('SALDO FINAL', PAD, footerY + 30);
-  ctx.font = '400 12px ' + SANS;
-  ctx.fillText('receitas − despesas − investimentos', PAD, footerY + 50);
+  ctx.font = '700 16px ' + SANS;
+  ctx.fillText('=', PAD, sy);
+  ctx.fillText('SALDO FINAL', PAD + 18, sy);
   ctx.textAlign = 'right';
-  ctx.font = '700 24px ' + MONO;
-  ctx.fillText(fmtMoney(totals.saldo), W - PAD, footerY + 42);
+  ctx.font = '700 26px ' + MONO;
+  ctx.fillText(fmtMoney(totals.saldo), AMT_RIGHT, sy);
 
   return canvas;
 }
@@ -1739,6 +2334,37 @@ function hasAnyData(s){
 function reconcileIdbMirror(){
   var emptyAtBoot = !hasAnyData(STATE);
   if (idbBroken){ if (bootStorageDamaged) notifyDamagedStorage(); return; }
+  var wipePending = false;
+  try { wipePending = !!localStorage.getItem(WIPE_KEY); } catch(eW) {}
+  if (wipePending){
+    // "Esqueci a senha" could not erase the automatic copy last time: finish it now and
+    // never restore anything from it.
+    idbDeleteKeys([IDB_KEY, IDB_PIN_KEY], function(ok){
+      if (ok){ try { localStorage.removeItem(WIPE_KEY); } catch(eR) {} }
+    });
+    return;
+  }
+  try {
+    idbGetKey(IDB_PIN_KEY, function(rawPin){
+      var mirrorPin = null;
+      try { mirrorPin = rawPin ? JSON.parse(rawPin) : null; } catch(eP) { mirrorPin = null; }
+      if (!(mirrorPin && typeof mirrorPin.salt === 'string' && /^[0-9a-f]{64}$/.test(mirrorPin.hash || ''))) mirrorPin = null;
+      if (!pinRecord && mirrorPin){
+        // the password went missing with the rest of this phone's storage: it comes back
+        // with the data, and the app locks before anything is shown
+        pinRecord = mirrorPin;
+        savePref(PIN_KEY, mirrorPin);
+        pinFlow = {mode:'unlock'};
+        pinEntry = '';
+        render();
+      } else if (pinRecord && (!mirrorPin || mirrorPin.hash !== pinRecord.hash)){
+        idbPutKey(IDB_PIN_KEY, JSON.stringify(pinRecord));
+      }
+      reconcileStateMirror(emptyAtBoot);
+    });
+  } catch(e) {}
+}
+function reconcileStateMirror(emptyAtBoot){
   try {
     idbGetState(function(raw){
       var mirror = null;
@@ -1787,19 +2413,706 @@ function setupOfflineSupport(){
   } catch(e) {}
 }
 function init(){
+  try { document.addEventListener('visibilitychange', onVisibilityChange); } catch(eVis) {}
+  try { document.addEventListener('keydown', onPinKeydown); } catch(eKey) {}
+  try { window.addEventListener('pageshow', function(){ if (!document.hidden) setPrivacyCover(false); }); } catch(eShow) {}
   render();
   reconcileIdbMirror();
   requestPersistentStorage();
   setupOfflineSupport();
 }
 
+/* ---------- per-phone view settings (filters, "próximos vencimentos") ---------- */
+var LIST_VIEW_KEY = 'gflowFinancasListView';
+var DUE_VIEW_KEY = 'gflowFinancasDueView';
+var DUE_DAY_OPTIONS = [3, 5, 7, 10, 15, 30, 60];
+function loadPref(key, fallback, isValid){
+  try {
+    var raw = localStorage.getItem(key);
+    if (raw){
+      var v = JSON.parse(raw);
+      if (isValid(v)) return v;
+    }
+  } catch(e) {}
+  return fallback;
+}
+function savePref(key, value){
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch(e) {}
+}
+var listView = loadPref(LIST_VIEW_KEY, {status:'all', sort:'default'}, function(v){
+  return !!v && /^(all|unpaid|paid)$/.test(v.status) && /^(default|due|amount)$/.test(v.sort);
+});
+var dueView = loadPref(DUE_VIEW_KEY, {days:7, showOverdue:true}, function(v){
+  return !!v && DUE_DAY_OPTIONS.indexOf(v.days) >= 0 && typeof v.showOverdue === 'boolean';
+});
+
+/* ---------- filters and sorting for "Contas fixas" and "Contas variáveis" ---------- */
+var LIST_STATUS_LABEL = {all:'Todas', unpaid:'Não pagas', paid:'Pagas'};
+function passesStatusFilter(paid){
+  return listView.status === 'all' || (listView.status === 'paid' ? !!paid : !paid);
+}
+// Sort a list of {due, amount, name} the way the person chose; "Padrão" keeps the order given.
+function sortForView(list){
+  if (listView.sort === 'due'){
+    return list.slice().sort(function(a, b){
+      var da = a.due || '9999-99-99', db = b.due || '9999-99-99';
+      if (da !== db) return da < db ? -1 : 1;
+      return (a.name || '') < (b.name || '') ? -1 : ((a.name || '') > (b.name || '') ? 1 : 0);
+    });
+  }
+  if (listView.sort === 'amount'){
+    return list.slice().sort(function(a, b){
+      var d = (b.amount || 0) - (a.amount || 0);
+      if (d) return d;
+      return (a.name || '') < (b.name || '') ? -1 : ((a.name || '') > (b.name || '') ? 1 : 0);
+    });
+  }
+  return list;
+}
+function renderListTools(){
+  function chips(action, options, current, label){
+    return '<div class="chip-group" role="group" aria-label="' + label + '">' + options.map(function(o){
+      var on = o[0] === current;
+      return '<button type="button" class="chip' + (on ? ' active' : '') + '" data-action="' + action + '" data-value="' + o[0] + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + o[1] + '</button>';
+    }).join('') + '</div>';
+  }
+  return '<div class="list-tools" id="sec-filtros">' +
+    '<div class="lt-row"><span class="lt-label">Mostrar</span>' +
+      chips('set-list-status', [['all','Todas'], ['unpaid','Não pagas'], ['paid','Pagas']], listView.status, 'Filtrar contas') + '</div>' +
+    '<div class="lt-row"><span class="lt-label">Ordenar</span>' +
+      chips('set-list-sort', [['default','Padrão'], ['due','Vencimento'], ['amount','Valor']], listView.sort, 'Ordenar contas') + '</div>' +
+    '<div class="lt-hint">Vale para as contas fixas e variáveis.</div>' +
+  '</div>';
+}
+function filterNote(hidden){
+  if (!hidden || listView.status === 'all') return '';
+  return '<p class="filter-note">' + hidden + (hidden === 1 ? ' conta oculta' : ' contas ocultas') + ' pelo filtro "' + LIST_STATUS_LABEL[listView.status] + '" · ' +
+    '<button type="button" class="link-btn" data-action="set-list-status" data-value="all">mostrar todas</button></p>';
+}
+
+/* ---------- "Próximos vencimentos" ---------- */
+function addDaysIso(iso, n){
+  var p = iso.split('-');
+  var d = new Date(parseInt(p[0],10), parseInt(p[1],10) - 1, parseInt(p[2],10) + n);
+  return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+}
+// Everything unpaid that is due between today and today + `days` (and, if asked, what is
+// already overdue), wherever it was entered, earliest first. Paid bills never show up.
+function collectUpcoming(days, showOverdue){
+  var today = todayStr();
+  var todayKey = monthKeyToday();
+  var endIso = addDaysIso(today, days);
+  var endKey = endIso.slice(0, 7);
+  var h = STATE.household;
+  var items = [];
+  function inWindow(due){ return due >= today && due <= endIso; }
+  function wanted(due, monthIsToday){ return inWindow(due) || (showOverdue && monthIsToday && due < today); }
+  monthRangeKeys(todayKey, endKey).forEach(function(k){
+    var mv = getMonthView(STATE, k);
+    var isTodayMonth = k === todayKey;
+    h.fixedCategories.forEach(function(cat){
+      var f = mv.fixed[cat.id];
+      if (!f || !f.isSet || f.paid || !cat.dueDay) return;
+      var due = dateInMonth(k, cat.dueDay);
+      if (wanted(due, isTodayMonth)) items.push({kind:'fixed', id:cat.id, month:k, name:cat.name, amount:f.amount, due:due});
+    });
+    mv.installmentsActive.forEach(function(inst){
+      if (inst.paid || !inst.dueDay) return;
+      var due = dateInMonth(k, inst.dueDay);
+      if (wanted(due, isTodayMonth)) items.push({kind:'installment', id:inst.id, month:k, name:inst.desc + ' (parcela ' + inst.index + '/' + inst.total + ')', amount:inst.amount, due:due});
+    });
+  });
+  // monthly bills still without their amount: a bill can be due in another month than the
+  // one it belongs to (e.g. September's card bill due 05/10), so every month that can reach
+  // the window is looked at, and only the due date decides
+  ((h.recurring) || []).forEach(function(tpl){
+    monthRangeKeys(shiftMonth(todayKey, -12), shiftMonth(endKey, 2)).forEach(function(k){
+      if (!recurringCovers(tpl, k) || recurringEntryIn(STATE, tpl.id, k) || recurringSkippedIn(STATE, tpl.id, k)) return;
+      var due = recurringDueIso(tpl, k);
+      if (!due || !(inWindow(due) || (showOverdue && due < today))) return;
+      items.push({kind:'launch', id:tpl.id, month:k, name:tpl.desc + (k !== todayKey ? ' (de ' + monthLabel(k) + ')' : ''), amount:null, due:due});
+    });
+  });
+  // variable expenses go by their own due date, whatever month they were saved in
+  Object.keys(STATE.months || {}).forEach(function(k){
+    if (!MONTH_KEY_RE.test(k)) return;
+    (STATE.months[k].variable || []).forEach(function(e){
+      if (!e || e.paid) return;
+      var due = varDueIso(e, k);
+      if (due && ISO_DATE_RE.test(due) && (inWindow(due) || (showOverdue && due < today))) items.push({kind:'variable', id:e.id, month:k, name:e.desc, amount:e.amount, due:due});
+    });
+  });
+  if (showOverdue){
+    var carried = collectCarriedForward(STATE, todayKey);
+    carried.fixed.forEach(function(c){ items.push({kind:'fixed', id:c.catId, month:c.sourceMonth, name:c.name + ' (de ' + monthLabel(c.sourceMonth) + ')', amount:c.amount, due:dateInMonth(c.sourceMonth, c.dueDay)}); });
+    carried.installments.forEach(function(c){ items.push({kind:'installment', id:c.instId, month:c.sourceMonth, name:c.name + ' (de ' + monthLabel(c.sourceMonth) + ')', amount:c.amount, due:dateInMonth(c.sourceMonth, c.dueDay)}); });
+  }
+  items.sort(function(a, b){
+    if (a.due !== b.due) return a.due < b.due ? -1 : 1;
+    return (b.amount || 0) - (a.amount || 0);
+  });
+  return items;
+}
+function relativeDue(due){
+  var d = daysFromTo(todayStr(), due);
+  if (d === 0) return 'vence hoje';
+  if (d === 1) return 'vence amanhã';
+  if (d > 1) return 'vence em ' + d + ' dias';
+  if (d === -1) return 'venceu ontem';
+  return 'venceu há ' + (-d) + ' dias';
+}
+var UPCOMING_KIND = {fixed:'Conta fixa', installment:'Parcela', variable:'Conta variável', launch:'Conta mensal · falta o valor'};
+function renderUpcoming(){
+  var items = collectUpcoming(dueView.days, dueView.showOverdue);
+  var today = todayStr();
+  var options = DUE_DAY_OPTIONS.map(function(n){ return '<option value="' + n + '"' + (n === dueView.days ? ' selected' : '') + '>' + n + '</option>'; }).join('');
+  var tools = '<div class="due-tools">' +
+    '<label class="due-days">Próximos <select data-action="set-due-days" aria-label="Quantidade de dias">' + options + '</select> dias</label>' +
+    '<label class="check-field due-overdue"><input type="checkbox" data-action="toggle-due-overdue"' + (dueView.showOverdue ? ' checked' : '') + '><span>Mostrar vencidas</span></label>' +
+  '</div>';
+  var body;
+  if (!items.length){
+    body = '<p class="empty-note">Nada ' + (dueView.showOverdue ? 'vencido nem ' : '') + 'vencendo nos próximos ' + dueView.days + ' dias.</p>';
+  } else {
+    var total = 0, toLaunch = 0;
+    body = '<div class="due-list">' + items.map(function(it){
+      if (it.amount == null) toLaunch++; else total += it.amount;
+      var overdue = it.due < today;
+      var dd = it.due.slice(8, 10), mm = (MONTH_NAMES[parseInt(it.due.slice(5, 7), 10) - 1] || '').slice(0, 3);
+      var action;
+      if (it.kind === 'launch'){
+        action = '<button type="button" class="btn-mini primary" data-action="launch-recurring" data-tplid="' + esc(it.id) + '" data-month="' + it.month + '">Lançar</button>';
+      } else {
+        var attrs = it.kind === 'fixed' ? 'data-action="toggle-paid" data-catid="' + esc(it.id) + '"' :
+          (it.kind === 'installment' ? 'data-action="toggle-installment-paid" data-instid="' + esc(it.id) + '"' : 'data-action="toggle-variable-paid" data-id="' + esc(it.id) + '"');
+        action = '<button type="button" class="pill ' + (overdue ? 'overdue' : 'pending') + '" ' + attrs + ' data-month="' + it.month + '" data-from-due="1" data-name="' + esc(it.name) + '" aria-label="' + (overdue ? 'Atrasada' : 'Pendente') + ' — toque para marcar como pago">' + (overdue ? 'Atrasada' : 'Pendente') + '</button>';
+      }
+      return '<div class="due-row' + (overdue ? ' is-overdue' : '') + '">' +
+        '<div class="due-date" aria-hidden="true"><span class="dd">' + dd + '</span><span class="mm">' + mm + '</span></div>' +
+        '<div class="row-main">' +
+          '<div class="row-title">' + esc(it.name) + '</div>' +
+          '<div class="row-sub">' + UPCOMING_KIND[it.kind] + ' · ' + relativeDue(it.due) + '</div>' +
+        '</div>' +
+        '<div class="var-amt-wrap">' +
+          '<div class="var-amt">' + (it.amount == null ? '—' : fmtMoney(it.amount)) + '</div>' +
+          action +
+        '</div>' +
+      '</div>';
+    }).join('') + '</div>' +
+    '<div class="due-total"><span>Total' + (toLaunch ? ' (sem as ' + toLaunch + ' a lançar)' : '') + '</span><span class="var-amt">' + fmtMoney(total) + '</span></div>';
+  }
+  return '<section class="card" id="sec-vencimentos"><div class="card-head"><div class="card-head-main"><span class="card-icon" aria-hidden="true">📅</span><h2 class="card-title">Próximos vencimentos</h2></div></div>' +
+    '<p class="card-sub">Contas ainda não pagas, da mais próxima para a mais distante · hoje é ' + esc(fmtDate(today)) + '</p>' + tools + body + '</section>';
+}
+
+/* ---------- period summary image (month by month) ---------- */
+var periodImagePreview = null;
+// The period chosen in "Histórico"; without a filter, January up to the current month.
+function periodForImage(){
+  if (historyFilterApplied) return {from: historyFilterApplied.from, to: historyFilterApplied.to};
+  // without a filter: this year, from the first month that has anything, up to now
+  var cur = monthKeyToday();
+  var from = cur.slice(0, 4) + '-01';
+  var candidates = Object.keys(STATE.months || {}).filter(function(k){ return MONTH_KEY_RE.test(k) && monthHasData(STATE.months[k]); });
+  (STATE.household.installments || []).forEach(function(i){ if (i && MONTH_KEY_RE.test(i.startMonth || '')) candidates.push(i.startMonth); });
+  STATE.household.fixedCategories.forEach(function(c){ (c.amountLog || []).forEach(function(l){ if (!l.stop) candidates.push(l.month); }); });
+  var first = candidates.filter(function(k){ return k >= from && k <= cur; }).sort()[0];
+  if (!first && candidates.some(function(k){ return k < from; })) first = from;
+  return {from: first || cur, to: cur};
+}
+function monthHasData(m){
+  if (!m) return false;
+  var inc = m.income || {};
+  var hasInc = ['person1', 'person2'].some(function(p){ return Array.isArray(inc[p]) ? inc[p].length > 0 : numOr0(inc[p]) > 0; });
+  return hasInc || (m.variable || []).length > 0 || (m.investments || []).length > 0 || Object.keys(m.fixed || {}).length > 0;
+}
+function periodTitle(from, to){
+  function lower(key){ var p = key.split('-'); return MONTH_NAMES[parseInt(p[1], 10) - 1] + ' de ' + p[0]; }
+  if (from === to) return 'Resumo de ' + lower(from);
+  if (from.slice(0, 4) === to.slice(0, 4)) return 'Resumo de ' + MONTH_NAMES[parseInt(from.slice(5, 7), 10) - 1] + ' a ' + lower(to);
+  return 'Resumo de ' + lower(from) + ' a ' + lower(to);
+}
+function periodShortLabel(p){
+  var a = shortMonthLabel(p.from), b = shortMonthLabel(p.to);
+  return p.from === p.to ? a : a + ' a ' + b;
+}
+var PERIOD_MAX_MONTHS = 60;
+function periodRows(from, to){
+  return monthRangeKeys(from, to).slice(0, PERIOD_MAX_MONTHS).map(function(k){
+    var t = computeMonthTotals(STATE.household, getMonthView(STATE, k), k);
+    return {key:k, income:t.totalIncome, expenses:t.totalFixed + t.totalVariable, investments:t.totalInvestments, saldo:t.saldo};
+  });
+}
+function buildPeriodCanvas(from, to){
+  var rows = periodRows(from, to);
+  var sameYear = from.slice(0, 4) === to.slice(0, 4);
+  var sum = {income:0, expenses:0, investments:0, saldo:0};
+  rows.forEach(function(r){ sum.income += r.income; sum.expenses += r.expenses; sum.investments += r.investments; sum.saldo += r.saldo; });
+  var accent = paletteSwatch();
+  var PAPER = '#F7F8F8', INK = '#1D2428', INK_SOFT = '#56626A', BORDER = '#DCE2E4', STRIPE = '#EEF1F2';
+  var POS = '#1F6A37', NEG = '#A3361F';
+  var SANS = 'system-ui,-apple-system,"Segoe UI",Roboto,sans-serif';
+  var MONO = 'ui-monospace,Menlo,Consolas,"Courier New",monospace';
+  var W = 820, PAD = 24, HEADER_H = 96, HEAD_ROW = 34, ROW_H = 30, TOTAL_H = 40, NOTE_H = 44;
+  var H = HEADER_H + 20 + HEAD_ROW + rows.length * ROW_H + TOTAL_H + NOTE_H;
+  var COLS = [
+    {key:'label', title:'Mês', right:PAD + 150, align:'left', x:PAD},
+    {key:'income', title:'Renda', right:PAD + 312},
+    {key:'expenses', title:'Despesas', right:PAD + 470},
+    {key:'investments', title:'Investimentos', right:PAD + 628},
+    {key:'saldo', title:'Saldo', right:W - PAD}
+  ];
+  var canvas = document.createElement('canvas');
+  var scale = 2;
+  canvas.width = W * scale;
+  canvas.height = H * scale;
+  var ctx = canvas.getContext('2d');
+  ctx.scale(scale, scale);
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = PAPER;
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = accent;
+  ctx.fillRect(0, 0, W, HEADER_H);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.textAlign = 'left';
+  ctx.font = '700 24px ' + SANS;
+  ctx.fillText('Nossas Finanças', PAD, 42);
+  ctx.font = '400 17px ' + SANS;
+  ctx.fillText(periodTitle(from, to), PAD, 70);
+  var y = HEADER_H + 20;
+  // column titles
+  ctx.font = '700 12px ' + SANS;
+  ctx.fillStyle = INK_SOFT;
+  COLS.forEach(function(c){
+    ctx.textAlign = c.align === 'left' ? 'left' : 'right';
+    ctx.fillText(c.title.toUpperCase(), c.align === 'left' ? c.x : c.right, y + 20);
+  });
+  y += HEAD_ROW;
+  ctx.strokeStyle = BORDER;
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(PAD, y - 6.5); ctx.lineTo(W - PAD, y - 6.5); ctx.stroke();
+  function moneyCell(value, col, bold, colorBySign){
+    ctx.textAlign = 'right';
+    ctx.font = (bold ? '700 ' : '400 ') + '14px ' + MONO;
+    ctx.fillStyle = (colorBySign && value) ? (value < 0 ? NEG : POS) : INK;
+    ctx.fillText(fmtMoney(value), col.right, y + 20);
+  }
+  rows.forEach(function(r, i){
+    if (i % 2 === 1){
+      ctx.fillStyle = STRIPE;
+      ctx.fillRect(PAD - 8, y - 2, W - 2*PAD + 16, ROW_H);
+    }
+    var p = r.key.split('-');
+    var label = capFirst(MONTH_NAMES[parseInt(p[1], 10) - 1]) + (sameYear ? '' : ' ' + p[0]);
+    ctx.textAlign = 'left';
+    ctx.font = '400 14px ' + SANS;
+    ctx.fillStyle = INK;
+    ctx.fillText(label, PAD, y + 20);
+    moneyCell(r.income, COLS[1]);
+    moneyCell(r.expenses, COLS[2]);
+    moneyCell(r.investments, COLS[3]);
+    moneyCell(r.saldo, COLS[4], false, true);
+    y += ROW_H;
+  });
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(PAD, y + 2); ctx.lineTo(W - PAD, y + 2); ctx.stroke();
+  y += 8;
+  ctx.textAlign = 'left';
+  ctx.font = '700 14px ' + SANS;
+  ctx.fillStyle = INK;
+  ctx.fillText('Total', PAD, y + 20);
+  moneyCell(sum.income, COLS[1], true);
+  moneyCell(sum.expenses, COLS[2], true);
+  moneyCell(sum.investments, COLS[3], true);
+  moneyCell(sum.saldo, COLS[4], true, true);
+  y += TOTAL_H - 8;
+  ctx.textAlign = 'left';
+  ctx.font = '400 11.5px ' + SANS;
+  ctx.fillStyle = INK_SOFT;
+  ctx.fillText('Despesas = contas fixas + contas variáveis (com as parcelas). Saldo = renda − despesas − investimentos.', PAD, y + 26);
+  return canvas;
+}
+function sharePeriodImage(){
+  var p = periodForImage();
+  if (monthDiff(p.from, p.to) + 1 > PERIOD_MAX_MONTHS){
+    toastMsg = 'Escolha um período de até ' + PERIOD_MAX_MONTHS + ' meses para a imagem.';
+    render();
+    return;
+  }
+  try {
+    var canvas = buildPeriodCanvas(p.from, p.to);
+    var dataUrl = canvas.toDataURL('image/png');
+    var blob = dataUrlToBlob(dataUrl);
+    var filename = 'resumo-' + p.from + (p.from === p.to ? '' : '-a-' + p.to) + '.png';
+    var file;
+    try { file = new File([blob], filename, {type:'image/png'}); } catch(e){ file = null; }
+    if (file && navigator.canShare && navigator.canShare({files:[file]})){
+      navigator.share({files:[file], title:'Resumo do período'}).catch(function(){});
+      return;
+    }
+    downloadBlob(blob, filename);
+    periodImagePreview = dataUrl;
+    toastMsg = 'Imagem baixada! Agora é só anexar numa conversa do WhatsApp.';
+    render();
+  } catch(e){
+    toastMsg = 'Não consegui gerar a imagem agora.';
+    render();
+  }
+}
+
+/* ---------- 6-digit password to open the app ---------- */
+// A privacy lock for whoever picks up the phone: the password itself is never stored, only a
+// salted SHA-256 of it, and it never goes into backups. It is NOT encryption: the data on the
+// phone stays as it was.
+var PIN_KEY = 'gflowFinancasPin';
+var PIN_PROMPTED_KEY = 'gflowFinancasPinPrompted';
+var PIN_WAIT_KEY = 'gflowFinancasPinWait';
+var WIPE_KEY = 'gflowFinancasWipePending';
+var IDB_PIN_KEY = 'pin';
+var PIN_LENGTH = 6;
+var LOCK_AFTER_MS = 5 * 60 * 1000;
+var PIN_MAX_TRIES = 5;
+var PIN_WAIT_MS = 30 * 1000;
+function sha256Hex(ascii){
+  // compact SHA-256 (public-domain algorithm); input is converted to UTF-8 first
+  var str = unescape(encodeURIComponent(ascii));
+  function rr(v, n){ return (v >>> n) | (v << (32 - n)); }
+  var K = [], Hh = [], primes = [], n = 2;
+  function frac(x){ return ((x - Math.floor(x)) * 4294967296) | 0; }
+  while (primes.length < 64){
+    var isP = true;
+    for (var i = 0; i < primes.length && primes[i] * primes[i] <= n; i++){ if (n % primes[i] === 0){ isP = false; break; } }
+    if (isP){
+      if (primes.length < 8) Hh.push(frac(Math.pow(n, 1/2)));
+      K.push(frac(Math.pow(n, 1/3)));
+      primes.push(n);
+    }
+    n++;
+  }
+  var bytes = [];
+  for (var c = 0; c < str.length; c++) bytes.push(str.charCodeAt(c) & 255);
+  var bitLen = bytes.length * 8;
+  bytes.push(0x80);
+  while (bytes.length % 64 !== 56) bytes.push(0);
+  for (var s = 7; s >= 0; s--) bytes.push(s >= 4 ? 0 : (bitLen >>> (s * 8)) & 255);
+  var hh = Hh.slice();
+  for (var off = 0; off < bytes.length; off += 64){
+    var w = [];
+    for (var t = 0; t < 16; t++) w[t] = (bytes[off + 4*t] << 24) | (bytes[off + 4*t + 1] << 16) | (bytes[off + 4*t + 2] << 8) | bytes[off + 4*t + 3];
+    for (t = 16; t < 64; t++){
+      var s0 = rr(w[t-15], 7) ^ rr(w[t-15], 18) ^ (w[t-15] >>> 3);
+      var s1 = rr(w[t-2], 17) ^ rr(w[t-2], 19) ^ (w[t-2] >>> 10);
+      w[t] = (w[t-16] + s0 + w[t-7] + s1) | 0;
+    }
+    var a = hh[0], b = hh[1], cc = hh[2], d = hh[3], e = hh[4], f = hh[5], g = hh[6], h2 = hh[7];
+    for (t = 0; t < 64; t++){
+      var S1 = rr(e, 6) ^ rr(e, 11) ^ rr(e, 25);
+      var ch = (e & f) ^ (~e & g);
+      var t1 = (h2 + S1 + ch + K[t] + w[t]) | 0;
+      var S0 = rr(a, 2) ^ rr(a, 13) ^ rr(a, 22);
+      var maj = (a & b) ^ (a & cc) ^ (b & cc);
+      var t2 = (S0 + maj) | 0;
+      h2 = g; g = f; f = e; e = (d + t1) | 0; d = cc; cc = b; b = a; a = (t1 + t2) | 0;
+    }
+    hh[0] = (hh[0] + a) | 0; hh[1] = (hh[1] + b) | 0; hh[2] = (hh[2] + cc) | 0; hh[3] = (hh[3] + d) | 0;
+    hh[4] = (hh[4] + e) | 0; hh[5] = (hh[5] + f) | 0; hh[6] = (hh[6] + g) | 0; hh[7] = (hh[7] + h2) | 0;
+  }
+  return hh.map(function(v){ return ('00000000' + (v >>> 0).toString(16)).slice(-8); }).join('');
+}
+function randomSalt(){
+  var out = '';
+  try {
+    var arr = new Uint8Array(16);
+    window.crypto.getRandomValues(arr);
+    for (var i = 0; i < arr.length; i++) out += ('0' + arr[i].toString(16)).slice(-2);
+  } catch(e){
+    for (var j = 0; j < 32; j++) out += Math.floor(Math.random() * 16).toString(16);
+  }
+  return out;
+}
+function loadPin(){
+  return loadPref(PIN_KEY, null, function(v){ return !!v && typeof v.salt === 'string' && /^[0-9a-f]{64}$/.test(v.hash || ''); });
+}
+var pinRecord = loadPin();
+function pinMatches(pin){ return !!pinRecord && sha256Hex(pinRecord.salt + ':' + pin) === pinRecord.hash; }
+// The record is also kept next to the automatic copy of the data (IndexedDB): if that copy
+// ever brings the data back, it brings the password with it.
+function savePin(pin){
+  var salt = randomSalt();
+  var rec = {v:1, salt:salt, hash:sha256Hex(salt + ':' + pin)};
+  savePref(PIN_KEY, rec);
+  var stored = loadPin();
+  if (!stored || stored.hash !== rec.hash) return false;
+  pinRecord = rec;
+  idbPutKey(IDB_PIN_KEY, JSON.stringify(rec));
+  return true;
+}
+function removePin(){
+  pinRecord = null;
+  try { localStorage.removeItem(PIN_KEY); } catch(e) {}
+  idbDeleteKeys([IDB_PIN_KEY], function(){});
+}
+var pinPrompted = false;
+try { pinPrompted = !!localStorage.getItem(PIN_PROMPTED_KEY); } catch(e) {}
+// pinFlow: what the password screen is doing right now (null = the app itself is showing)
+//  unlock | offer | create | confirm | verify-change | verify-disable | forgot
+var pinFlow = pinRecord ? {mode:'unlock'} : (pinPrompted ? null : {mode:'offer'});
+var pinEntry = '';
+// wrong tries and the pause survive closing and reopening the app
+var pinWaitInfo = loadPref(PIN_WAIT_KEY, {tries:0, until:0}, function(v){ return !!v && typeof v.tries === 'number' && typeof v.until === 'number'; });
+var pinTries = pinWaitInfo.tries;
+var pinWaitUntil = pinWaitInfo.until;
+var pinWaitTimer = null;
+var hiddenSince = null;
+var lastDueTapAt = 0;
+function savePinWait(){
+  if (!pinTries && !pinWaitUntil){ try { localStorage.removeItem(PIN_WAIT_KEY); } catch(e) {} return; }
+  savePref(PIN_WAIT_KEY, {tries:pinTries, until:pinWaitUntil});
+}
+function startPinFlow(mode, extra){
+  pinFlow = {mode:mode};
+  if (extra) Object.keys(extra).forEach(function(k){ pinFlow[k] = extra[k]; });
+  pinEntry = '';
+  render();
+}
+function finishPinFlow(message){
+  pinFlow = null;
+  pinEntry = '';
+  if (message) toastMsg = message;
+  render();
+}
+function pinWaitSeconds(){
+  // never longer than one pause, even if the phone's clock was changed meanwhile
+  if (pinWaitUntil - Date.now() > PIN_WAIT_MS) pinWaitUntil = Date.now() + PIN_WAIT_MS;
+  return Math.max(0, Math.ceil((pinWaitUntil - Date.now()) / 1000));
+}
+// The countdown only touches the keypad screen, in place (no redraws of anything else, and
+// a field being typed in elsewhere keeps its text and the keyboard).
+function scheduleWaitTick(){
+  clearTimeout(pinWaitTimer);
+  if (pinWaitSeconds() <= 0) return;
+  pinWaitTimer = setTimeout(function(){
+    var secs = pinWaitSeconds();
+    var pad = pinFlow && appEl ? appEl.querySelector('.pin-pad') : null;
+    if (secs > 0){
+      if (pad){
+        var err = appEl.querySelector('.pin-error');
+        if (err) err.textContent = 'Muitas tentativas. Tente de novo em ' + secs + ' s.';
+      }
+      scheduleWaitTick();
+      return;
+    }
+    pinWaitUntil = 0;
+    savePinWait();
+    if (pad){ if (pinFlow) pinFlow.error = ''; render(); }
+  }, 1000);
+}
+function pinDigit(d){
+  if (!pinFlow || pinWaitSeconds() > 0) return;
+  if (pinEntry.length >= PIN_LENGTH) return;
+  pinEntry += d;
+  if (pinFlow) pinFlow.error = '';
+  if (pinEntry.length < PIN_LENGTH){ updatePinDots(); return; }
+  var entered = pinEntry;
+  pinEntry = '';
+  var mode = pinFlow.mode;
+  if (mode === 'unlock' || mode === 'verify-change' || mode === 'verify-disable'){
+    if (pinMatches(entered)){
+      pinTries = 0;
+      pinWaitUntil = 0;
+      savePinWait();
+      if (mode === 'unlock'){ finishPinFlow(); return; }
+      if (mode === 'verify-change'){ startPinFlow('create', {changing:true}); return; }
+      removePin();
+      finishPinFlow('Senha desativada. O app abre sem pedir senha neste aparelho.');
+      return;
+    }
+    pinTries++;
+    if (pinTries >= PIN_MAX_TRIES){
+      pinTries = 0;
+      pinWaitUntil = Date.now() + PIN_WAIT_MS;
+      pinFlow.error = 'Muitas tentativas. Aguarde para tentar de novo.';
+    } else {
+      pinFlow.error = 'Senha incorreta. Tente de novo.';
+    }
+    savePinWait();
+    render();
+    return;
+  }
+  if (mode === 'create'){
+    startPinFlow('confirm', {first:entered, changing:!!pinFlow.changing});
+    return;
+  }
+  if (mode === 'confirm'){
+    if (entered !== pinFlow.first){
+      startPinFlow('create', {changing:!!pinFlow.changing, error:'As duas senhas não conferem. Digite de novo.'});
+      return;
+    }
+    try { localStorage.setItem(PIN_PROMPTED_KEY, '1'); } catch(e) {}
+    pinPrompted = true;
+    var changing = !!pinFlow.changing;
+    if (!savePin(entered)){
+      finishPinFlow(pinRecord ? 'Não consegui guardar a nova senha neste aparelho. A senha anterior continua valendo.' : 'Não consegui guardar a senha neste aparelho. O app continua sem senha.');
+      return;
+    }
+    finishPinFlow(changing ? 'Senha trocada.' : 'Senha criada. O app vai pedir essa senha ao abrir.');
+  }
+}
+function pinBackspace(){
+  if (!pinFlow || !pinEntry) return;
+  pinEntry = pinEntry.slice(0, -1);
+  updatePinDots();
+}
+// typing a digit only fills a dot: no full redraw (keeps taps snappy on the phone)
+function updatePinDots(){
+  var dots = appEl ? appEl.querySelectorAll('.pin-dot') : [];
+  for (var i = 0; i < dots.length; i++){
+    if (i < pinEntry.length) dots[i].classList.add('on'); else dots[i].classList.remove('on');
+  }
+  var err = appEl ? appEl.querySelector('.pin-error') : null;
+  if (err && pinEntry.length) err.textContent = '';
+}
+// "Esqueci a senha": erase this phone's data (both copies), never reveal it. A mark is left
+// until the automatic copy in IndexedDB is gone too: while it is there, nothing is ever
+// restored from that copy (the next start finishes the erasing instead).
+function wipeThisPhone(){
+  try {
+    [STORAGE_KEY, STORAGE_KEY + 'Danificado', PIN_KEY, PIN_PROMPTED_KEY, PIN_WAIT_KEY, LAST_BACKUP_KEY].forEach(function(k){ localStorage.removeItem(k); });
+    localStorage.setItem(WIPE_KEY, '1');
+  } catch(e) {}
+  STATE = defaultState();
+  pinRecord = null;
+  var done = false;
+  function finish(){ if (done) return; done = true; try { location.reload(); } catch(eR) {} }
+  idbDeleteKeys([IDB_KEY, IDB_PIN_KEY], function(ok){
+    if (ok){ try { localStorage.removeItem(WIPE_KEY); } catch(e2) {} }
+    finish();
+  });
+  setTimeout(finish, 2500);
+}
+function renderPinScreen(){
+  var f = pinFlow;
+  var title, text = '', extra = '';
+  var keypad = true;
+  if (f.mode === 'offer'){
+    keypad = false;
+    title = 'Proteger o app com senha?';
+    text = 'Crie uma senha de 6 dígitos para abrir o app neste aparelho. Ela fica só aqui (não vai no backup) e você pode trocar ou desativar em Ajustes.';
+    extra = '<div class="pin-actions">' +
+      '<button type="button" class="btn primary" data-action="pin-start-create">Criar senha</button>' +
+      '<button type="button" class="btn ghost" data-action="pin-skip">Agora não</button>' +
+    '</div>';
+  } else if (f.mode === 'forgot'){
+    keypad = false;
+    title = 'Esqueceu a senha?';
+    text = 'Por segurança, a senha não pode ser recuperada. O único jeito é apagar os dados deste aparelho e depois importar o último backup (Ajustes → Importar backup). Lançamentos feitos aqui depois desse backup serão perdidos.';
+    extra = '<form data-action="pin-wipe-form">' +
+      '<div class="field" style="margin:14px 0 0"><label for="wipe-confirm">Para confirmar, digite APAGAR</label><input id="wipe-confirm" name="wipeConfirm" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" placeholder="APAGAR"></div>' +
+      '<div class="pin-actions">' +
+        '<button type="submit" class="btn danger" data-action="pin-wipe">Apagar dados deste aparelho</button>' +
+        '<button type="button" class="btn ghost" data-action="pin-back-to-unlock">Voltar</button>' +
+      '</div>' +
+    '</form>';
+  } else {
+    var titles = {
+      'unlock': 'Digite sua senha',
+      'create': f.changing ? 'Digite a nova senha' : 'Crie uma senha de 6 dígitos',
+      'confirm': 'Digite a senha de novo',
+      'verify-change': 'Digite a senha atual',
+      'verify-disable': 'Digite a senha atual para desativar'
+    };
+    title = titles[f.mode] || 'Senha';
+    if (f.mode === 'create' && !f.changing) text = 'Ela vai ser pedida sempre que o app for aberto neste aparelho.';
+    if (f.mode === 'confirm') text = 'Para conferir que está certa.';
+  }
+  var wait = pinWaitSeconds();
+  if (wait > 0 && keypad) scheduleWaitTick();
+  var dots = '';
+  for (var i = 0; i < PIN_LENGTH; i++) dots += '<span class="pin-dot' + (i < pinEntry.length ? ' on' : '') + '"></span>';
+  var errorText = wait > 0 ? 'Muitas tentativas. Tente de novo em ' + wait + ' s.' : (f.error || '');
+  var pad = '';
+  if (keypad){
+    var keys = ['1','2','3','4','5','6','7','8','9','', '0', 'del'];
+    pad = '<div class="pin-dots" aria-live="polite" aria-label="' + pinEntry.length + ' de 6 dígitos">' + dots + '</div>' +
+      '<p class="pin-error" role="alert">' + esc(errorText) + '</p>' +
+      '<div class="pin-pad">' + keys.map(function(k){
+        if (!k) return '<span></span>';
+        if (k === 'del') return '<button type="button" class="pin-key pin-del" data-action="pin-back" aria-label="Apagar dígito">⌫</button>';
+        return '<button type="button" class="pin-key" data-action="pin-digit" data-d="' + k + '"' + (wait > 0 ? ' disabled' : '') + '>' + k + '</button>';
+      }).join('') + '</div>';
+    var links = [];
+    if (f.mode === 'unlock') links.push('<button type="button" class="link-btn" data-action="pin-forgot">Esqueci a senha</button>');
+    else links.push('<button type="button" class="link-btn" data-action="pin-cancel">Cancelar</button>');
+    extra = '<div class="pin-links">' + links.join('') + '</div>';
+  }
+  return '<div class="pin-screen" role="dialog" aria-modal="true" aria-label="' + esc(title) + '">' +
+    '<div class="pin-box">' +
+      '<div class="pin-lock" aria-hidden="true">🔒</div>' +
+      '<h1 class="pin-app">Nossas Finanças</h1>' +
+      '<h2 class="pin-title">' + esc(title) + '</h2>' +
+      (text ? '<p class="pin-text">' + esc(text) + '</p>' : '') +
+      pad + extra +
+    '</div>' +
+  '</div>';
+}
+function renderPinSettings(){
+  var body;
+  if (pinRecord){
+    body = '<p class="backup-status ok" style="padding-bottom:10px">Senha ativada: o app pede a senha ao abrir (e depois de 5 minutos fora dele).</p>' +
+      '<div class="sheet-actions" style="margin-top:0">' +
+        '<button type="button" class="btn ghost" data-action="pin-change">Trocar senha</button>' +
+        '<button type="button" class="btn ghost" data-action="pin-disable">Desativar</button>' +
+      '</div>';
+  } else {
+    body = '<p class="empty-note" style="padding-bottom:10px">Sem senha: qualquer pessoa com o celular desbloqueado consegue abrir o app.</p>' +
+      '<button type="button" class="btn primary" style="width:100%" data-action="pin-start-create">Criar senha de 6 dígitos</button>';
+  }
+  return '<section class="card" id="sec-senha">' +
+    '<div class="card-head"><div class="card-head-main"><span class="card-icon" aria-hidden="true">🔒</span><h2 class="card-title">Senha do app</h2></div></div>' +
+    body +
+    '<p class="pin-note">A senha vale só para este aparelho e não vai no backup. Ela impede que outra pessoa abra o app pelo celular, mas não criptografa os dados.</p>' +
+  '</section>';
+}
+function setPrivacyCover(on){
+  try {
+    if (on) document.body.classList.add('privacy-cover');
+    else document.body.classList.remove('privacy-cover');
+  } catch(e) {}
+}
+function onVisibilityChange(){
+  if (document.hidden){
+    hiddenSince = Date.now();
+    // while in the background (app switcher), the numbers are covered when there is a password
+    if (pinRecord) setPrivacyCover(true);
+    return;
+  }
+  // after 5 minutes away it always goes back to the password, whatever screen was open
+  // (including the "trocar/desativar senha" ones, whose "Cancelar" would open the app)
+  if (pinRecord && hiddenSince && Date.now() - hiddenSince >= LOCK_AFTER_MS && !(pinFlow && pinFlow.mode === 'unlock')){
+    pinFlow = {mode:'unlock'};
+    pinEntry = '';
+    render();
+  }
+  hiddenSince = null;
+  setPrivacyCover(false);
+}
+function onPinKeydown(ev){
+  if (!pinFlow || pinFlow.mode === 'offer' || pinFlow.mode === 'forgot') return;
+  var k = ev.key;
+  if (k && /^[0-9]$/.test(k)){ ev.preventDefault(); pinDigit(k); }
+  else if (k === 'Backspace'){ ev.preventDefault(); pinBackspace(); }
+}
+
 /* ---------- render helpers ---------- */
-function renderQuickNav(){
-  var items = [
-    ['sec-resumo','Resumo'], ['sec-renda','Salário'], ['sec-fixas','Fixas'],
+function renderQuickNav(isCurrent){
+  var items = [['sec-resumo','Resumo']];
+  if (isCurrent) items.push(['sec-vencimentos','Vencimentos']);
+  items = items.concat([
+    ['sec-renda','Salário'], ['sec-fixas','Fixas'],
     ['sec-variaveis','Variáveis'], ['sec-investimentos','Investimentos'],
     ['sec-historico','Histórico'], ['sec-ajustes','Ajustes']
-  ];
+  ]);
   return '<nav class="quicknav" aria-label="Navegação rápida entre seções">' +
     items.map(function(it){ return '<a class="qn-pill" href="#' + it[0] + '">' + it[1] + '</a>'; }).join('') +
   '</nav>';
@@ -1821,8 +3134,8 @@ function renderAlerts(mv, totals){
     var hasFixed = (mv.carriedIn.fixed.length + mv.carriedIn.installments.length) > 0;
     var hasVar = mv.carriedIn.variable.length > 0;
     var links = [];
-    if (hasFixed) links.push('<a class="link-btn" href="#sec-fixas">ver em Contas fixas</a>');
-    if (hasVar) links.push('<a class="link-btn" href="#sec-variaveis">ver em Contas variáveis</a>');
+    if (hasFixed) links.push('<a class="link-btn" href="#sec-fixas" data-action="goto-section" data-target="sec-fixas">ver em Contas fixas</a>');
+    if (hasVar) links.push('<a class="link-btn" href="#sec-variaveis" data-action="goto-section" data-target="sec-variaveis">ver em Contas variáveis</a>');
     html += '<div class="alert-banner danger">' +
       '<span class="alert-icon" aria-hidden="true">⏰</span>' +
       '<div class="alert-body">' +
@@ -1830,6 +3143,19 @@ function renderAlerts(mv, totals){
         (one ? 'Ficou pendente de um mês anterior e passou a contar no mês atual até ser paga — '
              : 'Ficaram pendentes de meses anteriores e passaram a contar no mês atual até serem pagas — ') +
         links.join(' · ') + '.' +
+      '</div>' +
+    '</div>';
+  }
+  var launchItems = (viewMonth === monthKeyToday()) ? (mv.toLaunch || []).concat(mv.toLaunchBacklog || []) : [];
+  if (launchItems.length){
+    var oneL = launchItems.length === 1;
+    var names = launchItems.map(function(it){ return esc(it.desc) + (it.month !== viewMonth ? ' (de ' + esc(monthLabel(it.month)) + ')' : ''); });
+    html += '<div class="alert-banner warn">' +
+      '<span class="alert-icon" aria-hidden="true">🔁</span>' +
+      '<div class="alert-body">' +
+        '<div class="alert-title">' + (oneL ? '1 conta mensal a lançar' : launchItems.length + ' contas mensais a lançar') + '</div>' +
+        names.slice(0, 4).join(', ') + (names.length > 4 ? ' e mais ' + (names.length - 4) : '') +
+        ' — ainda sem o valor' + (launchItems.every(function(it){ return it.month === viewMonth; }) ? ' deste mês' : '') + '. <a class="link-btn" href="#sec-variaveis" data-action="goto-section" data-target="sec-variaveis">Lançar agora</a>' +
       '</div>' +
     '</div>';
   }
@@ -1879,7 +3205,15 @@ function renderHeader(h, isCurrent){
   '</header>';
 }
 function renderStats(totalIncome, mv, totalFixed, paidCount, fixedCount, totalVariable, totalInvestments, saldo){
-  var variableCount = mv.variable.length + mv.installmentsActive.length;
+  // Overdue bills that moved here from earlier months are part of this month's totals, so
+  // they are counted here too (they are unpaid by definition) - same rule as the summary.
+  var carried = mv.carriedIn || {fixed:[], installments:[], variable:[]};
+  fixedCount += carried.fixed.length;
+  var variableCount = mv.variable.length + mv.installmentsActive.length + carried.installments.length + carried.variable.length;
+  var variablePaid = mv.variable.filter(function(e){ return e.paid; }).length + mv.installmentsActive.filter(function(i){ return i.paid; }).length;
+  var toLaunchCount = (mv.toLaunch || []).length + (mv.toLaunchBacklog || []).length;
+  var variableSub = (variableCount ? (variablePaid + ' de ' + variableCount + ' paga' + (variableCount === 1 ? '' : 's')) : 'nenhuma lançada') +
+    (toLaunchCount ? ' · ' + toLaunchCount + ' a lançar' : '');
   var invStat = '';
   if (mv.investments && mv.investments.length){
     invStat = '<div class="stat"><div class="stat-label">Investimentos</div><div class="stat-value">' + fmtMoney(totalInvestments) + '</div>' +
@@ -1891,7 +3225,7 @@ function renderStats(totalIncome, mv, totalFixed, paidCount, fixedCount, totalVa
     '<div class="stat"><div class="stat-label">Contas fixas</div><div class="stat-value">' + fmtMoney(totalFixed) + '</div>' +
       '<div class="stat-sub">' + (fixedCount ? (paidCount + ' de ' + fixedCount + ' paga' + (fixedCount === 1 ? '' : 's')) : 'nenhuma lançada') + '</div></div>' +
     '<div class="stat"><div class="stat-label">Variáveis</div><div class="stat-value">' + fmtMoney(totalVariable) + '</div>' +
-      '<div class="stat-sub">' + variableCount + ' lançamento' + (variableCount === 1 ? '' : 's') + '</div></div>' +
+      '<div class="stat-sub">' + variableSub + '</div></div>' +
     invStat +
     '<div class="stat"><div class="stat-label">Saldo</div><div class="stat-value ' + (saldo >= 0 ? 'income' : 'expense') + '">' + fmtMoney(saldo) + '</div>' +
       '<div class="stat-sub">' + (saldo >= 0 ? 'Sobra do mês' : 'Déficit do mês') + '</div></div>' +
@@ -1988,7 +3322,13 @@ function renderHistory(){
       '</button>' +
     '</div>';
   }
-  return '<section class="card" id="sec-historico"><div class="card-head"><div class="card-head-main"><span class="card-icon" aria-hidden="true">🕓</span><h2 class="card-title">Histórico</h2></div>' + filterBtn + '</div>' + filterForm + body + '</section>';
+  var period = periodForImage();
+  var imageUi = '<div class="history-image">' +
+    '<button type="button" class="btn ghost" data-action="share-period-image">📷 Imagem do período · ' + esc(periodShortLabel(period)) + '</button>' +
+    '<p class="lt-hint">Mês a mês: renda, despesas, investimentos e saldo, com o total. ' + (historyFilterApplied ? 'Usa o período filtrado.' : 'Para outro período, use "Filtrar período".') + '</p>' +
+    (periodImagePreview ? '<img src="' + periodImagePreview + '" alt="Resumo do período" class="period-preview"><button type="button" class="btn ghost" data-action="hide-period-image" style="width:100%;margin-top:8px">Ocultar imagem</button>' : '') +
+  '</div>';
+  return '<section class="card" id="sec-historico"><div class="card-head"><div class="card-head-main"><span class="card-icon" aria-hidden="true">🕓</span><h2 class="card-title">Histórico</h2></div>' + filterBtn + '</div>' + filterForm + body + imageUi + '</section>';
 }
 function renderIncomePerson(person, personName, list){
   var rows = list.map(function(entry){
@@ -2065,7 +3405,17 @@ function renderFixed(h, mv, isCurrent){
       }).join('') +
     '</div>';
   }
-  var rows = h.fixedCategories.map(function(cat){
+  var hiddenCount = 0;
+  if (carriedFixed.length && listView.status === 'paid'){ hiddenCount += carriedFixed.length; carriedHtml = ''; }
+  var catList = [];
+  h.fixedCategories.forEach(function(cat){
+    var fc = mv.fixed[cat.id];
+    var paidC = !!(fc && fc.isSet && fc.paid);
+    if (editingFixedId !== cat.id && !passesStatusFilter(paidC)){ hiddenCount++; return; }
+    catList.push({cat:cat, name:cat.name, due:(cat.dueDay ? dateInMonth(viewMonth, cat.dueDay) : null), amount:(fc && fc.isSet ? fc.amount : 0)});
+  });
+  var rows = sortForView(catList).map(function(item){
+    var cat = item.cat;
     var f = mv.fixed[cat.id];
     var delPending = removeConfirmFixed === cat.id;
     var delBtn = '<button type="button" class="icon-btn' + (delPending ? ' confirm' : '') + '" data-action="delete-fixed" data-catid="' + cat.id + '" aria-label="Remover conta">' + (delPending ? 'Remover?' : '✕') + '</button>';
@@ -2145,14 +3495,62 @@ function renderFixed(h, mv, isCurrent){
   } else {
     addUi = '<button type="button" class="add-btn" data-action="add-fixed">+ Nova conta fixa</button>';
   }
-  return '<section class="card" id="sec-fixas"><div class="card-head"><div class="card-head-main"><span class="card-icon" aria-hidden="true">🏠</span><h2 class="card-title">Contas fixas</h2></div></div>' + carriedHtml + rows + addUi + '</section>';
+  if (!rows && hiddenCount) rows = '<p class="empty-note">Nenhuma conta fixa ' + (listView.status === 'paid' ? 'paga' : 'em aberto') + ' neste mês.</p>';
+  return '<section class="card" id="sec-fixas"><div class="card-head"><div class="card-head-main"><span class="card-icon" aria-hidden="true">🏠</span><h2 class="card-title">Contas fixas</h2></div></div>' + carriedHtml + rows + filterNote(hiddenCount) + addUi + '</section>';
+}
+// "Categoria · Parcela 1 de 10 · Venc. 15/10 · João": the line wraps between the parts and
+// never inside "Parcela 1 de 10" or "Venc. 15/10" (marked with keep()); names typed by the
+// person (category, author) may still wrap if they are very long.
+function keep(html){ return {h: html}; }
+function subLine(parts){
+  return parts.map(function(p){
+    return typeof p === 'string' ? '<span class="sub-part wrap">' + p + '</span>' : '<span class="sub-part">' + p.h + '</span>';
+  }).join('&nbsp;· ');
+}
+function renderLaunchBlock(mv, catName){
+  var items = (mv.toLaunch || []).concat(mv.toLaunchBacklog || []);
+  if (!items.length) return '';
+  return '<div class="launch-block">' +
+    '<div class="launch-block-title">🔁 Contas mensais a lançar</div>' +
+    items.map(function(it){
+      var other = it.month !== viewMonth;
+      var parts = [esc(catName[it.categoryId] || 'Outros'), keep('Mensal')];
+      if (it.dueIso) parts.push(keep('Venc. ' + esc(fmtDate(it.dueIso))));
+      if (other) parts.push(keep('de ' + esc(monthLabel(it.month))));
+      var attrs = 'data-tplid="' + esc(it.tplId) + '" data-month="' + esc(it.month) + '"';
+      var hint = it.last ? '<div class="launch-hint">' + esc(lastAmountText(it.last, it.month)) + '</div>' : '';
+      var options = '';
+      if (recurringOptionsFor === it.tplId + '|' + it.month){
+        options = '<div class="launch-options">' +
+          '<div class="launch-options-text">Não vai ter essa conta ' + (other ? 'em ' + esc(monthLabel(it.month)) : 'neste mês') + '?</div>' +
+          '<div class="launch-options-actions">' +
+            '<button type="button" class="btn-mini" data-action="skip-recurring" ' + attrs + '>Pular só este mês</button>' +
+            '<button type="button" class="btn-mini danger" data-action="stop-recurring" ' + attrs + '>Parar de repetir</button>' +
+            '<button type="button" class="btn-mini ghost" data-action="cancel-recurring-options">Voltar</button>' +
+          '</div>' +
+        '</div>';
+      }
+      return '<div class="var-row launch-row">' +
+        '<div class="row-main">' +
+          '<div class="row-title">' + esc(it.desc) + '</div>' +
+          '<div class="row-sub">' + subLine(parts) + '</div>' +
+          hint +
+        '</div>' +
+        '<div class="launch-actions">' +
+          '<button type="button" class="btn-mini primary" data-action="launch-recurring" ' + attrs + '>Lançar valor</button>' +
+          '<button type="button" class="icon-btn" data-action="recurring-options" ' + attrs + ' aria-label="Pular este mês ou parar de repetir">✕</button>' +
+        '</div>' +
+        options +
+      '</div>';
+    }).join('') +
+  '</div>';
 }
 function renderVariable(h, mv, isCurrent){
   var catName = {};
   h.variableCategories.forEach(function(c){ catName[c.id] = c.name; });
   var carriedList = [].concat(
     ((mv.carriedIn && mv.carriedIn.installments) || []).map(function(c){ return {kind:'installment', id:c.instId, name:c.name, amount:c.amount, sourceMonth:c.sourceMonth, overdueDays:c.overdueDays}; }),
-    ((mv.carriedIn && mv.carriedIn.variable) || []).map(function(c){ return {kind:'variable', id:c.id, name:c.name, amount:c.amount, sourceMonth:c.sourceMonth, overdueDays:c.overdueDays}; })
+    ((mv.carriedIn && mv.carriedIn.variable) || []).map(function(c){ return {kind:'variable', id:c.id, name:c.name, amount:c.amount, sourceMonth:c.sourceMonth, overdueDays:c.overdueDays, dueIso:c.dueIso}; })
   ).sort(function(a,b){ return b.overdueDays - a.overdueDays; });
   var carriedHtml = '';
   if (carriedList.length){
@@ -2161,10 +3559,11 @@ function renderVariable(h, mv, isCurrent){
       carriedList.map(function(c){
         var toggleAction = c.kind === 'installment' ? 'toggle-installment-paid' : 'toggle-variable-paid';
         var toggleAttr = (c.kind === 'installment' ? 'data-instid="' : 'data-id="') + c.id + '"';
+        var when = c.dueIso ? 'Venceu em ' + esc(fmtDate(c.dueIso)) + ' (' + esc(monthLabel(c.sourceMonth)) + ')' : 'Venceu em ' + esc(monthLabel(c.sourceMonth));
         return '<div class="var-row">' +
           '<div class="row-main">' +
             '<div class="row-title">' + esc(c.name) + '</div>' +
-            '<div class="row-sub">Venceu em ' + esc(monthLabel(c.sourceMonth)) + ' · há ' + pluralDias(c.overdueDays) + '</div>' +
+            '<div class="row-sub">' + when + ' · há ' + pluralDias(c.overdueDays) + '</div>' +
           '</div>' +
           '<div class="var-amt-wrap">' +
             '<div class="var-amt">' + fmtMoney(c.amount) + '</div>' +
@@ -2174,30 +3573,53 @@ function renderVariable(h, mv, isCurrent){
       }).join('') +
     '</div>';
   }
+  var hiddenVar = 0;
+  if (listView.status === 'paid'){
+    hiddenVar += carriedList.length + (mv.toLaunch || []).length + (mv.toLaunchBacklog || []).length;
+    carriedHtml = '';
+  }
+  var launchHtml = listView.status === 'paid' ? '' : renderLaunchBlock(mv, catName);
+  // Every line reads "Categoria · Parcela · Vencimento · quem lançou"
   var combined = [];
   mv.variable.forEach(function(e){
+    var due = varDueIso(e, viewMonth);
+    var parts = [esc(catName[e.categoryId] || 'Outros')];
+    if (e.recurringId && findRecurring(STATE, e.recurringId)) parts.push(keep('Mensal'));
+    if (due) parts.push(keep('Venc. ' + esc(fmtDate(due))));
+    if (e.by) parts.push(esc(e.by));
     combined.push({
-      kind:'variable', id:e.id, desc:e.desc, amount:e.amount,
-      sortKey: e.date || '',
-      sub: esc(catName[e.categoryId] || 'Outros') + ' · ' + esc(fmtDate(e.date)) + (e.by ? ' · ' + esc(e.by) : ''),
-      paid: !!e.paid, dueDay: e.dueDay || null
+      kind:'variable', id:e.id, desc:e.desc, name:e.desc, amount:e.amount,
+      sortKey: e.date || '', due: due,
+      sub: subLine(parts),
+      paid: !!e.paid, overdue: varIsOverdue(e, viewMonth)
     });
   });
   mv.installmentsActive.forEach(function(inst){
+    var parts = [esc(catName[inst.categoryId] || 'Outros'), keep('Parcela ' + inst.index + ' de ' + inst.total)];
+    if (inst.dueDay) parts.push(keep('Venc. ' + esc(fmtDate(dateInMonth(viewMonth, inst.dueDay)))));
+    if (inst.by) parts.push(esc(inst.by));
     combined.push({
-      kind:'installment', id:inst.id, desc:inst.desc, amount:inst.amount,
-      sortKey: viewMonth + '-' + pad2(inst.dueDay || 1),
-      sub: esc(catName[inst.categoryId] || 'Outros') + ' · Parcela ' + inst.index + ' de ' + inst.total + (inst.by ? ' · ' + esc(inst.by) : ''),
-      paid: inst.paid, dueDay: inst.dueDay, total: inst.total
+      kind:'installment', id:inst.id, desc:inst.desc, name:inst.desc, amount:inst.amount,
+      sortKey: viewMonth + '-' + pad2(inst.dueDay || 1), due: (inst.dueDay ? dateInMonth(viewMonth, inst.dueDay) : null),
+      sub: subLine(parts),
+      paid: inst.paid, overdue: isPastDue(viewMonth, inst.dueDay, inst.paid), total: inst.total
     });
   });
   combined.sort(function(a,b){
     if (a.sortKey !== b.sortKey) return a.sortKey < b.sortKey ? 1 : -1;
     return (a.id < b.id) ? 1 : -1;
   });
+  var hadAny = combined.length > 0;
+  combined = sortForView(combined.filter(function(it){
+    if (passesStatusFilter(it.paid)) return true;
+    hiddenVar++;
+    return false;
+  }));
   var rows;
-  if (!combined.length){
-    rows = '<p class="empty-note">Nenhum gasto lançado neste mês ainda. Toque no + para adicionar.</p>';
+  if (!combined.length && hadAny){
+    rows = '<p class="empty-note">Nenhum gasto ' + (listView.status === 'paid' ? 'pago' : 'em aberto') + ' neste mês.</p>';
+  } else if (!combined.length){
+    rows = launchHtml ? '' : '<p class="empty-note">Nenhum gasto lançado neste mês ainda. Toque no + para adicionar.</p>';
   } else {
     rows = '<div class="varlist">' + combined.map(function(it){
       var isInst = it.kind === 'installment';
@@ -2205,19 +3627,14 @@ function renderVariable(h, mv, isCurrent){
       var delAction = isInst ? 'delete-installment' : 'remove-variable';
       var editAction = isInst ? 'edit-installment-entry' : 'edit-variable-entry';
       var delAttr = isInst ? ('data-instid="' + it.id + '"') : ('data-id="' + it.id + '"');
-      var pillHtml = '';
+      var pillClass = it.paid ? 'paid' : (it.overdue ? 'overdue' : 'pending');
+      var pillLabel = it.paid ? 'Pago' : (it.overdue ? 'Atrasada' : 'Pendente');
+      var toggleAction = isInst ? 'toggle-installment-paid' : 'toggle-variable-paid';
+      var pillHtml = '<button type="button" class="pill ' + pillClass + '" data-action="' + toggleAction + '" ' + delAttr + ' aria-label="' + pillLabel + ' — toque para marcar como ' + (it.paid ? 'pendente' : 'pago') + '">' + pillLabel + '</button>';
       var carryNote = '';
-      if (isInst || it.dueDay){
-        var overdue = isPastDue(viewMonth, it.dueDay, it.paid);
-        var pillClass = it.paid ? 'paid' : (overdue ? 'overdue' : 'pending');
-        var pillLabel = it.paid ? 'Pago' : (overdue ? 'Atrasada' : 'Pendente');
-        var toggleAction = isInst ? 'toggle-installment-paid' : 'toggle-variable-paid';
-        var toggleAttr = isInst ? ('data-instid="' + it.id + '"') : ('data-id="' + it.id + '"');
-        pillHtml = '<button type="button" class="pill ' + pillClass + '" data-action="' + toggleAction + '" ' + toggleAttr + '>' + pillLabel + '</button>';
-        var awayMap = mv.carryAway ? (isInst ? mv.carryAway.inst : mv.carryAway.variable) : {};
-        if (awayMap[it.id]){
-          carryNote = '<div class="carried-note">→ passa a contar no mês atual (' + esc(monthLabel(monthKeyToday())) + ') até ser paga</div>';
-        }
+      var awayMap = mv.carryAway ? (isInst ? mv.carryAway.inst : mv.carryAway.variable) : {};
+      if (awayMap[it.id]){
+        carryNote = '<div class="carried-note">→ passa a contar no mês atual (' + esc(monthLabel(monthKeyToday())) + ') até ser paga</div>';
       }
       return '<div class="var-row" style="flex-wrap:wrap">' +
         '<div class="row-main">' +
@@ -2237,7 +3654,7 @@ function renderVariable(h, mv, isCurrent){
     }).join('') + '</div>';
   }
   var addUi = '<button type="button" class="add-btn" data-action="open-sheet">+ Novo gasto variável</button>';
-  return '<section class="card" id="sec-variaveis"><div class="card-head"><div class="card-head-main"><span class="card-icon" aria-hidden="true">🛒</span><h2 class="card-title">Contas variáveis</h2></div></div>' + carriedHtml + rows + addUi + '</section>';
+  return '<section class="card" id="sec-variaveis"><div class="card-head"><div class="card-head-main"><span class="card-icon" aria-hidden="true">🛒</span><h2 class="card-title">Contas variáveis</h2></div></div>' + carriedHtml + launchHtml + rows + filterNote(hiddenVar) + addUi + '</section>';
 }
 function renderInvestments(h, mv){
   var who = whoAmI === 'person2' ? 'person2' : 'person1';
@@ -2284,18 +3701,37 @@ function renderInvestments(h, mv){
   }
   return '<section class="card" id="sec-investimentos"><div class="card-head"><div class="card-head-main"><span class="card-icon" aria-hidden="true">📈</span><h2 class="card-title">Investimentos</h2></div></div>' + rows + addUi + '</section>';
 }
-function renderSheet(h){
+// New expenses dated today or earlier start as "Pago"; a future due date starts as "Pendente".
+// Once the person picks one by hand, changing the date no longer changes it.
+function autoPaidStatus(dateIso){
+  return (ISO_DATE_RE.test(dateIso || '') && dateIso > todayStr()) ? 'pending' : 'paid';
+}
+function renderSheet(h, keepStill){
   var draft = sheetDraft || {};
   var who = whoAmI === 'person2' ? 'person2' : 'person1';
   var selectedCat = draft.categoryId || '';
   var isNewCat = selectedCat === '__new__';
   var isInstallment = !!draft.isInstallment;
+  var launching = launchingRecurring;
+  var launchTpl = launching ? findRecurring(STATE, launching.tplId) : null;
   var defaultDate = draft.date || ((viewMonth === monthKeyOf(new Date())) ? todayStr() : (viewMonth + '-01'));
   var catOptions = h.variableCategories.map(function(c){ return '<option value="' + c.id + '"' + (selectedCat === c.id ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('');
-  var valorLabel = isInstallment ? 'Valor de cada parcela' : 'Valor';
-  var lockKind = !!editingVariable;
-  var sheetTitle = editingVariable ? 'Editar gasto variável' : 'Novo gasto variável';
-  var submitLabel = editingVariable ? 'Salvar alterações' : 'Salvar gasto';
+  var valorLabel = isInstallment ? 'Valor de cada parcela' : (launching ? 'Valor deste mês' : 'Valor');
+  var lockKind = !!editingVariable || !!launching;
+  var sheetTitle, submitLabel;
+  if (launching){
+    sheetTitle = 'Lançar valor do mês';
+    submitLabel = 'Salvar valor';
+  } else {
+    sheetTitle = editingVariable ? 'Editar gasto variável' : 'Novo gasto variável';
+    submitLabel = editingVariable ? 'Salvar alterações' : 'Salvar gasto';
+  }
+  var launchInfo = '';
+  if (launching){
+    var lastAmt = launchTpl ? recurringLastAmount(STATE, launchTpl, launching.month) : null;
+    launchInfo = '<p class="sheet-note">Conta mensal de <strong>' + esc(monthLabel(launching.month)) + '</strong>' +
+      (lastAmt ? ' · ' + esc(lastAmountText(lastAmt, launching.month)) : '') + '</p>';
+  }
   var whenFields;
   if (isInstallment){
     var previewCount = parseInt(draft.installments || '12', 10);
@@ -2306,15 +3742,28 @@ function renderSheet(h){
       '<p id="installment-range-preview" class="empty-note" style="padding:0 0 10px">' + esc(installmentRangeText(previewCount, previewStart)) + '</p>' +
       '<div class="field"><label>Dia de vencimento (opcional)</label><input name="dueDay" type="number" inputmode="numeric" placeholder="Ex.: 10" value="' + esc(draft.dueDay || '') + '" style="width:100px"></div>';
   } else {
-    var trackDue = draft.trackDue != null ? draft.trackDue : false;
-    whenFields = '<div class="field"><label>Data</label><input name="date" type="date" value="' + defaultDate + '"></div>' +
-      '<div class="field" style="margin-bottom:0"><label class="check-field"><input type="checkbox" name="trackDue"' + (trackDue ? ' checked' : '') + '><span>Ainda não paguei essa conta (acompanhar como pendente)</span></label></div>';
+    var paidStatus = (draft.paidStatus === 'paid' || draft.paidStatus === 'pending') ? draft.paidStatus : autoPaidStatus(defaultDate);
+    var repeats = !!draft.repeats;
+    whenFields =
+      '<div class="field"><label>Vencimento</label><input name="date" type="date" value="' + esc(defaultDate) + '"></div>' +
+      '<div class="field"><label>Situação</label>' +
+        '<div class="seg status-seg">' +
+          '<button type="button" class="' + (paidStatus === 'paid' ? 'active' : '') + '" data-action="pick-paid-status" data-value="paid">Pago</button>' +
+          '<button type="button" class="' + (paidStatus === 'pending' ? 'active' : '') + '" data-action="pick-paid-status" data-value="pending">Pendente</button>' +
+        '</div>' +
+        '<input type="hidden" name="paidStatus" value="' + paidStatus + '">' +
+      '</div>' +
+      '<div class="field">' +
+        '<label class="check-field"><input type="checkbox" name="repeats"' + (repeats ? ' checked' : '') + '><span>Conta mensal (repete todo mês, com valor diferente)</span></label>' +
+        '<p class="field-hint">Ex.: fatura do cartão. Nos próximos meses ela aparece em "A lançar" pra vocês não esquecerem de lançar o valor.</p>' +
+      '</div>';
   }
   return '<div class="sheet-backdrop" data-action="close-sheet">' +
-    '<form class="sheet" data-action="submit-expense">' +
-      '<h3 style="margin-bottom:16px">' + sheetTitle + '</h3>' +
+    '<form class="sheet' + (keepStill ? ' still' : '') + '" data-action="submit-expense">' +
+      '<h3 style="margin-bottom:' + (launchInfo ? '6px' : '16px') + '">' + sheetTitle + '</h3>' +
+      launchInfo +
       '<div class="field"><label>Descrição</label><input name="desc" placeholder="Ex.: Compras do mês" value="' + esc(draft.desc || '') + '"></div>' +
-      '<div class="field" style="margin-bottom:14px"><label class="check-field' + (lockKind ? ' disabled' : '') + '"><input type="checkbox" name="isInstallment"' + (isInstallment ? ' checked' : '') + (lockKind ? ' disabled' : '') + '><span>Compra parcelada (dividir em várias vezes)' + (lockKind ? ' — não dá pra mudar depois de criado' : '') + '</span></label></div>' +
+      '<div class="field" style="margin-bottom:14px"><label class="check-field' + (lockKind ? ' disabled' : '') + '"><input type="checkbox" name="isInstallment"' + (isInstallment ? ' checked' : '') + (lockKind ? ' disabled' : '') + '><span>Compra parcelada (dividir em várias vezes)' + (editingVariable ? ' — não dá pra mudar depois de criado' : '') + '</span></label></div>' +
       '<div class="field"><label>Categoria</label><select name="categoryId">' + catOptions + '<option value="__new__"' + (isNewCat ? ' selected' : '') + '>+ Nova categoria…</option></select></div>' +
       '<div class="field" data-newcat-field style="display:' + (isNewCat ? 'block' : 'none') + '"><label>Nome da nova categoria</label><input name="newCategoryName" placeholder="Ex.: Pet" value="' + esc(draft.newCategoryName || '') + '"></div>' +
       '<div class="field"><label>' + valorLabel + '</label><input name="amount" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" value="' + esc(draft.amount || '') + '"></div>' +
@@ -2373,16 +3822,21 @@ function renderBackup(){
   '</section>';
 }
 function renderAppearance(){
-  var items = PALETTES.map(function(p){
-    var active = palette ? (palette === p.id) : (p.id === 'padrao');
-    return '<button type="button" class="palette-item' + (active ? ' active' : '') + '" data-action="set-palette" data-palette="' + p.id + '">' +
-      '<span class="palette-dot" style="background:' + p.swatch + '"></span>' +
-      '<span class="palette-name">' + esc(p.name) + '</span>' +
-    '</button>';
-  }).join('');
+  function itemsOf(group){
+    return PALETTES.filter(function(p){ return p.group === group; }).map(function(p){
+      var active = palette ? (palette === p.id) : (p.id === 'padrao');
+      return '<button type="button" class="palette-item' + (active ? ' active' : '') + '" data-action="set-palette" data-palette="' + p.id + '" aria-pressed="' + (active ? 'true' : 'false') + '">' +
+        '<span class="palette-dot" style="background:' + p.swatch + '"></span>' +
+        '<span class="palette-name">' + esc(p.name) + '</span>' +
+      '</button>';
+    }).join('');
+  }
   return '<section class="card">' +
     '<div class="card-head"><div class="card-head-main"><span class="card-icon" aria-hidden="true">🎨</span><h2 class="card-title">Aparência</h2></div></div>' +
-    '<div class="palette-row">' + items + '</div>' +
+    '<div class="palette-group-label">Sóbrias</div>' +
+    '<div class="palette-row">' + itemsOf('sobria') + '</div>' +
+    '<div class="palette-group-label">Vivas</div>' +
+    '<div class="palette-row">' + itemsOf('viva') + '</div>' +
   '</section>';
 }
 
@@ -2462,8 +3916,18 @@ function renderFatalError(err){
 function renderNow(){
   appEl = document.getElementById('app');
   if (!appEl) return;
+  if (pinFlow){
+    // Locked (or creating the password): nothing of the app is drawn behind this screen.
+    appEl.innerHTML = renderPinScreen();
+    if (!eventsBound){ bindEvents(appEl); eventsBound = true; }
+    return;
+  }
   var prevFocus = captureFocus(appEl);
-  var mv = getMonthView(STATE, viewMonth);
+  // Redrawing the form (e.g. after picking who is entering it) must not scroll it back to
+  // the top or replay its opening animation.
+  var prevSheetEl = appEl.querySelector('.sheet');
+  var prevSheetScroll = prevSheetEl ? prevSheetEl.scrollTop : 0;
+  var mv = getMonthViewFull(STATE, viewMonth);
   var h = STATE.household;
   var isCurrent = viewMonth === monthKeyOf(new Date());
   var totals = computeMonthTotals(h, mv, viewMonth);
@@ -2471,30 +3935,37 @@ function renderNow(){
   var html = '<div class="shell">';
   html += renderHeader(h, isCurrent);
   html += renderAlerts(mv, totals);
-  html += renderQuickNav();
+  html += renderQuickNav(isCurrent);
   html += '<div id="sec-resumo">' +
     '<section class="card"><div class="card-head"><div class="card-head-main"><span class="card-icon" aria-hidden="true">📊</span><h2 class="card-title">Resumo do mês</h2></div></div>' +
       renderStats(totals.totalIncome, mv, totals.totalFixed, totals.paidCount, totals.setCount, totals.totalVariable, totals.totalInvestments, totals.saldo) +
     '</section>' +
+    (isCurrent ? renderUpcoming() : '') +
     renderBars(h, mv) +
   '</div>';
   html += renderHistory();
   html += renderIncome(h, mv);
+  html += renderListTools();
   html += renderFixed(h, mv, isCurrent);
   html += renderVariable(h, mv, isCurrent);
   html += renderInvestments(h, mv);
   html += '<p class="section-divider">Ajustes</p>';
   html += '<div id="sec-ajustes">' +
     renderAppearance() +
+    renderPinSettings() +
     renderShare() +
     renderBackup() +
   '</div>';
   html += '<p class="footer-note">' + esc(footerNote()) + '</p>';
   html += '</div>';
-  if (sheetOpen) html += renderSheet(h);
+  if (sheetOpen) html += renderSheet(h, !!prevSheetEl);
   if (toastMsg) html += '<div class="toast">' + esc(toastMsg) + '</div>';
 
   appEl.innerHTML = html;
+  if (prevSheetScroll){
+    var newSheetEl = appEl.querySelector('.sheet');
+    if (newSheetEl) newSheetEl.scrollTop = prevSheetScroll;
+  }
   try {
     var headerEl = appEl.querySelector('.header');
     if (headerEl) document.documentElement.style.setProperty('--header-h', headerEl.offsetHeight + 'px');
@@ -2570,6 +4041,90 @@ function syncDraftFromField(el){
 function onInput(ev){
   syncDraftFromField(ev.target);
   updateInstallmentPreview(ev.target);
+  updateAutoPaidStatus(ev.target);
+}
+// Pago/Pendente buttons in the expense form: updated in place so the keyboard and the
+// form's scroll position are left alone.
+function setPaidStatusUI(form, value){
+  if (!form) return;
+  var hidden = form.querySelector('input[name="paidStatus"]');
+  if (hidden) hidden.value = value;
+  var btns = form.querySelectorAll('[data-action="pick-paid-status"]');
+  for (var i=0;i<btns.length;i++){
+    if (btns[i].getAttribute('data-value') === value) btns[i].classList.add('active');
+    else btns[i].classList.remove('active');
+  }
+}
+function updateAutoPaidStatus(el){
+  if (!el || el.name !== 'date' || !el.closest) return;
+  var form = el.closest('form[data-action="submit-expense"]');
+  if (!form) return;
+  if (sheetDraft && (sheetDraft.paidStatus === 'paid' || sheetDraft.paidStatus === 'pending')) return;
+  setPaidStatusUI(form, autoPaidStatus(el.value));
+}
+function findVariableEntry(month, id){
+  var m = STATE.months[month];
+  var list = (m && m.variable) || [];
+  for (var i=0;i<list.length;i++){ if (list[i] && list[i].id === id) return list[i]; }
+  return null;
+}
+function newRecurringTemplate(desc, categoryId, dateIso, startMonth, who){
+  return {id:uid(), desc:desc, categoryId:categoryId, dueDay:dayOfDate(dateIso),
+    dueOffset:clampDueOffset(monthDiff(startMonth, String(dateIso).slice(0, 7))),
+    startMonth:startMonth, endMonth:null, by:who};
+}
+// What saving one month's amount changes in its monthly bill. Only what was changed in this
+// save, and only in the most recent month, carries on to the next months (fixing an old
+// month doesn't rewrite the bill, and the 30/11 filled in for a "dia 31" bill is not a
+// change). Unticking "Conta mensal" stops the reminders after that month.
+function recurringPatchFrom(tpl, before, after, repeats, month){
+  var patch = {};
+  var last = recurringLastLaunchedMonth(STATE, tpl);
+  if (!last || month >= last){
+    if (after.desc !== before.desc) patch.desc = after.desc;
+    if (after.categoryId !== before.categoryId) patch.categoryId = after.categoryId;
+    if (after.date !== before.date && ISO_DATE_RE.test(after.date || '')){
+      patch.dueDay = dayOfDate(after.date);
+      patch.dueOffset = clampDueOffset(monthDiff(month, after.date.slice(0, 7)));
+    }
+  }
+  if (repeats && tpl.endMonth && tpl.endMonth <= month) patch.endMonth = null;
+  if (!repeats && recurringContinuesAfter(tpl, month)) patch.endMonth = month;
+  return Object.keys(patch).length ? patch : null;
+}
+function recurringHasOtherEntries(state, tplId, exceptId){
+  return Object.keys(state.months || {}).some(function(k){
+    return ((state.months[k] && state.months[k].variable) || []).some(function(e){ return e && e.recurringId === tplId && e.id !== exceptId; });
+  });
+}
+function openLaunchSheet(tplId, month){
+  var tpl = findRecurring(STATE, tplId);
+  if (!tpl || !MONTH_KEY_RE.test(month || '')) return;
+  var dateIso = recurringDueIso(tpl, month) || (month === monthKeyToday() ? todayStr() : month + '-01');
+  sheetDraft = {desc:tpl.desc, categoryId:tpl.categoryId, amount:'', date:dateIso, isInstallment:false, repeats:recurringContinuesAfter(tpl, month)};
+  launchingRecurring = {tplId:tpl.id, month:month, date:dateIso};
+  editingVariable = null;
+  recurringOptionsFor = null;
+  sheetOpen = true;
+  render();
+}
+// "Parar de repetir": the bill stops after the last month that has its amount (or is
+// removed if it never got one), and earlier months that never got an amount stop being
+// reminded too.
+function stopRecurring(tplId){
+  var tpl = findRecurring(STATE, tplId);
+  if (!tpl){ render(); return; }
+  var last = recurringLastLaunchedMonth(STATE, tpl);
+  toastMsg = tpl.desc + ' não vai mais aparecer em "A lançar".';
+  if (!last){
+    doOp({type:'removeRecurring', tplId:tpl.id});
+    return;
+  }
+  var from = tpl.startMonth > shiftMonth(last, -60) ? tpl.startMonth : shiftMonth(last, -60);
+  var skipMonths = monthRangeKeys(from, last).filter(function(k){
+    return !recurringEntryIn(STATE, tpl.id, k) && !recurringSkippedIn(STATE, tpl.id, k);
+  });
+  doOp({type:'stopRecurring', tplId:tpl.id, endMonth:last, skipMonths:skipMonths});
 }
 function updateInstallmentPreview(el){
   if (!el || (el.name !== 'installments' && el.name !== 'startMonth')) return;
@@ -2585,12 +4140,21 @@ function onClick(ev){
   var el = ev.target && ev.target.closest ? ev.target.closest('[data-action]') : null;
   if (!el) return;
   var action = el.getAttribute('data-action');
+  if (el.getAttribute('data-from-due')){
+    // paying from "Próximos vencimentos": the row disappears, so a quick second tap must not
+    // land on (and pay) the next one
+    var nowTap = Date.now();
+    if (nowTap - lastDueTapAt < 400) return;
+    lastDueTapAt = nowTap;
+    toastMsg = (el.getAttribute('data-name') || 'Conta') + ' — marcada como paga.';
+  }
   var catId, id, w, name, inputEl, instId;
   switch (action){
     case 'prev-month':
       viewMonth = shiftMonth(viewMonth, -1);
       editingFixedId = null; editingFixedDraft = null;
       shareTextPreview = null; sharedImagePreview = null;
+      recurringOptionsFor = null;
       render();
       break;
     case 'next-month':
@@ -2599,6 +4163,7 @@ function onClick(ev){
         viewMonth = shiftMonth(viewMonth, 1);
         editingFixedId = null; editingFixedDraft = null;
         shareTextPreview = null; sharedImagePreview = null;
+        recurringOptionsFor = null;
         render();
       }
       break;
@@ -2606,6 +4171,7 @@ function onClick(ev){
       viewMonth = el.getAttribute('data-month');
       editingFixedId = null; editingFixedDraft = null;
       shareTextPreview = null; sharedImagePreview = null;
+      recurringOptionsFor = null;
       render();
       break;
     case 'edit-name':
@@ -2742,7 +4308,16 @@ function onClick(ev){
       id = el.getAttribute('data-id');
       if (removeConfirm === id){
         removeConfirm = null;
-        doOp({type:'removeVariable', month:viewMonth, entryId:id});
+        var opRm = {type:'removeVariable', month:viewMonth, entryId:id};
+        var rmEntry = findVariableEntry(viewMonth, id);
+        var rmTpl = (rmEntry && rmEntry.recurringId) ? findRecurring(STATE, rmEntry.recurringId) : null;
+        if (rmTpl && !recurringHasOtherEntries(STATE, rmTpl.id, id)){
+          // it was the bill's only amount (e.g. "Conta mensal" ticked by mistake): don't
+          // leave a reminder behind for something that no longer exists
+          opRm.alsoRemoveRecurring = rmTpl.id;
+          toastMsg = 'Removido. Era o único valor da conta mensal "' + rmTpl.desc + '", então ela também deixou de repetir.';
+        }
+        doOp(opRm);
       } else {
         removeConfirm = id;
         render();
@@ -2755,11 +4330,43 @@ function onClick(ev){
       var mvEditV = getMonthView(STATE, viewMonth);
       var entryEdit = (mvEditV.variable || []).filter(function(e){ return e.id === id; })[0];
       if (entryEdit){
-        sheetDraft = {desc:entryEdit.desc, categoryId:entryEdit.categoryId, amount:fmtInputAmount(entryEdit.amount), date:entryEdit.date, trackDue:(entryEdit.dueDay != null), isInstallment:false};
+        var tplEdit = entryEdit.recurringId ? findRecurring(STATE, entryEdit.recurringId) : null;
+        sheetDraft = {desc:entryEdit.desc, categoryId:entryEdit.categoryId, amount:fmtInputAmount(entryEdit.amount), date:entryEdit.date, paidStatus:(entryEdit.paid ? 'paid' : 'pending'), repeats:!!(tplEdit && recurringContinuesAfter(tplEdit, viewMonth)), isInstallment:false};
         editingVariable = {kind:'variable', id:entryEdit.id};
+        launchingRecurring = null;
         sheetOpen = true;
         render();
       }
+      break;
+    case 'pick-paid-status':
+      sheetDraft = sheetDraft || {};
+      sheetDraft.paidStatus = el.getAttribute('data-value') === 'pending' ? 'pending' : 'paid';
+      setPaidStatusUI(el.closest ? el.closest('form') : null, sheetDraft.paidStatus);
+      break;
+    case 'launch-recurring':
+      openLaunchSheet(el.getAttribute('data-tplid'), el.getAttribute('data-month'));
+      break;
+    case 'recurring-options':
+      var roKey = el.getAttribute('data-tplid') + '|' + el.getAttribute('data-month');
+      recurringOptionsFor = (recurringOptionsFor === roKey) ? null : roKey;
+      render();
+      break;
+    case 'cancel-recurring-options':
+      recurringOptionsFor = null;
+      render();
+      break;
+    case 'skip-recurring':
+      recurringOptionsFor = null;
+      var tplSkip = findRecurring(STATE, el.getAttribute('data-tplid'));
+      var skipMonth = el.getAttribute('data-month');
+      if (tplSkip && MONTH_KEY_RE.test(skipMonth || '')){
+        toastMsg = tplSkip.desc + ' foi pulada em ' + monthLabel(skipMonth) + '. Nos próximos meses ela volta a aparecer.';
+        doOp({type:'skipRecurring', tplId:tplSkip.id, month:skipMonth});
+      } else render();
+      break;
+    case 'stop-recurring':
+      recurringOptionsFor = null;
+      stopRecurring(el.getAttribute('data-tplid'));
       break;
     case 'edit-installment-entry':
       instId = el.getAttribute('data-instid');
@@ -2775,12 +4382,14 @@ function onClick(ev){
       sheetOpen = true;
       sheetDraft = null;
       editingVariable = null;
+      launchingRecurring = null;
       render();
       break;
     case 'close-sheet':
       sheetOpen = false;
       sheetDraft = null;
       editingVariable = null;
+      launchingRecurring = null;
       render();
       break;
     case 'pick-who':
@@ -2823,7 +4432,78 @@ function onClick(ev){
     case 'clear-history-filter':
       historyFilterApplied = null;
       historyFilterDraft = null;
+      periodImagePreview = null;
       render();
+      break;
+    case 'goto-section':
+      if (listView.status === 'paid'){
+        // the overdue and "a lançar" blocks are hidden by "Pagas": show everything first
+        if (ev && ev.preventDefault) ev.preventDefault();
+        listView.status = 'all';
+        savePref(LIST_VIEW_KEY, listView);
+        render();
+        var target = document.getElementById(el.getAttribute('data-target'));
+        if (target && target.scrollIntoView) target.scrollIntoView();
+      }
+      break;
+    case 'set-list-status':
+      var lsVal = el.getAttribute('data-value');
+      if (/^(all|unpaid|paid)$/.test(lsVal || '')){ listView.status = lsVal; savePref(LIST_VIEW_KEY, listView); }
+      render();
+      break;
+    case 'set-list-sort':
+      var lsSort = el.getAttribute('data-value');
+      if (/^(default|due|amount)$/.test(lsSort || '')){ listView.sort = lsSort; savePref(LIST_VIEW_KEY, listView); }
+      render();
+      break;
+    case 'share-period-image':
+      sharePeriodImage();
+      break;
+    case 'hide-period-image':
+      periodImagePreview = null;
+      render();
+      break;
+    case 'pin-digit':
+      pinDigit(el.getAttribute('data-d'));
+      break;
+    case 'pin-back':
+      pinBackspace();
+      break;
+    case 'pin-start-create':
+      startPinFlow('create');
+      break;
+    case 'pin-skip':
+    case 'pin-cancel':
+      if (pinFlow && (pinFlow.mode === 'offer' || pinFlow.mode === 'create' || pinFlow.mode === 'confirm') && !pinRecord){
+        try { localStorage.setItem(PIN_PROMPTED_KEY, '1'); } catch(eSkip) {}
+        pinPrompted = true;
+      }
+      if (pinFlow && pinFlow.mode === 'unlock') break; // the lock screen itself can't be dismissed
+      finishPinFlow(action === 'pin-skip' ? 'Tudo bem. Se quiser, crie a senha depois em Ajustes.' : null);
+      break;
+    case 'pin-forgot':
+      startPinFlow('forgot');
+      break;
+    case 'pin-back-to-unlock':
+      startPinFlow('unlock');
+      break;
+    case 'pin-wipe':
+      if (ev && ev.preventDefault) ev.preventDefault();
+      var wipeInput = appEl.querySelector('input[name="wipeConfirm"]');
+      if (!wipeInput || wipeInput.value.trim().toUpperCase() !== 'APAGAR'){
+        if (pinFlow) pinFlow.error = '';
+        var hint = appEl.querySelector('.pin-text');
+        if (wipeInput){ wipeInput.focus(); wipeInput.setAttribute('aria-invalid', 'true'); }
+        if (hint) hint.textContent = 'Para apagar, digite APAGAR no campo abaixo. Por segurança, a senha não pode ser recuperada; depois de apagar, importe o último backup em Ajustes.';
+        break;
+      }
+      wipeThisPhone();
+      break;
+    case 'pin-change':
+      if (pinRecord) startPinFlow('verify-change');
+      break;
+    case 'pin-disable':
+      if (pinRecord) startPinFlow('verify-disable');
       break;
     default:
       break;
@@ -2838,6 +4518,18 @@ function onChange(ev){
     var file = el.files && el.files[0];
     handleImportFile(file);
     el.value = '';
+    return;
+  }
+  if (action === 'set-due-days'){
+    var nDays = parseInt(el.value, 10);
+    if (DUE_DAY_OPTIONS.indexOf(nDays) >= 0){ dueView.days = nDays; savePref(DUE_VIEW_KEY, dueView); }
+    render();
+    return;
+  }
+  if (action === 'toggle-due-overdue'){
+    dueView.showOverdue = !!el.checked;
+    savePref(DUE_VIEW_KEY, dueView);
+    render();
     return;
   }
   if (!action){
@@ -2855,12 +4547,22 @@ function onChange(ev){
       updateInstallmentPreview(el);
       return;
     }
+    if (el.name === 'date'){
+      updateAutoPaidStatus(el);
+      return;
+    }
     return;
   }
 }
 function onSubmit(ev){
   var form = ev.target;
   var action = form.getAttribute ? form.getAttribute('data-action') : null;
+  if (action === 'pin-wipe-form'){
+    ev.preventDefault();
+    var wipeBtn = form.querySelector('[data-action="pin-wipe"]');
+    if (wipeBtn) wipeBtn.click();
+    return;
+  }
   if (action === 'save-name'){
     ev.preventDefault();
     var person = form.getAttribute('data-person');
@@ -2882,9 +4584,11 @@ function onSubmit(ev){
     var countRaw = form.elements['installments'] ? form.elements['installments'].value : '';
     var startRaw = form.elements['startMonth'] ? form.elements['startMonth'].value : '';
     var dueRaw = form.elements['dueDay'] ? form.elements['dueDay'].value : '';
-    var trackDueRaw = form.elements['trackDue'] ? form.elements['trackDue'].checked : false;
+    var paidStatusRaw = form.elements['paidStatus'] ? form.elements['paidStatus'].value : '';
+    var repeatsRaw = form.elements['repeats'] ? form.elements['repeats'].checked : false;
+    var chosenPaidStatus = sheetDraft ? sheetDraft.paidStatus : null;
     var captureSheetDraft = function(){
-      sheetDraft = {desc:descRaw, categoryId:categoryIdRaw, newCategoryName:newNameRaw, amount:amountRaw, date:dateRaw, isInstallment:isInstallment, installments:countRaw, startMonth:startRaw, dueDay:dueRaw, trackDue:trackDueRaw};
+      sheetDraft = {desc:descRaw, categoryId:categoryIdRaw, newCategoryName:newNameRaw, amount:amountRaw, date:dateRaw, isInstallment:isInstallment, installments:countRaw, startMonth:startRaw, dueDay:dueRaw, paidStatus:chosenPaidStatus, repeats:repeatsRaw};
     };
     if (!desc){
       toastMsg = 'Digite uma descrição pro gasto.';
@@ -2934,27 +4638,53 @@ function onSubmit(ev){
       sheetOpen = false;
       sheetDraft = null;
       editingVariable = null;
+      launchingRecurring = null;
       if (editing && editing.kind === 'installment'){
         doOp({type:'updateInstallmentPlan', instId:editing.id, patch:{desc:desc, installmentAmount:amount, installments:count, startMonth:start, dueDay:due, categoryId:categoryId, by:who}, newCategory:newCategory});
       } else {
         doOp({type:'addInstallment', installment:{id:uid(), desc:desc, installmentAmount:amount, installments:count, startMonth:start, dueDay:due, categoryId:categoryId, by:who}, newCategory:newCategory});
       }
     } else {
-      var date = dateRaw || todayStr();
-      var dueVarD = null;
-      if (trackDueRaw){
-        var dateParts = date.split('-');
-        var dayFromDate = parseInt(dateParts[2], 10);
-        dueVarD = isFinite(dayFromDate) ? dayFromDate : null;
-      }
+      var date = ISO_DATE_RE.test(dateRaw) ? dateRaw : todayStr();
+      var dueVarD = dayOfDate(date);
+      var paidVar = (paidStatusRaw === 'paid' || paidStatusRaw === 'pending') ? (paidStatusRaw === 'paid') : (autoPaidStatus(date) === 'paid');
+      var launching = launchingRecurring;
+      var targetMonth = launching ? launching.month : viewMonth;
+      var tplLaunch = launching ? findRecurring(STATE, launching.tplId) : null;
+      var currentEntry = (editing && editing.kind === 'variable') ? findVariableEntry(viewMonth, editing.id) : null;
+      var tplCurrent = currentEntry && currentEntry.recurringId ? findRecurring(STATE, currentEntry.recurringId) : null;
       sheetOpen = false;
       sheetDraft = null;
       editingVariable = null;
-      if (editing && editing.kind === 'variable'){
-        doOp({type:'updateVariable', month:viewMonth, entryId:editing.id, patch:{desc:desc, amount:amount, date:date, categoryId:categoryId, dueDay:dueVarD, by:who}, newCategory:newCategory});
+      launchingRecurring = null;
+      if (tplLaunch){
+        // Entering this month's amount of a monthly bill (if both of you enter the same month
+        // before swapping backups, the merge keeps the latest one only).
+        var launched = {id:uid(), desc:desc, amount:amount, date:date, categoryId:categoryId, dueDay:dueVarD, paid:paidVar, by:who, sv:2, recurringId:tplLaunch.id};
+        doOp({type:'addVariable', month:targetMonth, entry:launched, newCategory:newCategory,
+          recurringPatch:{tplId:tplLaunch.id, patch:recurringPatchFrom(tplLaunch,
+            {desc:tplLaunch.desc, categoryId:tplLaunch.categoryId, date:launching.date},
+            {desc:desc, categoryId:categoryId, date:date}, repeatsRaw, targetMonth)}});
+      } else if (editing && editing.kind === 'variable'){
+        var patchV = {desc:desc, amount:amount, date:date, categoryId:categoryId, dueDay:dueVarD, paid:paidVar, by:who, sv:2};
+        var opV = {type:'updateVariable', month:viewMonth, entryId:editing.id, patch:patchV, newCategory:newCategory};
+        if (tplCurrent){
+          opV.recurringPatch = {tplId:tplCurrent.id, patch:recurringPatchFrom(tplCurrent,
+            {desc:currentEntry.desc, categoryId:currentEntry.categoryId, date:currentEntry.date},
+            {desc:desc, categoryId:categoryId, date:date}, repeatsRaw, viewMonth)};
+        } else if (repeatsRaw){
+          opV.recurring = newRecurringTemplate(desc, categoryId, date, viewMonth, who);
+          patchV.recurringId = opV.recurring.id;
+        }
+        doOp(opV);
       } else {
-        var entry = {id:uid(), desc:desc, amount:amount, date:date, categoryId:categoryId, dueDay:dueVarD, paid:false, by:who};
-        doOp({type:'addVariable', month:viewMonth, entry:entry, newCategory:newCategory});
+        var entry = {id:uid(), desc:desc, amount:amount, date:date, categoryId:categoryId, dueDay:dueVarD, paid:paidVar, by:who, sv:2};
+        var opA = {type:'addVariable', month:targetMonth, entry:entry, newCategory:newCategory};
+        if (repeatsRaw){
+          opA.recurring = newRecurringTemplate(desc, categoryId, date, targetMonth, who);
+          entry.recurringId = opA.recurring.id;
+        }
+        doOp(opA);
       }
     }
   } else if (action === 'add-fixed-form'){
@@ -3087,6 +4817,7 @@ function onSubmit(ev){
     historyFilterApplied = {from:fromV, to:toV};
     historyFilterDraft = null;
     historyFilterOpen = false;
+    periodImagePreview = null;
     render();
   } else if (action === 'add-investment-form'){
     ev.preventDefault();
