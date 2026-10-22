@@ -24,6 +24,7 @@
   --border:#D8E2DE;--shadow:rgba(22,48,46,0.10);color-scheme:light;
   --on-primary:#FFFFFF;--warning-ink:#8A5A0B;--warning-line:rgba(138,90,11,0.18);
   --hero-bg:var(--primary);--hero-ink:#FFFFFF;
+  --plan:#1F5FA8;--plan-soft:#E2ECF8;--plan-line:rgba(31,95,168,0.18);
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -33,6 +34,7 @@
     --border:#274744;--shadow:rgba(0,0,0,0.4);color-scheme:dark;
     --on-primary:var(--paper);--warning-ink:#E7B15C;--warning-line:rgba(231,177,92,0.2);
     --hero-bg:var(--primary-soft);--hero-ink:var(--ink);
+    --plan:#8DB9F0;--plan-soft:#1B2D45;--plan-line:rgba(141,185,240,0.2);
   }
 }
 :root[data-theme="dark"]{
@@ -42,6 +44,7 @@
   --border:#274744;--shadow:rgba(0,0,0,0.4);color-scheme:dark;
   --on-primary:var(--paper);--warning-ink:#E7B15C;--warning-line:rgba(231,177,92,0.2);
   --hero-bg:var(--primary-soft);--hero-ink:var(--ink);
+  --plan:#8DB9F0;--plan-soft:#1B2D45;--plan-line:rgba(141,185,240,0.2);
 }
 html{background:var(--paper)}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:'Karla',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);padding-bottom:env(safe-area-inset-bottom)}
@@ -80,10 +83,20 @@ button{cursor:pointer}
 @media (min-width:560px){.stats{grid-template-columns:repeat(4,1fr)}}
 .stat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px}
 .stat-label{font-size:0.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);font-weight:700}
-.stat-value{font-family:'Space Mono',monospace;font-variant-numeric:tabular-nums;font-size:1.1875rem;font-weight:700;margin-top:6px;line-height:1.2;word-break:break-word}
+.stat-value{font-family:'Space Mono',monospace;font-variant-numeric:tabular-nums;font-size:clamp(0.875rem, 4.4vw, 1.1875rem);font-weight:700;margin-top:6px;line-height:1.2}
+.stat-value .cur{font-size:0.72em;margin-right:3px}
+.stat-value .num{white-space:nowrap}
 .stat-value.income{color:var(--income)}
 .stat-value.expense{color:var(--expense)}
 .stat-sub{font-size:0.75rem;color:var(--ink-soft);margin-top:4px}
+.stat-note{font-size:0.8125rem;color:var(--ink-soft);margin:10px 0 0}
+/* paid x still to pay, under the summary */
+.pay-progress{margin-top:12px}
+.pp-bar{height:10px;border-radius:999px;background:var(--surface-2);overflow:hidden}
+.pp-fill{height:100%;border-radius:999px;background:var(--c-paid);min-width:0}
+.pp-text{display:flex;justify-content:space-between;align-items:baseline;gap:4px 12px;flex-wrap:wrap;margin-top:6px;font-size:0.8125rem;color:var(--ink-soft)}
+.pp-text strong{font-family:'Space Mono',monospace;color:var(--ink);white-space:nowrap;font-variant-numeric:tabular-nums}
+.pp-text .link-btn{font-size:inherit}
 
 .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:18px;box-shadow:0 2px 8px var(--shadow)}
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px}
@@ -163,6 +176,17 @@ button{cursor:pointer}
 .pill.paid{background:var(--income-soft);color:var(--income)}
 .pill.pending{background:var(--surface-2);color:var(--ink-soft)}
 .pill.overdue{background:var(--expense-soft);color:var(--expense)}
+.pill.planned{background:var(--plan-soft);color:var(--plan)}
+span.pill{cursor:default}
+button.pill[data-action="open-status"]{gap:5px}
+button.pill[data-action="open-status"]::after{content:'';width:8px;height:5px;flex:none;background:currentColor;opacity:.8;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat}
+/* a late bill may come with interest: noted only to be aware of it */
+.risk-tag{display:inline-block;font-size:0.6875rem;font-weight:700;line-height:1.5;color:var(--warning-ink);background:var(--warning-soft);border-radius:999px;padding:0 7px;white-space:nowrap}
+.carried-block .risk-tag{background:var(--surface)}
+/* fixed bills read like the other lists: name and details on the left, amount and status on the right */
+.fixed-row.bill-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.bill-row .row-main{flex:1;min-width:0}
+.bill-row .fixed-name{font-weight:600;font-size:0.9375rem;overflow-wrap:anywhere}
 
 .carried-note{width:100%;font-size:0.75rem;color:var(--expense);margin-top:-2px}
 .carried-block{background:var(--expense-soft);border-radius:12px;padding:10px 12px;margin-bottom:14px}
@@ -172,6 +196,66 @@ button{cursor:pointer}
 .carried-block .var-row:first-child,.carried-block .fixed-row:first-child{padding-top:0}
 .carried-row .fixed-due{flex-basis:100%}
 .carried-block .pill.overdue{background:var(--surface);box-shadow:inset 0 0 0 1px var(--expense)}
+/* bills from earlier months that count in this one: planned for it / paid late in it */
+.carried-block.plan{background:var(--plan-soft)}
+.carried-block.plan .carried-block-title{color:var(--plan)}
+.carried-block.plan .fixed-row,.carried-block.plan .var-row{border-bottom-color:var(--plan-line)}
+.carried-block .pill.planned{background:var(--surface);box-shadow:inset 0 0 0 1px var(--plan)}
+.carried-block.done{background:var(--surface-2)}
+.carried-block.done .carried-block-title{color:var(--ink-soft)}
+.carried-block.done .fixed-row,.carried-block.done .var-row{border-bottom-color:var(--border)}
+.carried-block.done .pill.paid{background:var(--surface);box-shadow:inset 0 0 0 1px var(--income)}
+.carried-note.plan{color:var(--plan)}
+.carried-note.done{color:var(--ink-soft)}
+.alert-banner.info{background:var(--plan-soft);color:var(--plan)}
+.alert-actions{margin-top:8px}
+.alert-actions .btn-mini{white-space:normal;max-width:100%;text-align:left}
+.alert-banner .btn-mini.primary{background:var(--plan);color:var(--surface)}
+.alert-banner.warn .btn-mini.primary{background:var(--warning-ink);color:var(--surface)}
+/* the window to change a bill's status (nothing changes until "Salvar") */
+.st-meta{margin:-10px 0 14px;font-size:0.8125rem;color:var(--ink-soft);line-height:1.5}
+.st-group{border:none;margin:0;padding:0;min-width:0}
+.st-group legend{font-size:0.8125rem;font-weight:700;color:var(--ink-soft);margin:0 0 8px;padding:0}
+.st-opt{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--paper);cursor:pointer;margin-bottom:8px}
+.st-opt input{width:20px;height:20px;margin:1px 0 0;accent-color:var(--primary);flex:none}
+.st-opt.on{border-color:var(--primary);box-shadow:inset 0 0 0 1px var(--primary)}
+.st-opt-body{display:flex;flex-direction:column;gap:2px;min-width:0}
+.st-opt-title{font-weight:700;font-size:0.9375rem;color:var(--ink)}
+.st-opt-desc{font-size:0.8125rem;color:var(--ink-soft);line-height:1.4}
+.st-extra{margin:-2px 0 10px;padding:12px 14px;border-radius:12px;background:var(--surface-2)}
+.st-extra[hidden]{display:none}
+.st-extra .field{margin-bottom:8px}
+.st-extra .field input{background:var(--surface)}
+.st-hint{font-size:0.8125rem;color:var(--ink-soft);line-height:1.45;margin:0}
+.st-hint strong{color:var(--ink)}
+.st-chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.st-interest{margin-top:6px;padding-top:12px;border-top:1px solid var(--border)}
+.st-interest .field{margin-bottom:8px}
+.st-error{color:var(--expense);font-size:0.875rem;font-weight:600;margin:10px 0 0}
+.st-error:empty{display:none}
+/* programming several open bills for a future month at once */
+.bp-group-title{font-size:0.75rem;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;margin:14px 0 2px}
+.bp-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer}
+.bp-list .bp-row:last-child{border-bottom:none}
+.bp-row input{width:20px;height:20px;accent-color:var(--primary);flex:none;margin:0}
+.bp-main{flex:1;min-width:0}
+.bp-name{font-weight:600;font-size:0.9375rem;overflow-wrap:anywhere}
+.bp-sub{font-size:0.8125rem;color:var(--ink-soft)}
+.bp-amt{font-family:'Space Mono',monospace;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums;font-size:0.875rem}
+.bp-name,.bp-sub{display:block}
+.btn:disabled{opacity:.5;cursor:default}
+.moved .var-amt{color:var(--ink-soft)}
+/* appearance: color mode and your own color */
+.theme-row{margin-bottom:16px}
+.color-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:10px 6px;max-width:440px}
+.color-swatch{width:36px;height:36px;border-radius:999px;border:2px solid var(--border);position:relative;justify-self:center;padding:0}
+.color-swatch.active{border-color:var(--ink);box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--ink)}
+.color-swatch.active::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#FFFFFF;font-weight:700;font-size:0.875rem;text-shadow:0 0 2px rgba(0,0,0,0.6)}
+.color-pick{position:relative;width:36px;height:36px;border-radius:999px;border:2px solid var(--border);justify-self:center;overflow:hidden;background:conic-gradient(#e11d48,#ea580c,#ca8a04,#16a34a,#0891b2,#2563eb,#7c3aed,#c026d3,#e11d48);display:flex;align-items:center;justify-content:center;color:#FFFFFF;font-weight:700;font-size:1.125rem;text-shadow:0 0 2px rgba(0,0,0,0.6);cursor:pointer}
+.color-pick input{position:absolute;inset:0;opacity:0;width:100%;height:100%;border:0;padding:0;cursor:pointer}
+.color-pick.active{border-color:var(--ink);box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--ink)}
+.custom-note{font-size:0.75rem;color:var(--ink-soft);margin:10px 0 0;line-height:1.45}
+.custom-note code{font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--ink)}
 
 .launch-block{background:var(--warning-soft);border-radius:12px;padding:10px 12px;margin-bottom:14px}
 .launch-block-title{font-size:0.75rem;font-weight:700;color:var(--warning-ink);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
@@ -244,7 +328,7 @@ button{cursor:pointer}
 .btn.primary{background:var(--primary);color:var(--on-primary)}
 .btn.ghost{background:var(--surface-2);color:var(--ink)}
 
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:12px 18px;border-radius:12px;font-size:0.875rem;max-width:88vw;z-index:40;box-shadow:0 6px 20px var(--shadow);text-align:center;pointer-events:none}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:12px 18px;border-radius:12px;font-size:0.875rem;width:max-content;max-width:88vw;z-index:40;box-shadow:0 6px 20px var(--shadow);text-align:center;pointer-events:none}
 
 .footer-note{text-align:center;color:var(--ink-soft);font-size:0.75rem;padding:6px 0 20px}
 
@@ -338,6 +422,7 @@ button{cursor:pointer}
 .due-date .dd{font-weight:700;font-size:1rem}
 .due-date .mm{font-size:0.6875rem;text-transform:uppercase;letter-spacing:.04em}
 .due-row.is-overdue .due-date{background:var(--expense-soft);color:var(--expense)}
+.due-row.is-planned .due-date{background:var(--plan-soft);color:var(--plan)}
 .due-total{display:flex;justify-content:space-between;align-items:center;gap:10px;border-top:1px solid var(--border);margin-top:4px;padding-top:10px;font-size:0.875rem;font-weight:700}
 /* period image */
 .history-image{margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
@@ -492,6 +577,10 @@ body.privacy-cover::after{content:'🔒';position:fixed;inset:0;display:flex;ali
 .col-pos-bg{background:var(--c-pos)}
 .col-neg-bg{background:var(--c-neg)}
 .col-invest-bg{background:var(--c-invest)}
+.legend-inline .sw.hatch{background:repeating-linear-gradient(45deg,var(--primary) 0 2px,transparent 2px 4px);box-shadow:inset 0 0 0 1px var(--primary)}
+.hatch-line{stroke:var(--primary);stroke-width:2.2}
+.col-hatch{stroke:var(--primary);stroke-width:1.2}
+.col-hatch.col-future{stroke-opacity:.45}
 .chart-svg{display:block;width:100%;height:auto;margin:0 auto;overflow:visible;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
 .charts-header .app-name:focus{outline:none}
 .chart-svg text{font-family:'Karla',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
@@ -544,6 +633,11 @@ body.privacy-cover::after{content:'🔒';position:fixed;inset:0;display:flex;ali
 @media (forced-colors: active){
   .stack-seg,.legend-row .sw,.legend-inline .sw{forced-color-adjust:none}
 }
+.interest-list{margin:8px 0 0;padding:0;list-style:none}
+.interest-list li{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:0.8125rem}
+.interest-list li:last-child{border-bottom:none}
+.interest-list .il-name{min-width:0;overflow-wrap:anywhere}
+.interest-list .il-val{font-family:'Space Mono',monospace;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -566,6 +660,8 @@ var MONTH_NAMES = ['janeiro','fevereiro','março','abril','maio','junho','julho'
 var WHO_KEY = 'gflowFinancasWho';
 var STORAGE_KEY = 'gflowFinancasState';
 var PALETTE_KEY = 'gflowFinancasPalette';
+var CUSTOM_COLOR_KEY = 'gflowFinancasCustomColor';   // {color:'#RRGGBB', vivid:true}
+var THEME_KEY = 'gflowFinancasTheme';                // 'auto' | 'light' | 'dark'
 var LAST_BACKUP_KEY = 'gflowFinancasLastBackup';
 
 /* ---------- best-effort IndexedDB mirror (extra safety net alongside localStorage) ---------- */
@@ -667,17 +763,171 @@ var PALETTES = [
   {id:'esmeralda', name:'Esmeralda', swatch:'#15803D', group:'viva'},
   {id:'turquesa', name:'Turquesa', swatch:'#0E7490', group:'viva'}
 ];
+/* ---------- your own color: a whole theme (light and dark) from one color ---------- */
+// The color is taken in OKLCH (lightness / chroma / hue as people see them): the theme keeps
+// its hue and builds every surface around it, then checks the contrast of each pair of colors
+// that is used for text, darkening or lightening what doesn't reach it.
+function hexToRgb01(hex){
+  var m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
+  if (!m) return null;
+  var n = parseInt(m[1], 16);
+  return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
+}
+function rgb01ToHex(rgb){
+  return '#' + rgb.map(function(c){
+    var v = Math.round(Math.max(0, Math.min(1, c)) * 255);
+    return (v < 16 ? '0' : '') + v.toString(16);
+  }).join('').toUpperCase();
+}
+function srgbToLinear(c){ return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
+function linearToSrgb(c){ return c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055; }
+function cbrtSigned(x){ return x < 0 ? -Math.pow(-x, 1 / 3) : Math.pow(x, 1 / 3); }
+function rgbToOklch(rgb){
+  var r = srgbToLinear(rgb[0]), g = srgbToLinear(rgb[1]), b = srgbToLinear(rgb[2]);
+  var l = cbrtSigned(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+  var m = cbrtSigned(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+  var s = cbrtSigned(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  var L = 0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s;
+  var A = 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s;
+  var B = 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s;
+  var h = Math.atan2(B, A) * 180 / Math.PI;
+  return {L: L, C: Math.sqrt(A * A + B * B), h: h < 0 ? h + 360 : h};
+}
+function oklchToLinearRgb(L, C, h){
+  var a = C * Math.cos(h * Math.PI / 180), b = C * Math.sin(h * Math.PI / 180);
+  var l = L + 0.3963377774 * a + 0.2158037573 * b;
+  var m = L - 0.1055613458 * a - 0.0638541728 * b;
+  var s = L - 0.0894841775 * a - 1.2914855480 * b;
+  l = l * l * l; m = m * m * m; s = s * s * s;
+  return [4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+          -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+          -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s];
+}
+// the color with that lightness and hue, with as much of the chroma as the screen can show
+function oklchToHex(L, C, h){
+  var lo = 0, hi = C, best = oklchToLinearRgb(L, 0, h);
+  function inGamut(rgb){ return rgb[0] >= -1e-4 && rgb[0] <= 1.0001 && rgb[1] >= -1e-4 && rgb[1] <= 1.0001 && rgb[2] >= -1e-4 && rgb[2] <= 1.0001; }
+  var full = oklchToLinearRgb(L, C, h);
+  if (inGamut(full)) best = full;
+  else {
+    for (var i = 0; i < 24; i++){
+      var mid = (lo + hi) / 2, rgb = oklchToLinearRgb(L, mid, h);
+      if (inGamut(rgb)){ lo = mid; best = rgb; } else hi = mid;
+    }
+  }
+  return rgb01ToHex(best.map(function(c){ return linearToSrgb(Math.max(0, Math.min(1, c))); }));
+}
+function relLuminance(hex){
+  var rgb = hexToRgb01(hex);
+  return 0.2126 * srgbToLinear(rgb[0]) + 0.7152 * srgbToLinear(rgb[1]) + 0.0722 * srgbToLinear(rgb[2]);
+}
+function contrastRatio(a, b){
+  var la = relLuminance(a), lb = relLuminance(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+// moves the lightness (darker for a light theme, lighter for a dark one) until the color reads
+// well on every background given
+function fitContrast(L, C, h, against, min, darker){
+  var hex = oklchToHex(L, C, h);
+  for (var i = 0; i < 80; i++){
+    var ok = against.every(function(bg){ return contrastRatio(hex, bg) >= min; });
+    if (ok) return hex;
+    L += darker ? -0.01 : 0.01;
+    if (L <= 0.02 || L >= 0.99) break;
+    hex = oklchToHex(L, C, h);
+  }
+  return hex;
+}
+function hexToRgba(hex, alpha){
+  var rgb = hexToRgb01(hex);
+  return 'rgba(' + Math.round(rgb[0] * 255) + ',' + Math.round(rgb[1] * 255) + ',' + Math.round(rgb[2] * 255) + ',' + alpha + ')';
+}
+// the backgrounds of the app that don't come from the palette (status colors) -- text in the
+// soft ink color sits on them too
+var FIXED_LIGHT_BGS = ['#F5E4DE', '#E2ECF8', '#F7ECD8', '#E1EFE3'];
+var FIXED_DARK_BGS = ['#3D2620', '#1B2D45', '#3D3018', '#1E3A26'];
+function buildCustomTheme(hex){
+  var base = rgbToOklch(hexToRgb01(hex) || [0.1, 0.3, 0.3]);
+  var h = base.h, c = base.C;
+  var tint = function(k, cap){ return Math.min(c * k, cap); };
+  // light
+  var lt = {};
+  lt.surface = '#FFFFFF';
+  lt.paper = oklchToHex(0.975, tint(0.12, 0.012), h);
+  lt['surface-2'] = oklchToHex(0.945, tint(0.2, 0.02), h);
+  lt.border = oklchToHex(0.9, tint(0.18, 0.022), h);
+  lt['primary-soft'] = oklchToHex(0.93, tint(0.35, 0.045), h);
+  // the color itself, darkened only if white text on it (buttons, colored top) wouldn't read
+  lt.primary = fitContrast(base.L, c, h, ['#FFFFFF', lt.paper, lt['surface-2'], lt['primary-soft']], 4.6, true);
+  lt.ink = fitContrast(0.26, tint(0.35, 0.05), h, [lt.paper, lt['surface-2']], 12, true);
+  lt['ink-soft'] = fitContrast(0.47, tint(0.3, 0.04), h, [lt.surface, lt.paper, lt['surface-2'], lt['primary-soft']].concat(FIXED_LIGHT_BGS), 4.6, true);
+  lt.shadow = hexToRgba(lt.ink, 0.1);
+  // dark
+  var dk = {};
+  dk.paper = oklchToHex(0.2, tint(0.3, 0.03), h);
+  dk.surface = oklchToHex(0.245, tint(0.3, 0.035), h);
+  dk['surface-2'] = oklchToHex(0.285, tint(0.3, 0.035), h);
+  dk.border = oklchToHex(0.33, tint(0.3, 0.035), h);
+  dk['primary-soft'] = oklchToHex(0.32, tint(0.5, 0.06), h);
+  // a lighter version of the color, for text and buttons on the dark background
+  dk.primary = fitContrast(Math.max(0.74, base.L), Math.min(c, 0.15), h, [dk.paper, dk.surface, dk['surface-2'], dk['primary-soft']], 4.6, false);
+  dk.ink = fitContrast(0.95, tint(0.15, 0.015), h, [dk.surface, dk['surface-2']], 12, false);
+  dk['ink-soft'] = fitContrast(0.77, tint(0.25, 0.04), h, [dk.paper, dk.surface, dk['surface-2'], dk['primary-soft']].concat(FIXED_DARK_BGS), 4.6, false);
+  dk.shadow = 'rgba(0,0,0,0.4)';
+  return {light: lt, dark: dk};
+}
+function themeCssVars(t){
+  return ['paper', 'surface', 'surface-2', 'ink', 'ink-soft', 'primary', 'primary-soft', 'border', 'shadow'].map(function(k){ return '--' + k + ':' + t[k]; }).join(';');
+}
+// "Sua cor": quick picks around the color wheel (any other one comes from the phone's picker)
+var CUSTOM_SWATCHES = [
+  ['#DC2626','Vermelho'], ['#E11D48','Rosa'], ['#DB2777','Pink'], ['#C026D3','Magenta'], ['#9333EA','Roxo'],
+  ['#7C3AED','Violeta'], ['#4F46E5','Anil'], ['#2563EB','Azul'], ['#0284C7','Céu'], ['#0891B2','Ciano'],
+  ['#0D9488','Verde-azulado'], ['#059669','Esmeralda'], ['#16A34A','Verde'], ['#65A30D','Lima'], ['#CA8A04','Mostarda'],
+  ['#D97706','Âmbar'], ['#EA580C','Laranja'], ['#92400E','Marrom'], ['#57534E','Pedra'], ['#475569','Ardósia']
+];
+var THEME_MODES = ['auto', 'light', 'dark'];
+var customThemeCache = {};
+function customTheme(hex){
+  var key = String(hex || '').toUpperCase();
+  if (!customThemeCache[key]) customThemeCache[key] = buildCustomTheme(key);
+  return customThemeCache[key];
+}
+function validCustomColor(v){ return !!v && typeof v === 'object' && !!hexToRgb01(v.color) && typeof v.vivid === 'boolean'; }
 function applyPaletteAttr(){
   try {
     var root = document.documentElement;
-    if (palette && palette !== 'padrao') root.setAttribute('data-palette', palette);
-    else root.removeAttribute('data-palette');
+    var custom = palette === 'custom' && validCustomColor(customColor);
+    var styleEl = document.getElementById('custom-palette-style');
     var current = null;
     for (var i=0;i<PALETTES.length;i++){ if (PALETTES[i].id === (palette || 'padrao')){ current = PALETTES[i]; break; } }
-    if (current && current.group === 'viva') root.setAttribute('data-vivid', '');
+    var themeColor = current ? current.swatch : PALETTES[0].swatch;
+    if (custom){
+      // the whole theme, light and dark, from the chosen color
+      var t = customTheme(customColor.color);
+      var css = ':root[data-palette="custom"]{' + themeCssVars(t.light) + '}' +
+        '@media (prefers-color-scheme: dark){:root[data-palette="custom"]:not([data-theme="light"]){' + themeCssVars(t.dark) + '}}' +
+        ':root[data-palette="custom"][data-theme="dark"]{' + themeCssVars(t.dark) + '}';
+      if (!styleEl){
+        styleEl = document.createElement('style');
+        styleEl.id = 'custom-palette-style';
+        document.head.appendChild(styleEl);
+      }
+      styleEl.textContent = css;
+      root.setAttribute('data-palette', 'custom');
+      themeColor = t.light.primary;
+    } else {
+      if (styleEl) styleEl.textContent = '';
+      if (current && current.id !== 'padrao') root.setAttribute('data-palette', current.id);
+      else root.removeAttribute('data-palette');
+    }
+    if (custom ? customColor.vivid : (current && current.group === 'viva')) root.setAttribute('data-vivid', '');
     else root.removeAttribute('data-vivid');
+    // Automático follows the phone; Claro / Escuro stay put
+    if (themeMode === 'light' || themeMode === 'dark') root.setAttribute('data-theme', themeMode);
+    else root.removeAttribute('data-theme');
     var meta = document.querySelector('meta[name="theme-color"]');
-    if (meta && current) meta.setAttribute('content', current.swatch);
+    if (meta) meta.setAttribute('content', themeColor);
   } catch(e) {}
 }
 
@@ -853,6 +1103,18 @@ function addTombstone(container, key, at){
   if (!container.deleted || typeof container.deleted !== 'object') container.deleted = {};
   container.deleted[key] = at;
 }
+// A bill's payment details: when it was paid ("paidOn"), when it is expected to be paid
+// ("planOn") and its updated amount when it had interest or a fine ("withInterest").
+// Anything that isn't a real date / a positive amount is dropped.
+function cleanBillFields(r){
+  if (!r || typeof r !== 'object') return;
+  if ('paidOn' in r && !ISO_DATE_RE.test(r.paidOn || '')) delete r.paidOn;
+  if ('planOn' in r && !ISO_DATE_RE.test(r.planOn || '')) delete r.planOn;
+  if ('withInterest' in r){
+    var wi = r.withInterest == null || r.withInterest === '' ? NaN : Number(r.withInterest);
+    if (isFinite(wi) && wi > 0) r.withInterest = wi; else delete r.withInterest;
+  }
+}
 // Makes any state (from this phone, an import or the mirror) safe to render and merge:
 // fills in missing lists, gives id-less items an id instead of dropping them, and
 // converts the "valor fixo" history to the timeline format (v2) without changing
@@ -937,6 +1199,8 @@ function normalizeState(s){
         e.sv = 2;
       }
     });
+    m.variable.forEach(cleanBillFields);
+    Object.keys(m.installments).forEach(function(iid){ cleanBillFields(m.installments[iid]); });
     m.investments = m.investments.filter(function(e){ return e && typeof e === 'object'; });
     m.investments.forEach(function(e){ if (!e.id) e.id = uid(); e.amount = numOr0(e.amount); });
     ['person1', 'person2'].forEach(function(p){
@@ -949,6 +1213,7 @@ function normalizeState(s){
       var f = m.fixed[cid];
       if (!f || typeof f !== 'object'){ delete m.fixed[cid]; return; }
       if (f.amount != null) f.amount = numOr0(f.amount);
+      cleanBillFields(f);
     });
   });
   if (!s.meta || typeof s.meta !== 'object') s.meta = {updatedAt:null, updatedBy:null};
@@ -1051,72 +1316,196 @@ var whoAmI = null;
 try { whoAmI = localStorage.getItem(WHO_KEY); } catch(e) {}
 var palette = null;
 try { palette = localStorage.getItem(PALETTE_KEY); } catch(e) {}
+var customColor = loadPref(CUSTOM_COLOR_KEY, null, validCustomColor);
+var themeMode = loadPref(THEME_KEY, 'auto', function(v){ return THEME_MODES.indexOf(v) >= 0; });
 applyPaletteAttr();
 var appEl = null;
 var eventsBound = false;
 
-/* ---------- derived view ---------- */
+/* ---------- derived view: where every bill counts ---------- */
+// Every bill occurrence -- a fixed bill in a month, a parcela in a month, a variable expense
+// (in the month it was saved in) -- has a home month and counts in exactly ONE month:
+//  - paid: its home month. Paid after its due date, in a later month: the month it was paid
+//    in (that's when the money left, and a month that already passed doesn't change any more
+//    when an old bill is finally paid).
+//  - not paid, with a payment forecast ("previsão") from today on: the forecast's month
+//    (never earlier than its home month).
+//  - not paid and the forecast already passed: the current month, until it is paid.
+//  - not paid and overdue from an earlier month: the current month, until it is paid.
+//  - otherwise: its home month.
+// Totals, lists, summaries and charts all read these same results, so an amount can never
+// count twice or vanish.
+var BILL_STATUS_LABEL = {paid:'Pago', pending:'Pendente', overdue:'Atrasada', planned:'Programada'};
+var BILL_KIND_LABEL = {fixed:'Conta fixa', installment:'Parcela', variable:'Conta variável'};
+function lastDayIso(monthKey){ return dateInMonth(monthKey, 31); }
+function isoOrNull(v){ return ISO_DATE_RE.test(v || '') ? v : null; }
+function positiveOrNull(v){
+  var n = (v == null || v === '') ? NaN : Number(v);
+  return (isFinite(n) && n > 0) ? n : null;
+}
+// state + month where it counts, from the bill's own fields (also used to preview a change)
+function settleBill(b, todayKey, today){
+  b.total = (b.withInterest != null && b.withInterest > b.amount) ? b.withInterest : b.amount;
+  b.interest = b.total > b.amount ? round2(b.total - b.amount) : 0;
+  b.lateBy = null;
+  b.paidLate = false;
+  if (b.paid){
+    b.state = 'paid';
+    b.paidLate = !!(b.paidOn && b.paidOn > (b.dueIso || lastDayIso(b.home)));
+    var pm = b.paidLate ? b.paidOn.slice(0, 7) : null;
+    b.eff = (pm && pm > b.home) ? pm : b.home;
+  } else if (b.planOn && b.planOn >= today){
+    b.state = 'planned';
+    var plm = b.planOn.slice(0, 7);
+    b.eff = plm > b.home ? plm : b.home;
+  } else if (b.planOn){
+    // the forecast passed and it wasn't paid: late again, and it follows the current month
+    b.state = 'overdue';
+    b.lateBy = 'plan';
+    b.eff = todayKey > b.home ? todayKey : b.home;
+  } else {
+    b.state = b.pastDue ? 'overdue' : 'pending';
+    if (b.pastDue) b.lateBy = 'due';
+    b.eff = b.carries ? todayKey : b.home;
+  }
+  b.lateDays = b.lateBy === 'plan' ? daysFromTo(b.planOn, today) : ((b.lateBy === 'due' && b.dueIso) ? daysFromTo(b.dueIso, today) : null);
+  return b;
+}
+function buildMonthBills(state, key, todayKey, today){
+  var m = state.months[key];
+  var out = [];
+  state.household.fixedCategories.forEach(function(cat){
+    var ov = m && m.fixed ? m.fixed[cat.id] : null;
+    var hasOverride = !!(ov && ov.amount != null);
+    var resolved = resolveFixedAmount(cat, key);
+    if (!hasOverride && !resolved.found) return;   // no amount this month: nothing to pay yet
+    var paid = !!(ov && ov.paid);
+    var b = {kind:'fixed', id:cat.id, home:key, name:cat.name, desc:cat.name, categoryId:null,
+      amount: hasOverride ? ov.amount : resolved.amount, paid: paid,
+      paidOn: ov ? isoOrNull(ov.paidOn) : null, planOn: ov ? isoOrNull(ov.planOn) : null,
+      withInterest: ov ? positiveOrNull(ov.withInterest) : null,
+      dueIso: cat.dueDay ? dateInMonth(key, cat.dueDay) : null};
+    b.pastDue = isPastDue(key, cat.dueDay, paid);
+    b.carries = b.pastDue && key < todayKey;
+    out.push(settleBill(b, todayKey, today));
+  });
+  (state.household.installments || []).forEach(function(inst){
+    if (!inst || !MONTH_KEY_RE.test(inst.startMonth || '')) return;
+    var idx = monthDiff(inst.startMonth, key);
+    if (idx < 0 || idx >= inst.installments) return;
+    var ov = m && m.installments ? m.installments[inst.id] : null;
+    if (ov && typeof ov !== 'object') ov = null;
+    var paid = !!(ov && ov.paid);
+    var b = {kind:'installment', id:inst.id, home:key, desc:inst.desc,
+      name: inst.desc + ' (parcela ' + (idx + 1) + '/' + inst.installments + ')',
+      index: idx + 1, count: inst.installments, categoryId: inst.categoryId, by: inst.by,
+      amount: inst.installmentAmount, paid: paid,
+      paidOn: ov ? isoOrNull(ov.paidOn) : null, planOn: ov ? isoOrNull(ov.planOn) : null,
+      withInterest: ov ? positiveOrNull(ov.withInterest) : null,
+      dueIso: inst.dueDay ? dateInMonth(key, inst.dueDay) : null};
+    // Parcelas that were already due before the purchase was registered in the app are not
+    // chased as "atrasadas" (they were most likely paid already). Plans saved before this
+    // rule existed keep the old behaviour (only months with records).
+    var eligible = inst.createdAt ? (key >= monthKeyOf(new Date(inst.createdAt))) : !!m;
+    b.eligible = eligible;
+    b.pastDue = isPastDue(key, inst.dueDay, paid);
+    b.carries = eligible && b.pastDue && key < todayKey;
+    out.push(settleBill(b, todayKey, today));
+  });
+  ((m && m.variable) || []).forEach(function(e){
+    var b = {kind:'variable', id:e.id, home:key, desc:e.desc, name:e.desc, categoryId:e.categoryId, by:e.by,
+      date:e.date, recurringId:e.recurringId || null,
+      amount:e.amount, paid:!!e.paid,
+      paidOn:isoOrNull(e.paidOn), planOn:isoOrNull(e.planOn), withInterest:positiveOrNull(e.withInterest),
+      dueIso: varDueIso(e, key)};
+    b.pastDue = varIsOverdue(e, key);
+    b.carries = b.pastDue && key < todayKey;
+    out.push(settleBill(b, todayKey, today));
+  });
+  return out;
+}
+// The data never changes in place (every change makes a new state), so the bills of a month
+// are worked out once per state and per day.
+var billCache = {state:null, today:'', months:{}, index:null};
+function billCacheFor(state){
+  var today = todayStr();
+  if (billCache.state !== state || billCache.today !== today) billCache = {state:state, today:today, months:{}, index:null};
+  return billCache;
+}
+function monthBills(state, key){
+  var c = billCacheFor(state);
+  if (!c.months[key]) c.months[key] = buildMonthBills(state, key, c.today.slice(0, 7), c.today);
+  return c.months[key];
+}
+// the first month whose bills can still be open: the oldest month with records, the first
+// "valor fixo" month or the first parcela of a purchase registered in the app
+function trackingStartKey(state, todayKey){
+  var starts = Object.keys(state.months || {}).filter(function(k){ return MONTH_KEY_RE.test(k) && k < todayKey; });
+  state.household.fixedCategories.forEach(function(cat){
+    var log = cat.amountLog || [];
+    for (var i=0;i<log.length;i++){ if (!log[i].stop){ starts.push(log[i].month); break; } }
+  });
+  (state.household.installments || []).forEach(function(inst){
+    if (inst && inst.createdAt && MONTH_KEY_RE.test(inst.startMonth || '')) starts.push(inst.startMonth);
+  });
+  if (!starts.length) return null;
+  starts.sort();
+  var floorKey = shiftMonth(todayKey, -240);
+  return starts[0] < floorKey ? floorKey : starts[0];
+}
+// Every month whose bills may count in another one: all past months since tracking began (a
+// quiet month can still have an unpaid "valor fixo" bill or parcela) and every month with
+// records (only a record can hold a forecast). `incoming[month]` = bills from other months
+// that count in it.
+function billIndex(state){
+  var c = billCacheFor(state);
+  if (c.index) return c.index;
+  var todayKey = c.today.slice(0, 7);
+  var keys = {};
+  var from = trackingStartKey(state, todayKey);
+  var lastPast = shiftMonth(todayKey, -1);
+  if (from && from <= lastPast) monthRangeKeys(from, lastPast).forEach(function(k){ keys[k] = true; });
+  Object.keys(state.months || {}).forEach(function(k){ if (MONTH_KEY_RE.test(k)) keys[k] = true; });
+  var list = Object.keys(keys).sort();
+  var incoming = {};
+  list.forEach(function(k){
+    monthBills(state, k).forEach(function(b){
+      if (b.eff !== b.home) (incoming[b.eff] = incoming[b.eff] || []).push(b);
+    });
+  });
+  c.index = {keys: list, incoming: incoming};
+  return c.index;
+}
+function findBill(state, kind, home, id){
+  if (!MONTH_KEY_RE.test(home || '')) return null;
+  var list = monthBills(state, home);
+  for (var i=0;i<list.length;i++){ if (list[i].kind === kind && list[i].id === id) return list[i]; }
+  return null;
+}
 function getMonthView(state, key){
   var existing = state.months[key];
+  // the fixed bills' amounts as typed (the edit form and "valor fixo" read them)
   var fixed = {};
-  // carryAway: items of THIS month that stopped counting here because they are unpaid,
-  // overdue and now count in the current real month instead. The same flags feed this
-  // month's totals and the current month's "atrasadas" list, so an amount can never
-  // count twice or vanish from both.
-  var carryAway = {fixed:{}, inst:{}, variable:{}};
   state.household.fixedCategories.forEach(function(cat){
     var ov = existing && existing.fixed ? existing.fixed[cat.id] : null;
     var hasOverride = !!(ov && ov.amount != null);
     var resolved = resolveFixedAmount(cat, key);
-    fixed[cat.id] = {
-      amount: hasOverride ? ov.amount : resolved.amount,
-      paid: ov ? !!ov.paid : false,
-      isSet: hasOverride || resolved.found
-    };
-    if (fixed[cat.id].isSet && carriesToToday(key, cat.dueDay, fixed[cat.id].paid)) carryAway.fixed[cat.id] = true;
+    fixed[cat.id] = {amount: hasOverride ? ov.amount : resolved.amount, paid: ov ? !!ov.paid : false, isSet: hasOverride || resolved.found};
   });
-  var installmentsActive = [];
-  (state.household.installments || []).forEach(function(inst){
-    if (!inst || !MONTH_KEY_RE.test(inst.startMonth || '')) return;
-    var idx = monthDiff(inst.startMonth, key);
-    if (idx >= 0 && idx < inst.installments){
-      var ov2 = existing && existing.installments ? existing.installments[inst.id] : null;
-      var paidI = ov2 ? !!ov2.paid : false;
-      installmentsActive.push({
-        id: inst.id,
-        desc: inst.desc,
-        amount: inst.installmentAmount,
-        dueDay: inst.dueDay,
-        categoryId: inst.categoryId,
-        by: inst.by,
-        index: idx + 1,
-        total: inst.installments,
-        paid: paidI
-      });
-      // Parcelas that were already due before the purchase was registered in the app are
-      // not chased as "atrasadas" (they were most likely paid already). Plans saved before
-      // this rule existed keep the old behaviour (only months with records).
-      var eligible = inst.createdAt ? (key >= monthKeyOf(new Date(inst.createdAt))) : !!existing;
-      if (eligible && carriesToToday(key, inst.dueDay, paidI)) carryAway.inst[inst.id] = true;
-    }
-  });
-  var variableList = (existing && existing.variable) || [];
-  variableList.forEach(function(e){
-    if (varCarries(e, key)) carryAway.variable[e.id] = true;
-  });
-  var mv = {
+  var bills = monthBills(state, key);
+  var incoming = billIndex(state).incoming[key] || [];
+  return {
     income: {
       person1: resolveIncomeForMonth(state, key, 'person1'),
       person2: resolveIncomeForMonth(state, key, 'person2')
     },
     fixed: fixed,
-    installmentsActive: installmentsActive,
-    variable: variableList,
+    variable: (existing && existing.variable) || [],
     investments: (existing && existing.investments) || [],
-    carryAway: carryAway
+    bills: bills,          // this month's own bills (some may count in another month)
+    incoming: incoming,    // bills of other months that count in this one
+    counted: bills.filter(function(b){ return b.eff === key; }).concat(incoming)
   };
-  mv.carriedIn = (key === monthKeyToday()) ? collectCarriedForward(state, key) : {fixed:[], installments:[], variable:[]};
-  return mv;
 }
 // What the screen and the summaries need on top of the month's numbers: the monthly bills
 // still waiting for this month's amount ("a lançar"), plus - in the current month - the
@@ -1128,39 +1517,29 @@ function getMonthViewFull(state, key){
   return mv;
 }
 function computeMonthTotals(h, mv, key){
-  key = key || viewMonth;
-  var away = mv.carryAway || {fixed:{}, inst:{}, variable:{}};
   var totalIncome = sumIncomeList(mv.income.person1) + sumIncomeList(mv.income.person2);
-  var totalFixed = 0, paidCount = 0, setCount = 0;
-  h.fixedCategories.forEach(function(cat){
-    var f = mv.fixed[cat.id];
-    if (!f) return;
-    if (f.isSet){
-      setCount++;
-      if (f.paid) paidCount++;
+  var t = {fixed:0, inst:0, plain:0, interest:0, fixedCount:0, fixedPaid:0, varCount:0, varPaid:0};
+  (mv.counted || []).forEach(function(b){
+    if (b.kind === 'fixed'){
+      t.fixed += b.total;
+      t.fixedCount++;
+      if (b.paid) t.fixedPaid++;
+    } else {
+      if (b.kind === 'installment') t.inst += b.total; else t.plain += b.total;
+      t.varCount++;
+      if (b.paid) t.varPaid++;
     }
-    if (f.isSet && !away.fixed[cat.id]) totalFixed += f.amount;
+    t.interest += b.interest;
   });
-  var totalInstallments = 0;
-  mv.installmentsActive.forEach(function(i){ if (!away.inst[i.id]) totalInstallments += i.amount; });
-  var totalVariablePlain = 0;
-  mv.variable.forEach(function(e){ if (!away.variable[e.id]) totalVariablePlain += e.amount; });
-  var carried = mv.carriedIn || {fixed:[], installments:[], variable:[]};
-  var carriedFixedTotal = 0; carried.fixed.forEach(function(c){ carriedFixedTotal += c.amount; });
-  var carriedVarTotal = 0;
-  carried.installments.forEach(function(c){ carriedVarTotal += c.amount; });
-  carried.variable.forEach(function(c){ carriedVarTotal += c.amount; });
-  var totalFixedAll = totalFixed + carriedFixedTotal;
-  var totalVariable = totalVariablePlain + totalInstallments + carriedVarTotal;
   var totalInvestments = 0;
   mv.investments.forEach(function(e){ totalInvestments += e.amount; });
-  var saldo = totalIncome - totalFixedAll - totalVariable - totalInvestments;
+  var totalVariable = t.plain + t.inst;
   return {
-    totalIncome: totalIncome, totalFixed: totalFixedAll, paidCount: paidCount, setCount: setCount,
-    totalInstallments: totalInstallments, totalVariablePlain: totalVariablePlain,
-    totalVariable: totalVariable, totalInvestments: totalInvestments, saldo: saldo,
-    carriedFixedTotal: carriedFixedTotal, carriedVarTotal: carriedVarTotal,
-    carriedCount: carried.fixed.length + carried.installments.length + carried.variable.length
+    totalIncome: totalIncome, totalFixed: t.fixed, paidCount: t.fixedPaid, setCount: t.fixedCount,
+    totalInstallments: t.inst, totalVariablePlain: t.plain, totalVariable: totalVariable,
+    varCount: t.varCount, varPaid: t.varPaid, totalInterest: round2(t.interest),
+    totalInvestments: totalInvestments,
+    saldo: totalIncome - t.fixed - totalVariable - totalInvestments
   };
 }
 
@@ -1237,7 +1616,7 @@ function previousMonthFixedAmount(cat, key){
   if (ov && ov.amount != null) return ov.amount;
   return null;
 }
-/* ---------- overdue rollover: an unpaid bill "migrates" to the current real month until paid ---------- */
+/* ---------- due dates and overdue days ---------- */
 function monthKeyToday(){ return monthKeyOf(new Date()); }
 function dueDateOf(natMonth, dueDay){
   var p = natMonth.split('-');
@@ -1259,9 +1638,6 @@ function isPastDue(natMonth, dueDay, paid){
   var d = daysOverdue(natMonth, dueDay);
   return d != null && d > 0;
 }
-function carriesToToday(natMonth, dueDay, paid){
-  return isPastDue(natMonth, dueDay, paid) && natMonth < monthKeyToday();
-}
 // A variable expense is due on its own date ("Vencimento"). Entries without a valid date
 // fall back to their day number inside the month they were saved in.
 function varDueIso(e, key){
@@ -1278,7 +1654,6 @@ function varIsOverdue(e, key){
   var d = varDaysOverdue(e, key);
   return d != null && d > 0;
 }
-function varCarries(e, key){ return varIsOverdue(e, key) && key < monthKeyToday(); }
 
 /* ---------- monthly bills with a different amount every month ("a lançar") ---------- */
 function findRecurring(state, id){
@@ -1375,47 +1750,6 @@ function recurringBacklog(state, todayKey){
   });
   return out.sort(function(a, b){ return a.month !== b.month ? (a.month < b.month ? -1 : 1) : byDueThenName(a, b); });
 }
-function collectCarriedForward(state, todayKey){
-  var out = {fixed: [], installments: [], variable: []};
-  var lastKey = shiftMonth(todayKey, -1);
-  // Scan every past month since tracking began -- not only months that happen to have a
-  // record. A "valor fixo" bill or a parcela in a quiet month (nothing else launched) is
-  // just as unpaid as one in a busy month.
-  var starts = Object.keys(state.months || {}).filter(function(k){ return MONTH_KEY_RE.test(k) && k < todayKey; });
-  state.household.fixedCategories.forEach(function(cat){
-    var log = cat.amountLog || [];
-    for (var i=0;i<log.length;i++){ if (!log[i].stop){ starts.push(log[i].month); break; } }
-  });
-  (state.household.installments || []).forEach(function(inst){
-    if (inst && inst.createdAt && MONTH_KEY_RE.test(inst.startMonth || '')) starts.push(inst.startMonth);
-  });
-  if (!starts.length) return out;
-  starts.sort();
-  var fromKey = starts[0];
-  var floorKey = shiftMonth(todayKey, -240);
-  if (fromKey < floorKey) fromKey = floorKey;
-  if (fromKey > lastKey) return out;
-  monthRangeKeys(fromKey, lastKey).forEach(function(mKey){
-    var pv = getMonthView(state, mKey);
-    state.household.fixedCategories.forEach(function(cat){
-      if (pv.carryAway.fixed[cat.id]){
-        var f = pv.fixed[cat.id];
-        out.fixed.push({sourceMonth:mKey, catId:cat.id, name:cat.name, amount:f.amount, dueDay:cat.dueDay, overdueDays:daysOverdue(mKey, cat.dueDay)});
-      }
-    });
-    pv.installmentsActive.forEach(function(inst){
-      if (pv.carryAway.inst[inst.id]){
-        out.installments.push({sourceMonth:mKey, instId:inst.id, categoryId:inst.categoryId, name:inst.desc + ' (parcela ' + inst.index + '/' + inst.total + ')', amount:inst.amount, dueDay:inst.dueDay, overdueDays:daysOverdue(mKey, inst.dueDay)});
-      }
-    });
-    pv.variable.forEach(function(e){
-      if (pv.carryAway.variable[e.id]){
-        out.variable.push({sourceMonth:mKey, id:e.id, categoryId:e.categoryId, name:e.desc, amount:e.amount, dueDay:e.dueDay, dueIso:varDueIso(e, mKey), overdueDays:varDaysOverdue(e, mKey)});
-      }
-    });
-  });
-  return out;
-}
 /* ---------- income entries (named, unlimited per person) ---------- */
 function resolveIncomeList(raw, fallbackUpdatedAt){
   if (Array.isArray(raw)) return raw;
@@ -1461,6 +1795,32 @@ function ensureIncomeArray(state, m, monthKey, person){
     }
   }
   return m.income[person];
+}
+// The record that holds a bill's status in its own month (created for fixed bills and parcelas
+// when missing: without an amount, so a "valor fixo" bill keeps following its value).
+function billRecordFor(state, m, kind, id){
+  if (kind === 'fixed'){
+    if (!findCat(state.household.fixedCategories, id)) return null;
+    if (!m.fixed[id] || typeof m.fixed[id] !== 'object') m.fixed[id] = {paid:false};
+    return m.fixed[id];
+  }
+  if (kind === 'installment'){
+    if (!(state.household.installments || []).some(function(i){ return i && i.id === id; })) return null;
+    if (!m.installments[id] || typeof m.installments[id] !== 'object') m.installments[id] = {paid:false};
+    return m.installments[id];
+  }
+  if (kind === 'variable'){
+    for (var i=0;i<m.variable.length;i++){ if (m.variable[i] && m.variable[i].id === id) return m.variable[i]; }
+  }
+  return null;
+}
+function applyBillStatus(rec, st, at){
+  rec.paid = !!st.paid;
+  if (st.paid && isoOrNull(st.paidOn)) rec.paidOn = st.paidOn; else delete rec.paidOn;
+  if (!st.paid && isoOrNull(st.planOn)) rec.planOn = st.planOn; else delete rec.planOn;
+  var wi = positiveOrNull(st.withInterest);
+  if (wi != null) rec.withInterest = wi; else delete rec.withInterest;
+  rec.updatedAt = at;
 }
 function applyOp(state, op){
   var next = clone(state);
@@ -1627,6 +1987,27 @@ function applyOp(state, op){
       m.installments[op.instId].updatedAt = at;
       m.updatedAt = at;
       break;
+    case 'setBillStatus':
+      // Pago (with the payment date) / Pendente / Vou pagar em (forecast), plus the amount with
+      // interest -- saved on the bill's own month, whatever month it counts in
+      m = ensureMonth(next, op.month);
+      var recS = billRecordFor(next, m, op.kind, op.id);
+      if (recS) applyBillStatus(recS, op, at);
+      m.updatedAt = at;
+      break;
+    case 'planBills':
+      (op.items || []).forEach(function(it){
+        if (!it || !MONTH_KEY_RE.test(it.month || '') || !isoOrNull(it.planOn)) return;
+        var mp = ensureMonth(next, it.month);
+        var recP = billRecordFor(next, mp, it.kind, it.id);
+        if (!recP) return;
+        recP.paid = false;
+        delete recP.paidOn;
+        recP.planOn = it.planOn;
+        recP.updatedAt = at;
+        mp.updatedAt = at;
+      });
+      break;
     case 'addVariable':
       if (op.newCategory){
         var hasCat = next.household.variableCategories.some(function(c){ return c.id === op.newCategory.id; });
@@ -1657,6 +2038,7 @@ function applyOp(state, op){
         if (e.id !== op.entryId) return e;
         var mergedE = clone(e);
         Object.keys(op.patch).forEach(function(k){ mergedE[k] = op.patch[k]; });
+        cleanBillFields(mergedE);
         mergedE.updatedAt = at;
         return mergedE;
       });
@@ -1975,54 +2357,45 @@ function handleImportFile(file){
 }
 
 /* ---------- monthly summary: text + image export ---------- */
-function fixedStatusLabel(paid, overdue){
-  return paid ? 'Pago' : (overdue ? 'Atrasada' : 'Pendente');
+// One line of the summary for a bill that counts in the month `key` (its own or one from
+// another month, which says where it came from).
+function summaryBillRow(b, key){
+  var incoming = b.home !== key;
+  var suffix = '';
+  if (incoming) suffix = (b.state === 'overdue' && b.lateBy === 'due') ? ' (venceu em ' + monthLabel(b.home) + ')' : ' (de ' + monthLabel(b.home) + ')';
+  var notes = [];
+  if (b.state === 'planned') notes.push('previsão ' + fmtDate(b.planOn));
+  else if (b.lateBy === 'plan') notes.push('previsão era ' + fmtDate(b.planOn));
+  else if (b.state === 'paid' && b.paidLate) notes.push('paga em ' + fmtDate(b.paidOn));
+  if (b.interest > 0) notes.push('juros ' + fmtMoney(b.interest));
+  return {
+    name: b.name + suffix,
+    shortName: b.name + (incoming ? ' (' + shortMonthLabel(b.home) + ')' : ''),
+    amount: b.total, paid: b.paid, status: BILL_STATUS_LABEL[b.state],
+    dueLabel: b.dueIso ? dueLabelFor(b.dueIso, key) : null,
+    planLabel: b.planOn ? fmtDate(b.planOn) : null,
+    interest: b.interest, notes: notes, sortKey: b.date || '', bill: b
+  };
 }
-function summaryFixedRows(h, mv){
-  var rows = [];
-  h.fixedCategories.forEach(function(cat){
-    var f = mv.fixed[cat.id];
-    if (!f.isSet) return;
-    var overdue = isPastDue(viewMonth, cat.dueDay, f.paid);
-    rows.push({name:cat.name, amount:f.amount, paid:f.paid, status: fixedStatusLabel(f.paid, overdue), dueLabel: cat.dueDay ? 'dia ' + cat.dueDay : null});
-  });
-  ((mv.carriedIn && mv.carriedIn.fixed) || []).forEach(function(c){
-    rows.push({name:c.name + ' (venceu em ' + monthLabel(c.sourceMonth) + ')', amount:c.amount, paid:false, status:'Atrasada', dueLabel: c.dueDay ? 'dia ' + c.dueDay : null});
-  });
-  return rows;
+function summaryRowsOf(mv, key, kind){
+  return mv.counted.filter(function(b){ return b.kind === kind; }).map(function(b){ return summaryBillRow(b, key); });
 }
-function summaryInstallmentRows(mv){
-  var rows = mv.installmentsActive.map(function(inst){
-    var overdue = isPastDue(viewMonth, inst.dueDay, inst.paid);
-    return {
-      name: inst.desc + ' (parcela ' + inst.index + '/' + inst.total + ')',
-      amount: inst.amount,
-      paid: inst.paid,
-      status: fixedStatusLabel(inst.paid, overdue),
-      dueLabel: inst.dueDay ? 'dia ' + inst.dueDay : null
-    };
-  });
-  ((mv.carriedIn && mv.carriedIn.installments) || []).forEach(function(c){
-    rows.push({name:c.name + ' (venceu em ' + monthLabel(c.sourceMonth) + ')', amount:c.amount, paid:false, status:'Atrasada', dueLabel: c.dueDay ? 'dia ' + c.dueDay : null});
-  });
-  return rows;
+function summaryVariableRows(mv, key){
+  var own = mv.counted.filter(function(b){ return b.kind === 'variable' && b.home === key; }).map(function(b){ return summaryBillRow(b, key); });
+  own.sort(function(a,b){ return a.sortKey < b.sortKey ? 1 : (a.sortKey > b.sortKey ? -1 : 0); });
+  var others = mv.counted.filter(function(b){ return b.kind === 'variable' && b.home !== key; }).map(function(b){ return summaryBillRow(b, key); });
+  return own.concat(others);
 }
-function summaryVariableRows(mv){
-  var rows = mv.variable.map(function(e){
-    return {
-      name: e.desc,
-      amount: e.amount,
-      paid: !!e.paid,
-      status: fixedStatusLabel(!!e.paid, varIsOverdue(e, viewMonth)),
-      dueLabel: dueLabelFor(varDueIso(e, viewMonth), viewMonth),
-      sortKey: e.date || ''
-    };
+// this month's own bills that count in another month (and why)
+function billMovedWhy(b){
+  if (b.state === 'paid') return 'paga em ' + fmtDate(b.paidOn) + ', depois do vencimento: conta em ' + monthLabel(b.eff);
+  if (b.state === 'planned') return 'programada para ' + fmtDate(b.planOn) + ': conta em ' + monthLabel(b.eff);
+  return 'atrasada: conta em ' + monthLabel(b.eff) + ' (mês atual) até ser paga';
+}
+function summaryMovedRows(mv, key){
+  return mv.bills.filter(function(b){ return b.eff !== key; }).map(function(b){
+    return {name: b.name, amount: b.total, status: BILL_STATUS_LABEL[b.state], why: billMovedWhy(b), bill: b};
   });
-  rows.sort(function(a,b){ return a.sortKey < b.sortKey ? 1 : (a.sortKey > b.sortKey ? -1 : 0); });
-  ((mv.carriedIn && mv.carriedIn.variable) || []).forEach(function(c){
-    rows.push({name:c.name + ' (venceu em ' + monthLabel(c.sourceMonth) + ')', amount:c.amount, paid:false, status:'Atrasada', dueLabel: c.dueIso ? fmtDate(c.dueIso) : null, sortKey:''});
-  });
-  return rows;
 }
 // Monthly bills still waiting for this month's amount (and, in the current month, the ones
 // forgotten in earlier months). They have no amount yet, so they never enter any total.
@@ -2037,20 +2410,28 @@ function summaryToLaunchRows(mv){
       name: it.desc + (other ? ' (de ' + monthLabel(it.month) + ')' : ''),
       shortName: it.desc + (other ? ' (' + shortMonthLabel(it.month) + ')' : ''),
       amount: null, paid: false, status: 'A lançar', dueIso: it.dueIso,
-      dueLabel: it.dueIso ? dueLabelFor(it.dueIso, viewMonth) : null
+      dueLabel: it.dueIso ? dueLabelFor(it.dueIso, viewMonth) : null, notes: []
     };
   });
 }
 function statusEmoji(status){
   if (status === 'Atrasada') return '🔴 ';
   if (status === 'Pendente') return '🟡 ';
+  if (status === 'Programada') return '📅 ';
   if (status === 'A lançar') return '⏳ ';
   return '';
 }
 function dueSuffix(label){
   return label ? ' (' + label + ')' : '';
 }
-var PENDING_ORDER = {'Atrasada':0, 'Pendente':1, 'A lançar':2};
+// "(dia 15, previsão 10/11, juros R$ 12,34)"
+function rowSuffix(r){
+  var parts = [];
+  if (r.dueLabel) parts.push(r.dueLabel);
+  (r.notes || []).forEach(function(n){ parts.push(n); });
+  return parts.length ? ' (' + parts.join(', ') + ')' : '';
+}
+var PENDING_ORDER = {'Atrasada':0, 'Pendente':1, 'Programada':2, 'A lançar':3};
 function collectPendingItems(lists){
   var items = [];
   lists.forEach(function(list){
@@ -2064,16 +2445,18 @@ function collectPendingItems(lists){
 }
 function countPaid(rows){ return rows.filter(function(r){ return r.paid; }).length; }
 function summaryData(){
-  var mv = getMonthViewFull(STATE, viewMonth);
+  var key = viewMonth;
+  var mv = getMonthViewFull(STATE, key);
   var h = STATE.household;
-  var totals = computeMonthTotals(h, mv, viewMonth);
-  var fixedRows = summaryFixedRows(h, mv);
-  var instRows = summaryInstallmentRows(mv);
-  var varRows = summaryVariableRows(mv);
+  var totals = computeMonthTotals(h, mv, key);
+  var fixedRows = summaryRowsOf(mv, key, 'fixed');
+  var instRows = summaryRowsOf(mv, key, 'installment');
+  var varRows = summaryVariableRows(mv, key);
   var launchRows = summaryToLaunchRows(mv);
   return {
     mv: mv, h: h, totals: totals,
     fixedRows: fixedRows, instRows: instRows, varRows: varRows, launchRows: launchRows,
+    movedRows: summaryMovedRows(mv, key),
     fixedPaid: countPaid(fixedRows),
     varCount: instRows.length + varRows.length,
     varPaid: countPaid(instRows) + countPaid(varRows),
@@ -2091,15 +2474,22 @@ function buildSummaryText(){
   var lines = [];
   lines.push('📊 *Nossas Finanças — ' + monthLabel(viewMonth) + '*');
   lines.push('');
+  // this month's bills that are still unpaid but count in another month (late or planned)
+  var movedOpen = d.movedRows.filter(function(r){ return !r.bill.paid; }).length;
   if (d.pending.length){
     lines.push('⚠️ *Pendências (' + d.pending.length + ')*');
+    if (d.pending.some(function(p){ return p.status === 'Atrasada'; })) lines.push('_Contas atrasadas podem ter juros e multa._');
     d.pending.forEach(function(p){
       var when;
-      if (p.status === 'Atrasada') when = p.dueLabel ? 'venceu ' + p.dueLabel : 'atrasada';
+      if (p.status === 'Atrasada') when = (p.bill && p.bill.lateBy === 'plan') ? 'previsão era ' + p.planLabel : (p.dueLabel ? 'venceu ' + p.dueLabel : 'atrasada');
+      else if (p.status === 'Programada') when = 'previsão ' + p.planLabel;
       else if (p.status === 'A lançar') when = 'falta lançar o valor' + (p.dueLabel ? ((p.dueIso && p.dueIso < todayStr()) ? ', venceu ' : ', vence ') + p.dueLabel : '');
       else when = p.dueLabel ? 'vence ' + p.dueLabel : 'pendente';
       lines.push(statusEmoji(p.status) + '*' + p.name + '*' + (p.amount != null ? ' — ' + fmtMoney(p.amount) : '') + ' (' + when + ')');
     });
+    if (movedOpen) lines.push('↪ E mais ' + movedOpen + plural(movedOpen, ' conta deste mês sem pagar, que conta em outro mês', ' contas deste mês sem pagar, que contam em outro mês') + ' (lista no fim).');
+  } else if (movedOpen){
+    lines.push('⚠️ *' + movedOpen + plural(movedOpen, ' conta deste mês ainda não foi paga*', ' contas deste mês ainda não foram pagas*') + ' — ' + plural(movedOpen, 'ela conta', 'elas contam') + ' em outro mês (lista no fim).');
   } else {
     lines.push('✅ *Tudo em dia!* Nenhuma conta pendente ou atrasada.');
   }
@@ -2111,7 +2501,7 @@ function buildSummaryText(){
   lines.push('');
   lines.push('*Contas fixas*' + paidCountText(d.fixedPaid, d.fixedRows.length));
   if (d.fixedRows.length){
-    d.fixedRows.forEach(function(fr){ lines.push(statusEmoji(fr.status) + fr.name + ' — ' + fmtMoney(fr.amount) + dueSuffix(fr.dueLabel)); });
+    d.fixedRows.forEach(function(fr){ lines.push(statusEmoji(fr.status) + fr.name + ' — ' + fmtMoney(fr.amount) + rowSuffix(fr)); });
   } else {
     lines.push('(nenhuma lançada ainda)');
   }
@@ -2120,11 +2510,11 @@ function buildSummaryText(){
   lines.push('*Contas variáveis*' + paidCountText(d.varPaid, d.varCount));
   if (d.instRows.length){
     lines.push('_Parcelas do mês_');
-    d.instRows.forEach(function(ir){ lines.push(statusEmoji(ir.status) + ir.name + ' — ' + fmtMoney(ir.amount) + dueSuffix(ir.dueLabel)); });
+    d.instRows.forEach(function(ir){ lines.push(statusEmoji(ir.status) + ir.name + ' — ' + fmtMoney(ir.amount) + rowSuffix(ir)); });
   }
   if (d.varRows.length){
     if (d.instRows.length) lines.push('_Outros gastos_');
-    d.varRows.forEach(function(vr){ lines.push(statusEmoji(vr.status) + vr.name + ' — ' + fmtMoney(vr.amount) + dueSuffix(vr.dueLabel)); });
+    d.varRows.forEach(function(vr){ lines.push(statusEmoji(vr.status) + vr.name + ' — ' + fmtMoney(vr.amount) + rowSuffix(vr)); });
   }
   if (d.launchRows.length){
     lines.push('_A lançar (valor ainda não informado)_');
@@ -2132,8 +2522,14 @@ function buildSummaryText(){
   }
   if (!d.instRows.length && !d.varRows.length && !d.launchRows.length) lines.push('(nenhuma lançada ainda)');
   lines.push('*Total: ' + fmtMoney(totals.totalVariable) + '*');
+  if (d.movedRows.length){
+    lines.push('');
+    lines.push('_Deste mês, mas contam em outro mês (fora dos totais):_');
+    d.movedRows.forEach(function(mr){ lines.push('↪ ' + mr.name + ' — ' + fmtMoney(mr.amount) + ' (' + mr.why + ')'); });
+  }
   lines.push('');
   lines.push('*Total de contas (fixas + variáveis): ' + fmtMoney(d.totalBills) + '*');
+  if (totals.totalInterest > 0) lines.push('Juros e multas no mês: ' + fmtMoney(totals.totalInterest) + ' (já somados nas contas)');
   if (hasInv) lines.push('*Investimentos: ' + fmtMoney(totals.totalInvestments) + '*');
   lines.push('');
   lines.push('*SALDO FINAL: ' + fmtMoney(totals.saldo) + '*');
@@ -2142,6 +2538,7 @@ function buildSummaryText(){
   return lines.join('\n');
 }
 function paletteSwatch(){
+  if (palette === 'custom' && validCustomColor(customColor)) return customTheme(customColor.color).light.primary;
   for (var pi=0; pi<PALETTES.length; pi++){
     if (PALETTES[pi].id === (palette || 'padrao')) return PALETTES[pi].swatch;
   }
@@ -2159,6 +2556,7 @@ function buildSummaryCanvas(){
     'Pago': {bg:'#DCF0E2', fg:'#1F6A37'},
     'Pendente': {bg:'#FBEBC8', fg:'#7E5207'},
     'Atrasada': {bg:'#F8DED6', fg:'#A3361F'},
+    'Programada': {bg:'#E2ECF8', fg:'#1F5FA8'},
     'A lançar': {bg:'#E3E8EE', fg:'#3A4756'}
   };
   var SANS = 'system-ui,-apple-system,"Segoe UI",Roboto,sans-serif';
@@ -2171,7 +2569,11 @@ function buildSummaryCanvas(){
   function line(label, amount, o){ blocks.push({k:'row', label:label, amount:amount, o:o || {}}); }
   function empty(t){ blocks.push({k:'empty', t:t}); }
   function gap(){ blocks.push({k:'gap'}); }
-  function itemLine(r){ line(r.shortName || r.name, r.amount, {status:r.status, due:r.dueLabel}); }
+  function itemLine(r){
+    var due = r.status === 'Programada' && r.planLabel ? 'prev. ' + r.planLabel : r.dueLabel;
+    if (r.interest > 0) due = (due ? due + ' · ' : '') + 'juros ' + fmtMoney(r.interest);
+    line(r.shortName || r.name, r.amount, {status:r.status, due:due});
+  }
 
   sec('Receitas');
   line(h.person1Name, sumIncomeList(mv.income.person1));
@@ -2200,6 +2602,7 @@ function buildSummaryCanvas(){
   line('Total variáveis', totals.totalVariable, {bold:true});
   gap();
   blocks.push({k:'band', label:'Total de contas (fixas + variáveis)', amount:d.totalBills});
+  if (totals.totalInterest > 0) line('Juros e multas (já somados nas contas)', totals.totalInterest, {noRule:true});
   if (hasInv){
     gap();
     line('Investimentos', totals.totalInvestments, {bold:true, noRule:true});
@@ -2605,8 +3008,12 @@ function addDaysIso(iso, n){
   var d = new Date(parseInt(p[0],10), parseInt(p[1],10) - 1, parseInt(p[2],10) + n);
   return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
 }
-// Everything unpaid that is due between today and today + `days` (and, if asked, what is
-// already overdue), wherever it was entered, earliest first. Paid bills never show up.
+// Everything unpaid that is due -- or expected to be paid (its "previsão") -- between today
+// and today + `days` (and, if asked, what is late and counts in the current month), wherever
+// it was entered, earliest first. Paid bills never show up.
+// fixed bills and parcelas of an earlier month say which month they are from; a variable
+// expense goes by its own due date, whatever month it was saved in
+function upcomingName(b, todayKey){ return b.name + (b.kind !== 'variable' && b.home < todayKey ? ' (de ' + monthLabel(b.home) + ')' : ''); }
 function collectUpcoming(days, showOverdue){
   var today = todayStr();
   var todayKey = monthKeyToday();
@@ -2615,20 +3022,20 @@ function collectUpcoming(days, showOverdue){
   var h = STATE.household;
   var items = [];
   function inWindow(due){ return due >= today && due <= endIso; }
-  function wanted(due, monthIsToday){ return inWindow(due) || (showOverdue && monthIsToday && due < today); }
-  monthRangeKeys(todayKey, endKey).forEach(function(k){
-    var mv = getMonthView(STATE, k);
-    var isTodayMonth = k === todayKey;
-    h.fixedCategories.forEach(function(cat){
-      var f = mv.fixed[cat.id];
-      if (!f || !f.isSet || f.paid || !cat.dueDay) return;
-      var due = dateInMonth(k, cat.dueDay);
-      if (wanted(due, isTodayMonth)) items.push({kind:'fixed', id:cat.id, month:k, name:cat.name, amount:f.amount, due:due});
-    });
-    mv.installmentsActive.forEach(function(inst){
-      if (inst.paid || !inst.dueDay) return;
-      var due = dateInMonth(k, inst.dueDay);
-      if (wanted(due, isTodayMonth)) items.push({kind:'installment', id:inst.id, month:k, name:inst.desc + ' (parcela ' + inst.index + '/' + inst.total + ')', amount:inst.amount, due:due});
+  function add(b, due){ items.push({kind:b.kind, id:b.id, bill:b, month:b.home, name:upcomingName(b, todayKey), amount:b.total, due:due}); }
+  var keys = {};
+  billIndex(STATE).keys.forEach(function(k){ keys[k] = true; });
+  monthRangeKeys(todayKey, endKey).forEach(function(k){ keys[k] = true; });
+  Object.keys(keys).sort().forEach(function(k){
+    monthBills(STATE, k).forEach(function(b){
+      if (b.paid) return;
+      if (b.state === 'planned'){
+        if (inWindow(b.planOn)) add(b, b.planOn);
+      } else if (b.state === 'overdue'){
+        if (showOverdue && b.eff >= todayKey) add(b, b.lateBy === 'plan' ? b.planOn : b.dueIso);
+      } else if (b.dueIso && inWindow(b.dueIso)){
+        add(b, b.dueIso);
+      }
     });
   });
   // monthly bills still without their amount: a bill can be due in another month than the
@@ -2642,20 +3049,6 @@ function collectUpcoming(days, showOverdue){
       items.push({kind:'launch', id:tpl.id, month:k, name:tpl.desc + (k !== todayKey ? ' (de ' + monthLabel(k) + ')' : ''), amount:null, due:due});
     });
   });
-  // variable expenses go by their own due date, whatever month they were saved in
-  Object.keys(STATE.months || {}).forEach(function(k){
-    if (!MONTH_KEY_RE.test(k)) return;
-    (STATE.months[k].variable || []).forEach(function(e){
-      if (!e || e.paid) return;
-      var due = varDueIso(e, k);
-      if (due && ISO_DATE_RE.test(due) && (inWindow(due) || (showOverdue && due < today))) items.push({kind:'variable', id:e.id, month:k, name:e.desc, amount:e.amount, due:due});
-    });
-  });
-  if (showOverdue){
-    var carried = collectCarriedForward(STATE, todayKey);
-    carried.fixed.forEach(function(c){ items.push({kind:'fixed', id:c.catId, month:c.sourceMonth, name:c.name + ' (de ' + monthLabel(c.sourceMonth) + ')', amount:c.amount, due:dateInMonth(c.sourceMonth, c.dueDay)}); });
-    carried.installments.forEach(function(c){ items.push({kind:'installment', id:c.instId, month:c.sourceMonth, name:c.name + ' (de ' + monthLabel(c.sourceMonth) + ')', amount:c.amount, due:dateInMonth(c.sourceMonth, c.dueDay)}); });
-  }
   items.sort(function(a, b){
     if (a.due !== b.due) return a.due < b.due ? -1 : 1;
     return (b.amount || 0) - (a.amount || 0);
@@ -2669,6 +3062,19 @@ function relativeDue(due){
   if (d > 1) return 'vence em ' + d + ' dias';
   if (d === -1) return 'venceu ontem';
   return 'venceu há ' + (-d) + ' dias';
+}
+function relativePlan(day){
+  var d = daysFromTo(todayStr(), day);
+  if (d === 0) return 'previsão de pagamento: hoje';
+  if (d === 1) return 'previsão de pagamento: amanhã';
+  return 'previsão de pagamento: em ' + d + ' dias';
+}
+// the little status button on a bill: it opens the window to change the status
+function billPill(b){
+  var label = BILL_STATUS_LABEL[b.state];
+  return '<button type="button" class="pill ' + (b.state === 'paid' ? 'paid' : (b.state === 'overdue' ? 'overdue' : (b.state === 'planned' ? 'planned' : 'pending'))) + '"' +
+    ' data-action="open-status" data-kind="' + b.kind + '" data-id="' + esc(b.id) + '" data-month="' + b.home + '"' +
+    ' aria-haspopup="dialog" aria-label="' + esc(label + ': ' + b.name + ' — toque para mudar a situação') + '">' + label + '</button>';
 }
 var UPCOMING_KIND = {fixed:'Conta fixa', installment:'Parcela', variable:'Conta variável', launch:'Conta mensal · falta o valor'};
 function renderUpcoming(){
@@ -2686,21 +3092,26 @@ function renderUpcoming(){
     var total = 0, toLaunch = 0;
     body = '<div class="due-list">' + items.map(function(it){
       if (it.amount == null) toLaunch++; else total += it.amount;
-      var overdue = it.due < today;
+      var b = it.bill;
+      var planned = !!(b && b.state === 'planned');
+      var overdue = b ? b.state === 'overdue' : it.due < today;
       var dd = it.due.slice(8, 10), mm = (MONTH_NAMES[parseInt(it.due.slice(5, 7), 10) - 1] || '').slice(0, 3);
-      var action;
+      var action, when;
       if (it.kind === 'launch'){
         action = '<button type="button" class="btn-mini primary" data-action="launch-recurring" data-tplid="' + esc(it.id) + '" data-month="' + it.month + '">Lançar</button>';
+        when = relativeDue(it.due);
       } else {
-        var attrs = it.kind === 'fixed' ? 'data-action="toggle-paid" data-catid="' + esc(it.id) + '"' :
-          (it.kind === 'installment' ? 'data-action="toggle-installment-paid" data-instid="' + esc(it.id) + '"' : 'data-action="toggle-variable-paid" data-id="' + esc(it.id) + '"');
-        action = '<button type="button" class="pill ' + (overdue ? 'overdue' : 'pending') + '" ' + attrs + ' data-month="' + it.month + '" data-from-due="1" data-name="' + esc(it.name) + '" aria-label="' + (overdue ? 'Atrasada' : 'Pendente') + ' — toque para marcar como pago">' + (overdue ? 'Atrasada' : 'Pendente') + '</button>';
+        action = billPill(b);
+        if (planned) when = relativePlan(it.due);
+        else if (b.lateBy === 'plan') when = 'previsão era ' + fmtDate(b.planOn) + ' · há ' + pluralDias(b.lateDays);
+        else when = relativeDue(it.due);
+        if (b.interest > 0) when += ' · com juros';
       }
-      return '<div class="due-row' + (overdue ? ' is-overdue' : '') + '">' +
+      return '<div class="due-row' + (overdue ? ' is-overdue' : (planned ? ' is-planned' : '')) + '">' +
         '<div class="due-date" aria-hidden="true"><span class="dd">' + dd + '</span><span class="mm">' + mm + '</span></div>' +
         '<div class="row-main">' +
           '<div class="row-title">' + esc(it.name) + '</div>' +
-          '<div class="row-sub">' + UPCOMING_KIND[it.kind] + ' · ' + relativeDue(it.due) + '</div>' +
+          '<div class="row-sub">' + UPCOMING_KIND[it.kind] + ' · ' + esc(when) + (b && riskTagHtml(b) ? ' ' + riskTagHtml(b) : '') + '</div>' +
         '</div>' +
         '<div class="var-amt-wrap">' +
           '<div class="var-amt">' + (it.amount == null ? '—' : fmtMoney(it.amount)) + '</div>' +
@@ -2711,7 +3122,7 @@ function renderUpcoming(){
     '<div class="due-total"><span>Total' + (toLaunch ? ' (sem as ' + toLaunch + ' a lançar)' : '') + '</span><span class="var-amt">' + fmtMoney(total) + '</span></div>';
   }
   return '<section class="card" id="sec-vencimentos"><div class="card-head"><div class="card-head-main"><span class="card-icon" aria-hidden="true">📅</span><h2 class="card-title">Próximos vencimentos</h2></div></div>' +
-    '<p class="card-sub">Contas ainda não pagas, da mais próxima para a mais distante · hoje é ' + esc(fmtDate(today)) + '</p>' + tools + body + '</section>';
+    '<p class="card-sub">Contas ainda não pagas, da mais próxima para a mais distante (pela data de vencimento ou da previsão de pagamento) · hoje é ' + esc(fmtDate(today)) + '</p>' + tools + body + '</section>';
 }
 
 /* ---------- period summary image (month by month) ---------- */
@@ -3094,64 +3505,62 @@ function chartCard(id, icon, title, inner){
 }
 
 /* -- 1. What is still unpaid in the month (pending + overdue) -- */
+// the date that matters for an unpaid bill: its forecast when it has one, else its due date
+function billWhenIso(b){ return (b.state === 'planned' || b.lateBy === 'plan') ? b.planOn : b.dueIso; }
 function unpaidBreakdown(key){
-  var h = STATE.household;
   var mv = getMonthViewFull(STATE, key);
-  var away = mv.carryAway || {fixed:{}, inst:{}, variable:{}};
   var out = {
     paid: {amount:0, count:0}, pending: {amount:0, count:0}, overdue: {amount:0, count:0},
-    moved: {amount:0, count:0},
+    // this month's own bills that count in another month (late in the current month,
+    // planned for later, or paid late in a later month): only mentioned here
+    moved: {late: {amount:0, count:0}, planned: {amount:0, count:0}, paid: {amount:0, count:0}},
     items: [],
     toLaunch: (mv.toLaunch || []).length + (mv.toLaunchBacklog || []).length
   };
-  function add(it){
-    var g = it.paid ? 'paid' : (it.overdue ? 'overdue' : 'pending');
-    out[g].amount += it.amount;
+  mv.counted.forEach(function(b){
+    var g = b.state === 'paid' ? 'paid' : (b.state === 'overdue' ? 'overdue' : 'pending');
+    out[g].amount += b.total;
     out[g].count++;
-    if (!it.paid) out.items.push(it);
-  }
-  // overdue bills of an earlier month count in the current month until paid (same rule as
-  // the month's totals), so here they are only mentioned
-  function moved(amount){ out.moved.amount += amount; out.moved.count++; }
-  h.fixedCategories.forEach(function(cat){
-    var f = mv.fixed[cat.id];
-    if (!f || !f.isSet) return;
-    if (away.fixed[cat.id]){ moved(f.amount); return; }
-    add({kind:'fixed', name:cat.name, amount:f.amount, paid:!!f.paid, overdue:isPastDue(key, cat.dueDay, f.paid), due: cat.dueDay ? dateInMonth(key, cat.dueDay) : null});
+    if (!b.paid) out.items.push(b);
   });
-  mv.installmentsActive.forEach(function(inst){
-    if (away.inst[inst.id]){ moved(inst.amount); return; }
-    add({kind:'installment', name:inst.desc + ' (parcela ' + inst.index + '/' + inst.total + ')', amount:inst.amount, paid:!!inst.paid, overdue:isPastDue(key, inst.dueDay, inst.paid), due: inst.dueDay ? dateInMonth(key, inst.dueDay) : null});
+  mv.bills.forEach(function(b){
+    if (b.eff === key) return;
+    var mg = b.state === 'paid' ? 'paid' : (b.state === 'planned' ? 'planned' : 'late');
+    out.moved[mg].amount += b.total;
+    out.moved[mg].count++;
   });
-  mv.variable.forEach(function(e){
-    if (away.variable[e.id]){ moved(e.amount); return; }
-    var due = varDueIso(e, key);
-    add({kind:'variable', name:e.desc, amount:e.amount, paid:!!e.paid, overdue:varIsOverdue(e, key), due: (due && ISO_DATE_RE.test(due)) ? due : null});
-  });
-  var c = mv.carriedIn || {fixed:[], installments:[], variable:[]};
-  c.fixed.forEach(function(it){ add({kind:'fixed', name:it.name, from:it.sourceMonth, amount:it.amount, paid:false, overdue:true, due: it.dueDay ? dateInMonth(it.sourceMonth, it.dueDay) : null}); });
-  c.installments.forEach(function(it){ add({kind:'installment', name:it.name, from:it.sourceMonth, amount:it.amount, paid:false, overdue:true, due: it.dueDay ? dateInMonth(it.sourceMonth, it.dueDay) : null}); });
-  c.variable.forEach(function(it){ add({kind:'variable', name:it.name, from:it.sourceMonth, amount:it.amount, paid:false, overdue:true, due: (it.dueIso && ISO_DATE_RE.test(it.dueIso)) ? it.dueIso : null}); });
-  ['paid', 'pending', 'overdue', 'moved'].forEach(function(g){ out[g].amount = round2(out[g].amount); });
+  ['paid', 'pending', 'overdue'].forEach(function(g){ out[g].amount = round2(out[g].amount); });
+  ['late', 'planned', 'paid'].forEach(function(g){ out.moved[g].amount = round2(out.moved[g].amount); });
   out.total = round2(out.paid.amount + out.pending.amount + out.overdue.amount);
   out.unpaid = round2(out.pending.amount + out.overdue.amount);
   out.items.sort(function(a, b){
-    if (a.overdue !== b.overdue) return a.overdue ? -1 : 1;
-    var da = a.due || '9999-99-99', db = b.due || '9999-99-99';
+    var ao = a.state === 'overdue', bo = b.state === 'overdue';
+    if (ao !== bo) return ao ? -1 : 1;
+    var da = billWhenIso(a) || '9999-99-99', db = billWhenIso(b) || '9999-99-99';
     if (da !== db) return da < db ? -1 : 1;
-    return b.amount - a.amount;
+    return b.total - a.total;
   });
   return out;
 }
 var UNPAID_KIND = {fixed:'Conta fixa', installment:'Parcela', variable:'Conta variável'};
+function plural(n, one, many){ return n === 1 ? one : many; }
 function renderUnpaidCard(key){
   var b = unpaidBreakdown(key);
   var count = b.paid.count + b.pending.count + b.overdue.count;
   var notes = '';
-  if (b.moved.count){
-    var oneM = b.moved.count === 1;
-    notes += '<p class="chart-note">⏰ ' + b.moved.count + ' conta' + (oneM ? '' : 's') + ' atrasada' + (oneM ? '' : 's') + ' deste mês (' + fmtMoney(b.moved.amount) + ') ' +
+  var ml = b.moved.late, mp = b.moved.planned, mpd = b.moved.paid;
+  if (ml.count){
+    var oneM = ml.count === 1;
+    notes += '<p class="chart-note">⏰ ' + ml.count + ' conta' + (oneM ? '' : 's') + ' atrasada' + (oneM ? '' : 's') + ' deste mês (' + fmtMoney(ml.amount) + ') ' +
       (oneM ? 'passou' : 'passaram') + ' a contar em ' + esc(monthLabel(monthKeyToday())) + ', o mês atual, até ' + (oneM ? 'ser paga' : 'serem pagas') + '.</p>';
+  }
+  if (mp.count){
+    notes += '<p class="chart-note">📅 ' + mp.count + plural(mp.count, ' conta deste mês (', ' contas deste mês (') + fmtMoney(mp.amount) + ') ' +
+      plural(mp.count, 'foi programada para depois e conta no mês da previsão.', 'foram programadas para depois e contam no mês da previsão.') + '</p>';
+  }
+  if (mpd.count){
+    notes += '<p class="chart-note">✅ ' + mpd.count + plural(mpd.count, ' conta deste mês (', ' contas deste mês (') + fmtMoney(mpd.amount) + ') ' +
+      plural(mpd.count, 'foi paga com atraso em outro mês e conta lá.', 'foram pagas com atraso em outro mês e contam lá.') + '</p>';
   }
   if (b.toLaunch){
     notes += '<p class="chart-note">🔁 ' + (b.toLaunch === 1 ? '1 conta mensal ainda sem o valor — não entra' : b.toLaunch + ' contas mensais ainda sem o valor — não entram') + ' na conta.</p>';
@@ -3180,23 +3589,31 @@ function renderUnpaidCard(key){
       '<span class="lg-name"><span aria-hidden="true">' + x.icon + '</span> ' + x.label + ' <span class="lg-count">· ' + x.g.count + ' conta' + (x.g.count === 1 ? '' : 's') + '</span></span> ' +
       '<span class="lg-val">' + fmtMoney(x.g.amount) + '</span></div>';
   }).join('') + '</div>';
+  var plannedCount = b.items.filter(function(it){ return it.state === 'planned'; }).length;
+  if (plannedCount) legend += '<p class="lt-hint">' + plannedCount + plural(plannedCount, ' delas está programada (com previsão de pagamento).', ' delas estão programadas (com previsão de pagamento).') + '</p>';
   var list = '';
   if (b.items.length){
     list = '<button type="button" class="btn ghost chart-list-btn" data-action="toggle-unpaid-list" aria-expanded="' + (unpaidListOpen ? 'true' : 'false') + '">' +
       (unpaidListOpen ? 'Ocultar a lista' : 'Ver ' + (b.items.length === 1 ? 'a conta que falta' : 'as ' + b.items.length + ' contas que faltam')) + '</button>';
     if (unpaidListOpen){
       list += '<div class="due-list unpaid-list">' + b.items.map(function(it){
-        var dd = it.due ? it.due.slice(8, 10) : '—';
-        var mm = it.due ? shortMonthName(it.due.slice(0, 7)) : '';
-        var when = it.due ? relativeDue(it.due) : 'sem vencimento';
-        return '<div class="due-row' + (it.overdue ? ' is-overdue' : '') + '">' +
+        var due = billWhenIso(it);
+        var dd = due ? due.slice(8, 10) : '—';
+        var mm = due ? shortMonthName(due.slice(0, 7)) : '';
+        var when;
+        if (it.state === 'planned') when = relativePlan(due);
+        else if (it.lateBy === 'plan') when = 'previsão era ' + fmtDate(it.planOn);
+        else when = due ? relativeDue(due) : 'sem vencimento';
+        if (it.interest > 0) when += ' · com juros';
+        var cls = it.state === 'overdue' ? 'overdue' : (it.state === 'planned' ? 'planned' : 'pending');
+        return '<div class="due-row' + (it.state === 'overdue' ? ' is-overdue' : (it.state === 'planned' ? ' is-planned' : '')) + '">' +
           '<div class="due-date" aria-hidden="true"><span class="dd">' + dd + '</span><span class="mm">' + mm + '</span></div>' +
-          '<div class="row-main"><div class="row-title">' + esc(it.name) + (it.from ? ' <span class="lg-count">(de ' + esc(monthLabel(it.from)) + ')</span>' : '') + '</div>' +
-          '<div class="row-sub">' + UNPAID_KIND[it.kind] + ' · ' + esc(when) + '</div></div>' +
-          '<div class="var-amt-wrap"><div class="var-amt">' + fmtMoney(it.amount) + '</div><span class="pill ' + (it.overdue ? 'overdue' : 'pending') + '">' + (it.overdue ? 'Atrasada' : 'Pendente') + '</span></div>' +
+          '<div class="row-main"><div class="row-title">' + esc(it.name) + (it.home !== key ? ' <span class="lg-count">(de ' + esc(monthLabel(it.home)) + ')</span>' : '') + '</div>' +
+          '<div class="row-sub">' + UNPAID_KIND[it.kind] + ' · ' + esc(when) + (riskTagHtml(it) ? ' ' + riskTagHtml(it) : '') + '</div></div>' +
+          '<div class="var-amt-wrap"><div class="var-amt">' + fmtMoney(it.total) + '</div><span class="pill ' + cls + '">' + BILL_STATUS_LABEL[it.state] + '</span></div>' +
         '</div>';
       }).join('') + '</div>' +
-      '<p class="chart-note">Para marcar como paga, use as listas da tela principal ou o card "Próximos vencimentos".</p>';
+      '<p class="chart-note">Para mudar a situação de uma conta (paga, pendente ou com previsão de pagamento), toque na etiqueta dela nas listas da tela principal ou em "Próximos vencimentos".</p>';
     }
   }
   return chartCard('graf-falta', '⏳', 'Falta pagar', hero + bar + legend + notes + list);
@@ -3204,31 +3621,21 @@ function renderUnpaidCard(key){
 
 /* -- 2. Where the money went (moved here from the main screen) -- */
 function categoryItems(h, mv){
-  // Same rules as the month's totals: what moved to the current month as "atrasada"
-  // leaves this chart, and what arrived from earlier months shows up here.
-  var away = mv.carryAway || {fixed:{}, inst:{}, variable:{}};
-  var carried = mv.carriedIn || {fixed:[], installments:[], variable:[]};
+  // Same rules as the month's totals: only what counts in this month, with interest included
+  // (a bill is shown by its own name and its whole amount).
   var fixedAmt = {};
-  h.fixedCategories.forEach(function(cat){
-    var f = mv.fixed[cat.id];
-    if (f && f.isSet && !away.fixed[cat.id]) fixedAmt[cat.id] = (fixedAmt[cat.id] || 0) + f.amount;
+  var catIds = {};
+  h.variableCategories.forEach(function(c){ catIds[c.id] = true; });
+  var byVarCat = {};
+  (mv.counted || []).forEach(function(b){
+    if (b.kind === 'fixed'){ fixedAmt[b.id] = (fixedAmt[b.id] || 0) + b.total; return; }
+    var k = (b.categoryId && catIds[b.categoryId]) ? b.categoryId : '__semcat__';
+    byVarCat[k] = (byVarCat[k] || 0) + b.total;
   });
-  carried.fixed.forEach(function(c){ fixedAmt[c.catId] = (fixedAmt[c.catId] || 0) + c.amount; });
   var items = [];
   h.fixedCategories.forEach(function(cat){
     if (fixedAmt[cat.id] > 0) items.push({name:cat.name, amount:fixedAmt[cat.id]});
   });
-  var catIds = {};
-  h.variableCategories.forEach(function(c){ catIds[c.id] = true; });
-  var byVarCat = {};
-  function addToVarCat(catId, amount){
-    var k = (catId && catIds[catId]) ? catId : '__semcat__';
-    byVarCat[k] = (byVarCat[k] || 0) + amount;
-  }
-  mv.variable.forEach(function(e){ if (!away.variable[e.id]) addToVarCat(e.categoryId, e.amount); });
-  mv.installmentsActive.forEach(function(inst){ if (!away.inst[inst.id]) addToVarCat(inst.categoryId, inst.amount); });
-  carried.installments.forEach(function(c){ addToVarCat(c.categoryId, c.amount); });
-  carried.variable.forEach(function(c){ addToVarCat(c.categoryId, c.amount); });
   h.variableCategories.forEach(function(cat){
     if (byVarCat[cat.id] > 0) items.push({name:cat.name, amount:byVarCat[cat.id]});
   });
@@ -3271,14 +3678,14 @@ function renderCategoryCard(key){
   return chartCard('graf-categorias', '🥧', 'Para onde foi o dinheiro', inner);
 }
 
-/* -- period control (scopes the three charts below it) -- */
+/* -- period control (scopes the charts below it) -- */
 function renderChartTools(){
   return '<div class="list-tools chart-tools" role="group" aria-label="Período dos gráficos">' +
     '<div class="lt-row"><span class="lt-label">Período</span><div class="chip-group">' + CHART_RANGES.map(function(n){
       var on = chartsView.range === n;
       return '<button type="button" class="chip' + (on ? ' active' : '') + '" data-action="chart-range" data-value="' + n + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + n + ' meses</button>';
     }).join('') + '</div></div>' +
-    '<div class="lt-hint">Vale para os três gráficos abaixo. Toque numa coluna para ver os valores daquele mês.</div>' +
+    '<div class="lt-hint">Vale para os gráficos abaixo. Toque numa coluna para ver os valores daquele mês.</div>' +
   '</div>';
 }
 
@@ -3447,18 +3854,96 @@ function renderBalanceChart(endKey){
     (hasFuture && chartTableOpen.saldo ? FUTURE_NOTE : ''));
 }
 
-/* -- 5. What is already committed in the coming months (parcelas + "valor fixo" bills) -- */
+/* -- 5. Interest and fines, month by month ("só para ter uma ideia") -- */
+function interestRow(k){
+  var mv = getMonthView(STATE, k);
+  var r = {key:k, interest:0, base:0, bills:[]};
+  mv.counted.forEach(function(b){
+    if (b.interest > 0){ r.interest += b.interest; r.base += b.amount; r.bills.push(b); }
+  });
+  r.interest = round2(r.interest);
+  r.base = round2(r.base);
+  r.bills.sort(function(a, b){ return b.interest - a.interest; });
+  return r;
+}
+var INTEREST_MAX_ROWS = 6;
+function renderInterestChart(endKey){
+  var title = 'Juros e multas';
+  var keys = chartMonthsBack(endKey, chartsView.range);
+  var caption = '<p class="chart-caption">Quanto as contas marcadas com "Teve juros ou multa" custaram a mais, no mês em que cada uma conta. Os outros gráficos já mostram essas contas com o valor total.</p>';
+  if (!keys.length) return chartCard('graf-juros', '💸', title, caption + '<p class="empty-note">Ainda não há meses com lançamentos até ' + esc(monthLabel(endKey)) + '.</p>');
+  var todayKey = monthKeyToday();
+  var rows = keys.map(interestRow);
+  var sum = 0, base = 0, count = 0;
+  rows.forEach(function(r){ sum += r.interest; base += r.base; count += r.bills.length; });
+  sum = round2(sum);
+  if (!(sum > 0)){
+    return chartCard('graf-juros', '💸', title, caption + '<p class="empty-note">Nenhuma conta com juros ou multa ' + esc(periodPhrase(keys)) + '. Quando uma conta atrasar e vier com juros, toque na situação dela, marque "Teve juros ou multa" e informe o valor atualizado.</p>');
+  }
+  var hasFuture = keys[keys.length - 1] > todayKey;
+  var sel = pickFor('juros', keys, endKey);
+  var selRow = rows[keys.indexOf(sel)];
+  var box = chartBox(keys.length);
+  var max = 0;
+  rows.forEach(function(r){ if (r.interest > max) max = r.interest; });
+  var sc = chartScale(0, max, box);
+  var bw = Math.min(24, Math.max(4, box.band * 0.6));
+  var svg = chartSvgOpen(box, title + ', de ' + monthLabel(keys[0]) + ' a ' + monthLabel(keys[keys.length - 1])) +
+    selBandSvg(keys, box, sel, bw) + axisSvg(sc, box);
+  var marks = [];
+  rows.forEach(function(r, i){
+    var x = box.left + box.band * i + (box.band - bw) / 2;
+    var d = colPath(x, bw, sc.y(0), sc.y(r.interest));
+    if (d){
+      svg += '<path class="col-main' + (r.key > todayKey ? ' col-future' : '') + '" data-month="' + r.key + '" d="' + d + '"/>';
+      marks.push({x0: x, x1: x + bw, y: sc.y(r.interest)});
+    }
+  });
+  if (selRow.interest > 0){
+    var si = keys.indexOf(sel);
+    svg += capLabelSvg('R$ ' + fmtCompact(selRow.interest), box.left + box.band * (si + 0.5), sc.y(selRow.interest), box, false, marks);
+  }
+  svg += xAxisSvg(keys, box, sel) + hitAreasSvg('juros', keys, box, sel, function(k){
+    var r = rows[keys.indexOf(k)];
+    return monthLabel(k) + ': ' + (r.interest > 0 ? 'juros e multas de ' + fmtMoney(r.interest) + ' em ' + r.bills.length + ' ' + plural(r.bills.length, 'conta', 'contas') : 'sem juros');
+  }) + '</svg>';
+  var sub = '<strong class="money">' + fmtMoney(sum) + '</strong> em juros e multas ' + esc(periodPhrase(keys)) + ', em ' + count + ' ' + plural(count, 'conta', 'contas') +
+    (base > 0 ? ' — ' + fmtPct(sum / base * 100) + ' a mais sobre o valor lançado ' + plural(count, 'dela', 'delas') : '') + '.';
+  var detail = '<strong>' + esc(monthLabel(sel)) + '</strong>' + (sel > todayKey ? ' (previsão)' : '') + ': ';
+  var list = '';
+  if (selRow.interest > 0){
+    detail += '<span class="money">' + fmtMoney(selRow.interest) + '</span> a mais em ' + selRow.bills.length + ' ' + plural(selRow.bills.length, 'conta', 'contas') + '.';
+    list = '<ul class="interest-list">' + selRow.bills.slice(0, INTEREST_MAX_ROWS).map(function(b){
+      return '<li><span class="il-name">' + esc(b.name) + (b.home !== sel ? ' <span class="lg-count">(de ' + esc(shortMonthLabel(b.home)) + ')</span>' : '') +
+        ' <span class="lg-count">' + fmtMoney(b.amount) + ' → ' + fmtMoney(b.total) + '</span></span><span class="il-val">+' + fmtMoney(b.interest) + '</span></li>';
+    }).join('') + '</ul>' +
+    (selRow.bills.length > INTEREST_MAX_ROWS ? '<p class="lt-hint">e mais ' + (selRow.bills.length - INTEREST_MAX_ROWS) + '.</p>' : '');
+  } else {
+    detail += 'nenhuma conta com juros.';
+  }
+  var table = chartTable('juros', ['Mês', 'Contas', 'Juros'], rows.map(function(r){
+    return {cls: r.key === sel ? 'sel' : '', cells:[shortMonthLabel(r.key) + (r.key > todayKey ? '*' : ''), String(r.bills.length), fmtNum(r.interest)]};
+  }));
+  return chartCard('graf-juros', '💸', title,
+    '<p class="chart-sub">' + sub + '</p>' + caption + svg +
+    '<p class="chart-detail" aria-live="polite">' + detail + '</p>' + list + chartTableToggle('juros') + table +
+    (hasFuture && chartTableOpen.juros ? '<p class="lt-hint">* mês futuro: contas programadas para lá que já têm o valor com juros.</p>' : ''));
+}
+
+/* -- 6. What is already committed in the coming months -- */
+// parcelas + fixed bills (in later months, only "valor fixo" ones have an amount) + bills of
+// other months that count there (late in the current month, or planned for that month)
 function commitmentRows(fromKey, n){
   return monthRangeKeys(fromKey, shiftMonth(fromKey, n - 1)).map(function(k){
     var mv = getMonthView(STATE, k);
-    var inst = 0, fixed = 0;
-    mv.installmentsActive.forEach(function(i){ inst += i.amount; });
-    STATE.household.fixedCategories.forEach(function(cat){
-      var f = mv.fixed[cat.id];
-      if (f && f.isSet) fixed += f.amount;
+    var inst = 0, fixed = 0, other = 0;
+    mv.counted.forEach(function(b){
+      if (b.home !== k) other += b.total;
+      else if (b.kind === 'installment') inst += b.total;
+      else if (b.kind === 'fixed') fixed += b.total;
     });
     return {
-      key: k, installments: round2(inst), fixed: round2(fixed), total: round2(inst + fixed),
+      key: k, installments: round2(inst), fixed: round2(fixed), other: round2(other), total: round2(inst + fixed + other),
       income: round2(sumIncomeList(mv.income.person1) + sumIncomeList(mv.income.person2))
     };
   });
@@ -3474,6 +3959,9 @@ function endingInstallments(fromKey, toKey){
   return out.sort(function(a, b){ return a.end !== b.end ? (a.end < b.end ? -1 : 1) : b.amount - a.amount; });
 }
 var ENDING_MAX_ROWS = 6;
+// a diagonal texture (same color as the parcelas): "de outros meses" is told apart by its
+// pattern, whatever color the app is using
+var HATCH_DEFS = '<defs><pattern id="nf-hatch" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(45)"><line class="hatch-line" x1="0" y1="0" x2="0" y2="5"/></pattern></defs>';
 function renderCommitmentsChart(viewKey){
   var title = 'Compromissos dos próximos meses';
   var todayKey = monthKeyToday();
@@ -3481,10 +3969,11 @@ function renderCommitmentsChart(viewKey){
   var rows = commitmentRows(fromKey, chartsView.range);
   var keys = rows.map(function(r){ return r.key; });
   var toKey = keys[keys.length - 1];
-  var caption = '<p class="chart-caption">O que já está lançado de ' + esc(shortMonthLabel(fromKey)) + ' a ' + esc(shortMonthLabel(toKey)) + ': parcelas e contas fixas (nos meses seguintes, só as que têm valor fixo). Gastos variáveis e contas que mudam todo mês, como cartões, não entram.</p>';
+  var caption = '<p class="chart-caption">O que já está lançado de ' + esc(shortMonthLabel(fromKey)) + ' a ' + esc(shortMonthLabel(toKey)) + ': parcelas, contas fixas (nos meses seguintes, só as que têm valor fixo) e contas de outros meses que passaram a contar no mês (atrasadas ou programadas). Gastos variáveis do próprio mês e contas que mudam todo mês, como cartões, não entram.</p>';
   var anything = rows.some(function(r){ return r.total > 0; });
-  if (!anything) return chartCard('graf-compromissos', '🗓️', title, caption + '<p class="empty-note">Nenhuma parcela ou conta com valor fixo nesses meses.</p>');
+  if (!anything) return chartCard('graf-compromissos', '🗓️', title, caption + '<p class="empty-note">Nenhuma parcela, conta com valor fixo ou conta programada nesses meses.</p>');
   var anyIncome = rows.some(function(r){ return r.income > 0; });
+  var anyOther = rows.some(function(r){ return r.other > 0; });
   var sel = pickFor('compromissos', keys, fromKey);
   var selRow = rows[keys.indexOf(sel)];
   var box = chartBox(keys.length);
@@ -3493,22 +3982,22 @@ function renderCommitmentsChart(viewKey){
   var sc = chartScale(0, mx, box);
   var y0 = sc.y(0);
   var bw = Math.min(24, Math.max(4, box.band * 0.6));
-  var svg = chartSvgOpen(box, title + ', de ' + monthLabel(fromKey) + ' a ' + monthLabel(toKey)) + selBandSvg(keys, box, sel, bw) + axisSvg(sc, box);
+  var svg = chartSvgOpen(box, title + ', de ' + monthLabel(fromKey) + ' a ' + monthLabel(toKey)) + (anyOther ? HATCH_DEFS : '') + selBandSvg(keys, box, sel, bw) + axisSvg(sc, box);
   var marks = [];
   rows.forEach(function(r, i){
     var x = box.left + box.band * i + (box.band - bw) / 2;
-    var yInst = sc.y(r.installments);
-    var hasTop = r.fixed > 0;
     if (r.total > 0) marks.push({x0: x, x1: x + bw, y: sc.y(r.total)});
-    var d1 = colPath(x, bw, y0, yInst, !hasTop);
-    if (d1) svg += '<path class="col-main" data-month="' + r.key + '" data-series="parcelas" d="' + d1 + '"/>';
-    if (hasTop){
-      // stacked on top of the parcelas, with a 2px gap
-      var base = d1 ? yInst - 2 : y0;
-      var top = Math.min(base - 1, sc.y(r.total));
-      var d2 = colPath(x, bw, base, top);
-      if (d2) svg += '<path class="col-muted" data-month="' + r.key + '" data-series="fixas" d="' + d2 + '"/>';
-    }
+    var segs = [['col-main', 'parcelas', r.installments], ['col-muted', 'fixas', r.fixed], ['col-hatch', 'outros', r.other]].filter(function(sg){ return sg[2] > 0; });
+    var acc = 0, prevTop = null;
+    segs.forEach(function(sg, si){
+      acc += sg[2];
+      // stacked with a 2px gap; only the top one has rounded corners
+      var from = prevTop == null ? y0 : prevTop - 2;
+      var to = prevTop == null ? sc.y(acc) : Math.min(from - 1, sc.y(acc));
+      var d = colPath(x, bw, from, to, si === segs.length - 1);
+      if (d) svg += '<path class="' + sg[0] + '"' + (sg[0] === 'col-hatch' ? ' fill="url(#nf-hatch)"' : '') + ' data-month="' + r.key + '" data-series="' + sg[1] + '" d="' + d + '"/>';
+      prevTop = to;
+    });
   });
   if (anyIncome){
     var pts = rows.map(function(r, i){ return svgNum(box.left + box.band * (i + 0.5)) + ',' + svgNum(sc.y(r.income)); });
@@ -3524,10 +4013,11 @@ function renderCommitmentsChart(viewKey){
   }
   svg += xAxisSvg(keys, box, sel) + hitAreasSvg('compromissos', keys, box, sel, function(k){
     var r = rows[keys.indexOf(k)];
-    return monthLabel(k) + ': parcelas ' + fmtMoney(r.installments) + ', contas fixas ' + fmtMoney(r.fixed) + (r.income > 0 ? ', renda prevista ' + fmtMoney(r.income) : '');
+    return monthLabel(k) + ': parcelas ' + fmtMoney(r.installments) + ', contas fixas ' + fmtMoney(r.fixed) + (r.other > 0 ? ', de outros meses ' + fmtMoney(r.other) : '') + (r.income > 0 ? ', renda prevista ' + fmtMoney(r.income) : '');
   }) + '</svg>';
-  var legend = legendInline([['col-main-bg', 'Parcelas'], ['col-muted-bg', 'Contas fixas'], anyIncome && ['line', 'Renda prevista']]);
+  var legend = legendInline([['col-main-bg', 'Parcelas'], ['col-muted-bg', 'Contas fixas'], anyOther && ['hatch', 'De outros meses'], anyIncome && ['line', 'Renda prevista']]);
   var detail = '<strong>' + esc(monthLabel(sel)) + '</strong>: parcelas ' + fmtMoney(selRow.installments) + ' + contas fixas ' + fmtMoney(selRow.fixed) +
+    (selRow.other > 0 ? ' + de outros meses ' + fmtMoney(selRow.other) : '') +
     ' = <span class="money">' + fmtMoney(selRow.total) + '</span>';
   if (selRow.income > 0) detail += ' · ' + fmtPct(selRow.total / selRow.income * 100) + ' da renda prevista (' + fmtMoney(selRow.income) + ')';
   var ending = endingInstallments(fromKey, toKey);
@@ -3541,8 +4031,9 @@ function renderCommitmentsChart(viewKey){
       (ending.length > ENDING_MAX_ROWS ? '<p class="lt-hint">e mais ' + (ending.length - ENDING_MAX_ROWS) + '.</p>' : '') +
     '</div>';
   }
-  var table = chartTable('compromissos', ['Mês', 'Parcelas', 'Fixas', 'Total', 'Renda prev.'], rows.map(function(r){
-    return {cls: r.key === sel ? 'sel' : '', cells:[shortMonthLabel(r.key), fmtNum(r.installments), fmtNum(r.fixed), fmtNum(r.total), fmtNum(r.income)]};
+  var head = ['Mês', 'Parcelas', 'Fixas'].concat(anyOther ? ['Outros meses'] : []).concat(['Total', 'Renda prev.']);
+  var table = chartTable('compromissos', head, rows.map(function(r){
+    return {cls: r.key === sel ? 'sel' : '', cells:[shortMonthLabel(r.key), fmtNum(r.installments), fmtNum(r.fixed)].concat(anyOther ? [fmtNum(r.other)] : []).concat([fmtNum(r.total), fmtNum(r.income)])};
   }));
   return chartCard('graf-compromissos', '🗓️', title,
     caption + legend + svg + '<p class="chart-detail" aria-live="polite">' + detail + '</p>' + chartTableToggle('compromissos') + table + endHtml);
@@ -3570,6 +4061,7 @@ function renderChartsScreen(){
     renderChartTools() +
     renderSpendingChart(viewMonth) +
     renderBalanceChart(viewMonth) +
+    renderInterestChart(viewMonth) +
     renderCommitmentsChart(viewMonth) +
     '<p class="footer-note">Os gráficos usam os mesmos números do resumo de cada mês.</p>' +
   '</div>';
@@ -3644,6 +4136,11 @@ function onWindowResize(){
 }
 // chart columns are focusable: Enter or Space picks them, like a tap
 function onAppKeydown(ev){
+  if ((ev.key === 'Escape' || ev.key === 'Esc') && (statusSheet || bulkPlan)){
+    bulkPlan = null;
+    if (statusSheet) closeStatusSheet(); else render();
+    return;
+  }
   var t = ev.target;
   if (!t || !t.getAttribute || t.getAttribute('role') !== 'button' || !t.getAttribute('data-action')) return;
   if (ev.key === 'Enter' || ev.key === ' ' || ev.key === 'Spacebar'){
@@ -3654,7 +4151,7 @@ function onAppKeydown(ev){
 function pickChartMonth(el, fromKeyboard){
   var chartId = el.getAttribute('data-chart');
   var month = el.getAttribute('data-month');
-  if (!/^(gastos|saldo|compromissos)$/.test(chartId || '') || !MONTH_KEY_RE.test(month || '')) return;
+  if (!/^(gastos|saldo|juros|compromissos)$/.test(chartId || '') || !MONTH_KEY_RE.test(month || '')) return;
   chartPick[chartId] = month;
   render();
   if (fromKeyboard){
@@ -3767,7 +4264,6 @@ var pinTries = pinWaitInfo.tries;
 var pinWaitUntil = pinWaitInfo.until;
 var pinWaitTimer = null;
 var hiddenSince = null;
-var lastDueTapAt = 0;
 function savePinWait(){
   if (!pinTries && !pinWaitUntil){ try { localStorage.removeItem(PIN_WAIT_KEY); } catch(e) {} return; }
   savePref(PIN_WAIT_KEY, {tries:pinTries, until:pinWaitUntil});
@@ -4020,6 +4516,37 @@ function renderQuickNav(isCurrent){
     items.map(function(it){ return '<a class="qn-pill" href="#' + it[0] + '">' + it[1] + '</a>'; }).join('') +
   '</nav>';
 }
+// the current month's unpaid bills without a forecast (late ones first): what can still be
+// planned for a later month
+function openBillsWithoutPlan(){
+  var todayKey = monthKeyToday();
+  var list = getMonthView(STATE, todayKey).counted.filter(function(b){ return b.state === 'overdue' || b.state === 'pending'; });
+  return list.sort(function(a, b){
+    if (a.state !== b.state) return a.state === 'overdue' ? -1 : 1;
+    var da = a.dueIso || '9999-99-99', db = b.dueIso || '9999-99-99';
+    if (da !== db) return da < db ? -1 : 1;
+    return b.total - a.total;
+  });
+}
+function sectionLinks(bills){
+  var links = [];
+  if (bills.some(function(b){ return b.kind === 'fixed'; })) links.push('<a class="link-btn" href="#sec-fixas" data-action="goto-section" data-target="sec-fixas">ver em Contas fixas</a>');
+  if (bills.some(function(b){ return b.kind !== 'fixed'; })) links.push('<a class="link-btn" href="#sec-variaveis" data-action="goto-section" data-target="sec-variaveis">ver em Contas variáveis</a>');
+  return links.join(' · ');
+}
+function sumTotals(bills){ var s = 0; bills.forEach(function(b){ s += b.total; }); return s; }
+// bills of the current month (or late ones from before) that were planned for a later month:
+// they no longer count now, but stay in sight
+function plannedLater(){
+  var todayKey = monthKeyToday();
+  var incoming = billIndex(STATE).incoming;
+  var out = [];
+  Object.keys(incoming).sort().forEach(function(k){
+    if (k <= todayKey) return;
+    incoming[k].forEach(function(b){ if (b.home <= todayKey && b.state === 'planned') out.push(b); });
+  });
+  return out;
+}
 function renderAlerts(mv, totals){
   var html = '';
   if (saveFailed){
@@ -4031,25 +4558,70 @@ function renderAlerts(mv, totals){
       '</div>' +
     '</div>';
   }
-  if (totals.carriedCount > 0){
-    var sum = totals.carriedFixedTotal + totals.carriedVarTotal;
-    var one = totals.carriedCount === 1;
-    var hasFixed = (mv.carriedIn.fixed.length + mv.carriedIn.installments.length) > 0;
-    var hasVar = mv.carriedIn.variable.length > 0;
-    var links = [];
-    if (hasFixed) links.push('<a class="link-btn" href="#sec-fixas" data-action="goto-section" data-target="sec-fixas">ver em Contas fixas</a>');
-    if (hasVar) links.push('<a class="link-btn" href="#sec-variaveis" data-action="goto-section" data-target="sec-variaveis">ver em Contas variáveis</a>');
+  var todayKey = monthKeyToday();
+  var incoming = mv.incoming || [];
+  var lateIn = incoming.filter(function(b){ return b.state === 'overdue'; });
+  if (viewMonth === todayKey && lateIn.length){
+    var one = lateIn.length === 1;
     html += '<div class="alert-banner danger">' +
       '<span class="alert-icon" aria-hidden="true">⏰</span>' +
       '<div class="alert-body">' +
-        '<div class="alert-title">' + totals.carriedCount + ' conta' + (one ? '' : 's') + ' atrasada' + (one ? '' : 's') + ', somando ' + fmtMoney(sum) + '</div>' +
+        '<div class="alert-title">' + lateIn.length + ' conta' + (one ? '' : 's') + ' atrasada' + (one ? '' : 's') + ', somando ' + fmtMoney(sumTotals(lateIn)) + '</div>' +
         (one ? 'Ficou pendente de um mês anterior e passou a contar no mês atual até ser paga — '
              : 'Ficaram pendentes de meses anteriores e passaram a contar no mês atual até serem pagas — ') +
-        links.join(' · ') + '.' +
+        sectionLinks(lateIn) + '. Podem ter juros e multa. Se não der pra pagar agora, toque na situação e escolha quando vai pagar.' +
       '</div>' +
     '</div>';
   }
-  var launchItems = (viewMonth === monthKeyToday()) ? (mv.toLaunch || []).concat(mv.toLaunchBacklog || []) : [];
+  if (viewMonth === todayKey){
+    var later = plannedLater();
+    if (later.length){
+      var byMonth = {};
+      later.forEach(function(b){ (byMonth[b.eff] = byMonth[b.eff] || []).push(b); });
+      var monthLinks = Object.keys(byMonth).sort().map(function(k){
+        return '<button type="button" class="link-btn" data-action="goto-month" data-month="' + k + '">' + esc(monthLabel(k)) + ' (' + byMonth[k].length + ')</button>';
+      });
+      html += '<div class="alert-banner info" id="later-banner">' +
+        '<span class="alert-icon" aria-hidden="true">📅</span>' +
+        '<div class="alert-body">' +
+          '<div class="alert-title">' + later.length + plural(later.length, ' conta programada para depois', ' contas programadas para depois') + ', somando ' + fmtMoney(sumTotals(later)) + '</div>' +
+          plural(later.length, 'Não conta', 'Não contam') + ' em ' + esc(monthLabel(todayKey)) + '; ' + plural(later.length, 'aparece', 'aparecem') + ' no mês da previsão: ' + monthLinks.join(' · ') + '.' +
+        '</div>' +
+      '</div>';
+    }
+  }
+  if (viewMonth > todayKey){
+    // planning a later month: what is still open now can be moved here
+    var open = openBillsWithoutPlan();
+    if (open.length){
+      var lateCount = open.filter(function(b){ return b.state === 'overdue'; }).length;
+      html += '<div class="alert-banner ' + (lateCount ? 'warn' : 'info') + '" id="plan-banner">' +
+        '<span class="alert-icon" aria-hidden="true">📌</span>' +
+        '<div class="alert-body">' +
+          '<div class="alert-title">' + (lateCount ?
+            lateCount + plural(lateCount, ' conta atrasada', ' contas atrasadas') + ' sem previsão de pagamento' :
+            open.length + plural(open.length, ' conta do mês atual ainda em aberto', ' contas do mês atual ainda em aberto')) + '</div>' +
+          'Em aberto agora: ' + open.length + ' ' + plural(open.length, 'conta', 'contas') + ', ' + fmtMoney(sumTotals(open)) +
+          (lateCount ? ' (' + lateCount + plural(lateCount, ' atrasada', ' atrasadas') + ')' : '') + '. ' +
+          plural(open.length, 'Conta', 'Contam') + ' em ' + esc(monthLabel(todayKey)) + ' (mês atual) até ' + plural(open.length, 'ser paga', 'serem pagas') +
+          ' — escolha as que vão ficar para ' + esc(monthLabel(viewMonth)) + '.' +
+          '<div class="alert-actions"><button type="button" class="btn-mini primary" data-action="open-bulk-plan" data-month="' + viewMonth + '">Programar para ' + esc(capFirst(MONTH_NAMES[parseInt(viewMonth.slice(5, 7), 10) - 1])) + '</button></div>' +
+        '</div>' +
+      '</div>';
+    }
+    var plannedIn = incoming.filter(function(b){ return b.state === 'planned'; });
+    if (plannedIn.length){
+      var oneP = plannedIn.length === 1;
+      html += '<div class="alert-banner info">' +
+        '<span class="alert-icon" aria-hidden="true">📅</span>' +
+        '<div class="alert-body">' +
+          '<div class="alert-title">' + plannedIn.length + plural(plannedIn.length, ' conta programada', ' contas programadas') + ' para este mês, somando ' + fmtMoney(sumTotals(plannedIn)) + '</div>' +
+          (oneP ? 'É de um mês anterior e já entra nas contas e no saldo de ' : 'São de meses anteriores e já entram nas contas e no saldo de ') + esc(monthLabel(viewMonth)) + ' — ' + sectionLinks(plannedIn) + '.' +
+        '</div>' +
+      '</div>';
+    }
+  }
+  var launchItems = (viewMonth === todayKey) ? (mv.toLaunch || []).concat(mv.toLaunchBacklog || []) : [];
   if (launchItems.length){
     var oneL = launchItems.length === 1;
     var names = launchItems.map(function(it){ return esc(it.desc) + (it.month !== viewMonth ? ' (de ' + esc(monthLabel(it.month)) + ')' : ''); });
@@ -4107,31 +4679,52 @@ function renderHeader(h, isCurrent){
     '</div>' +
   '</header>';
 }
-function renderStats(totalIncome, mv, totalFixed, paidCount, fixedCount, totalVariable, totalInvestments, saldo){
-  // Overdue bills that moved here from earlier months are part of this month's totals, so
-  // they are counted here too (they are unpaid by definition) - same rule as the summary.
-  var carried = mv.carriedIn || {fixed:[], installments:[], variable:[]};
-  fixedCount += carried.fixed.length;
-  var variableCount = mv.variable.length + mv.installmentsActive.length + carried.installments.length + carried.variable.length;
-  var variablePaid = mv.variable.filter(function(e){ return e.paid; }).length + mv.installmentsActive.filter(function(i){ return i.paid; }).length;
+// "R$" a little smaller, and the number never breaks in the middle (narrow phones)
+function moneyHtml(v){
+  var n = Number(v); if (!isFinite(n)) n = 0;
+  var neg = round2(n) < 0;
+  var num = Math.abs(n).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+  return (neg ? '-' : '') + '<span class="cur">R$</span><wbr><span class="num">' + num + '</span>';
+}
+function renderStats(totals, mv){
+  // Bills of other months that count in this one are part of its totals, so they are counted
+  // here too; this month's bills that count in another month are not (same rule as the summary).
+  var fixedCount = totals.setCount, paidCount = totals.paidCount;
+  var variableCount = totals.varCount, variablePaid = totals.varPaid;
   var toLaunchCount = (mv.toLaunch || []).length + (mv.toLaunchBacklog || []).length;
   var variableSub = (variableCount ? (variablePaid + ' de ' + variableCount + ' paga' + (variableCount === 1 ? '' : 's')) : 'nenhuma lançada') +
     (toLaunchCount ? ' · ' + toLaunchCount + ' a lançar' : '');
   var invStat = '';
   if (mv.investments && mv.investments.length){
-    invStat = '<div class="stat"><div class="stat-label">Investimentos</div><div class="stat-value">' + fmtMoney(totalInvestments) + '</div>' +
+    invStat = '<div class="stat"><div class="stat-label">Investimentos</div><div class="stat-value">' + moneyHtml(totals.totalInvestments) + '</div>' +
       '<div class="stat-sub">' + mv.investments.length + ' lançamento' + (mv.investments.length === 1 ? '' : 's') + '</div></div>';
   }
+  var saldo = totals.saldo;
   return '<div class="stats">' +
-    '<div class="stat"><div class="stat-label">Renda</div><div class="stat-value income">' + fmtMoney(totalIncome) + '</div>' +
+    '<div class="stat"><div class="stat-label">Renda</div><div class="stat-value income">' + moneyHtml(totals.totalIncome) + '</div>' +
       '<div class="stat-sub">' + esc(STATE.household.person1Name) + ' + ' + esc(STATE.household.person2Name) + '</div></div>' +
-    '<div class="stat"><div class="stat-label">Contas fixas</div><div class="stat-value">' + fmtMoney(totalFixed) + '</div>' +
+    '<div class="stat"><div class="stat-label">Contas fixas</div><div class="stat-value">' + moneyHtml(totals.totalFixed) + '</div>' +
       '<div class="stat-sub">' + (fixedCount ? (paidCount + ' de ' + fixedCount + ' paga' + (fixedCount === 1 ? '' : 's')) : 'nenhuma lançada') + '</div></div>' +
-    '<div class="stat"><div class="stat-label">Variáveis</div><div class="stat-value">' + fmtMoney(totalVariable) + '</div>' +
+    '<div class="stat"><div class="stat-label">Variáveis</div><div class="stat-value">' + moneyHtml(totals.totalVariable) + '</div>' +
       '<div class="stat-sub">' + variableSub + '</div></div>' +
     invStat +
-    '<div class="stat"><div class="stat-label">Saldo</div><div class="stat-value ' + (saldo >= 0 ? 'income' : 'expense') + '">' + fmtMoney(saldo) + '</div>' +
+    '<div class="stat"><div class="stat-label">Saldo</div><div class="stat-value ' + (saldo >= 0 ? 'income' : 'expense') + '">' + moneyHtml(saldo) + '</div>' +
       '<div class="stat-sub">' + (saldo >= 0 ? 'Sobra do mês' : 'Déficit do mês') + '</div></div>' +
+  '</div>' +
+  renderPayProgress(viewMonth) +
+  (totals.totalInterest > 0 ? '<p class="stat-note">Inclui ' + fmtMoney(totals.totalInterest) + ' de juros e multas — <button type="button" class="link-btn" data-action="open-charts">ver nos gráficos</button></p>' : '');
+}
+function renderPayProgress(key){
+  var b = unpaidBreakdown(key);
+  if (!(b.total > 0)) return '';
+  var share = b.paid.amount / b.total * 100;
+  var label = 'Pago ' + fmtMoney(b.paid.amount) + ' de ' + fmtMoney(b.total) + ' em contas do mês (' + fmtShare(share) + '); falta pagar ' + fmtMoney(b.unpaid);
+  return '<div class="pay-progress">' +
+    '<div class="pp-bar" role="img" aria-label="' + esc(label) + '"><div class="pp-fill" style="width:' + Math.max(0, Math.min(100, share)).toFixed(1) + '%"></div></div>' +
+    '<div class="pp-text">' +
+      '<span>Pago <strong>' + fmtMoney(b.paid.amount) + '</strong> · ' + esc(fmtShare(share)) + '</span>' +
+      (b.unpaid > 0 ? '<span><button type="button" class="link-btn" data-action="open-charts">Falta pagar</button> <strong>' + fmtMoney(b.unpaid) + '</strong></span>' : '<span>✅ Tudo pago</span>') +
+    '</div>' +
   '</div>';
 }
 function historySaldoOf(k){
@@ -4242,36 +4835,117 @@ function renderIncome(h, mv){
     renderIncomePerson('person2', h.person2Name, mv.income.person2) +
   '</section>';
 }
-function renderFixed(h, mv, isCurrent){
-  var carriedFixed = (mv.carriedIn && mv.carriedIn.fixed) || [];
-  var carriedHtml = '';
-  if (carriedFixed.length){
-    carriedHtml = '<div class="carried-block">' +
-      '<div class="carried-block-title">⏰ Atrasadas de meses anteriores</div>' +
-      carriedFixed.map(function(c){
-        return '<div class="fixed-row carried-row">' +
-          '<div class="fixed-row-top"><div class="fixed-name">' + esc(c.name) + '</div></div>' +
-          '<div class="fixed-row-bottom">' +
-            '<div class="fixed-due">venceu em ' + esc(monthLabel(c.sourceMonth)) + ' · há ' + pluralDias(c.overdueDays) + '</div>' +
-            '<div class="var-amt" style="flex:1">' + fmtMoney(c.amount) + '</div>' +
-            '<button type="button" class="pill overdue" data-action="toggle-paid" data-catid="' + c.catId + '" data-month="' + c.sourceMonth + '">Atrasada</button>' +
-          '</div>' +
-        '</div>';
-      }).join('') +
+// Bills of other months that count in this one, in up to three groups: late ones (they count
+// in the current month until paid), the ones planned for this month, and the ones paid late
+// in this month.
+var INCOMING_GROUPS = [
+  {state:'overdue', cls:'', title:'⏰ Atrasadas de meses anteriores'},
+  {state:'planned', cls:' plan', title:'📅 Programadas para este mês'},
+  {state:'paid', cls:' done', title:'✅ Pagas neste mês, de meses anteriores'}
+];
+function incomingSort(a, b){
+  if (a.state === 'overdue' && b.lateDays !== a.lateDays) return (b.lateDays || 0) - (a.lateDays || 0);
+  var da = (a.state === 'paid' ? a.paidOn : billWhenIso(a)) || '', db = (b.state === 'paid' ? b.paidOn : billWhenIso(b)) || '';
+  if (da !== db) return da < db ? -1 : 1;
+  return b.total - a.total;
+}
+function incomingBlocks(list, rowFn, hidden){
+  var html = '';
+  INCOMING_GROUPS.forEach(function(g){
+    var items = list.filter(function(b){ return b.state === g.state; });
+    if (!items.length) return;
+    var visible = items.filter(function(b){ return passesStatusFilter(b.paid); });
+    hidden.n += items.length - visible.length;
+    if (!visible.length) return;
+    html += '<div class="carried-block' + g.cls + '" data-group="' + g.state + '">' +
+      '<div class="carried-block-title">' + g.title + '</div>' +
+      visible.sort(incomingSort).map(rowFn).join('') +
     '</div>';
-  }
-  var hiddenCount = 0;
-  if (carriedFixed.length && listView.status === 'paid'){ hiddenCount += carriedFixed.length; carriedHtml = ''; }
+  });
+  return html;
+}
+// "previsão 10/11", "paga em 22/10", "juros R$ 12,34": what the row adds to the due date
+function billStatusBits(b){
+  var bits = [];
+  if (b.state === 'overdue' && b.lateBy === 'due') bits.push('atrasada há ' + pluralDias(b.lateDays));
+  else if (b.state === 'overdue') bits.push('previsão era ' + fmtDate(b.planOn) + ' (há ' + pluralDias(b.lateDays) + ')');
+  else if (b.state === 'planned') bits.push('previsão ' + fmtDate(b.planOn));
+  else if (b.state === 'paid' && b.paidLate) bits.push('paga em ' + fmtDate(b.paidOn));
+  if (b.interest > 0) bits.push('juros ' + fmtMoney(b.interest));
+  return bits;
+}
+// a bill of the month being shown that counts in another month
+function movedNoteHtml(b){
+  var cls = '', text;
+  if (b.state === 'planned'){ cls = ' plan'; text = '→ programada para ' + fmtDate(b.planOn) + ': conta em ' + monthLabel(b.eff); }
+  else if (b.state === 'paid'){ cls = ' done'; text = '→ paga em ' + fmtDate(b.paidOn) + ', depois do vencimento: conta em ' + monthLabel(b.eff); }
+  else text = '→ passa a contar no mês atual (' + monthLabel(monthKeyToday()) + ') até ser paga';
+  return '<div class="carried-note' + cls + '">' + esc(text) + '</div>';
+}
+// A late bill usually comes with interest and a fine: a small note, only to be aware of it
+// (until the updated amount is noted in its status window).
+function riskTagHtml(b){
+  return (b.state === 'overdue' && !(b.interest > 0)) ? '<span class="risk-tag" title="Conta atrasada costuma ter juros e multa">pode ter juros</span>' : '';
+}
+function incomingFixedRow(b){
+  var sub;
+  if (b.state === 'overdue' && b.lateBy === 'due') sub = 'venceu em ' + monthLabel(b.home) + ' · há ' + pluralDias(b.lateDays);
+  else if (b.state === 'overdue') sub = 'de ' + monthLabel(b.home) + ' · previsão era ' + fmtDate(b.planOn) + ' · há ' + pluralDias(b.lateDays);
+  else if (b.state === 'planned') sub = 'de ' + monthLabel(b.home) + ' · previsão ' + fmtDate(b.planOn);
+  else sub = 'de ' + monthLabel(b.home) + ' · paga em ' + fmtDate(b.paidOn);
+  if (b.interest > 0) sub += ' · juros ' + fmtMoney(b.interest);
+  var risk = riskTagHtml(b);
+  return '<div class="fixed-row carried-row bill-row">' +
+    '<div class="row-main">' +
+      '<div class="fixed-name">' + esc(b.name) + '</div>' +
+      '<div class="row-sub fixed-due">' + esc(sub) + (risk ? ' ' + risk : '') + '</div>' +
+    '</div>' +
+    '<div class="var-amt-wrap">' +
+      '<div class="var-amt">' + fmtMoney(b.total) + '</div>' +
+      billPill(b) +
+    '</div>' +
+  '</div>';
+}
+function incomingVarRow(b){
+  var when;
+  if (b.state === 'overdue' && b.lateBy === 'due') when = (b.dueIso ? 'Venceu em ' + fmtDate(b.dueIso) + ' (' + monthLabel(b.home) + ')' : 'Venceu em ' + monthLabel(b.home)) + ' · há ' + pluralDias(b.lateDays);
+  else if (b.state === 'overdue') when = 'De ' + monthLabel(b.home) + ' · previsão era ' + fmtDate(b.planOn) + ' · há ' + pluralDias(b.lateDays);
+  else if (b.state === 'planned') when = 'De ' + monthLabel(b.home) + ' · previsão ' + fmtDate(b.planOn);
+  else when = 'De ' + monthLabel(b.home) + ' · paga em ' + fmtDate(b.paidOn);
+  if (b.interest > 0) when += ' · juros ' + fmtMoney(b.interest);
+  var risk = riskTagHtml(b);
+  return '<div class="var-row">' +
+    '<div class="row-main">' +
+      '<div class="row-title">' + esc(b.name) + '</div>' +
+      '<div class="row-sub">' + esc(when) + (risk ? ' ' + risk : '') + '</div>' +
+    '</div>' +
+    '<div class="var-amt-wrap">' +
+      '<div class="var-amt">' + fmtMoney(b.total) + '</div>' +
+      billPill(b) +
+    '</div>' +
+  '</div>';
+}
+function billsById(list, kind){
+  var map = {};
+  list.forEach(function(b){ if (b.kind === kind) map[b.id] = b; });
+  return map;
+}
+function renderFixed(h, mv, isCurrent){
+  var hidden = {n:0};
+  var carriedHtml = incomingBlocks((mv.incoming || []).filter(function(b){ return b.kind === 'fixed'; }), incomingFixedRow, hidden);
+  var hiddenCount = hidden.n;
+  var own = billsById(mv.bills || [], 'fixed');
   var catList = [];
   h.fixedCategories.forEach(function(cat){
-    var fc = mv.fixed[cat.id];
-    var paidC = !!(fc && fc.isSet && fc.paid);
+    var ob = own[cat.id];
+    var paidC = !!(ob && ob.paid);
     if (editingFixedId !== cat.id && !passesStatusFilter(paidC)){ hiddenCount++; return; }
-    catList.push({cat:cat, name:cat.name, due:(cat.dueDay ? dateInMonth(viewMonth, cat.dueDay) : null), amount:(fc && fc.isSet ? fc.amount : 0)});
+    catList.push({cat:cat, name:cat.name, due:(cat.dueDay ? dateInMonth(viewMonth, cat.dueDay) : null), amount:(ob ? ob.total : 0)});
   });
   var rows = sortForView(catList).map(function(item){
     var cat = item.cat;
     var f = mv.fixed[cat.id];
+    var b = own[cat.id];
     var delPending = removeConfirmFixed === cat.id;
     var delBtn = '<button type="button" class="icon-btn' + (delPending ? ' confirm' : '') + '" data-action="delete-fixed" data-catid="' + cat.id + '" aria-label="Remover conta">' + (delPending ? 'Remover?' : '✕') + '</button>';
     if (editingFixedId === cat.id){
@@ -4284,6 +4958,7 @@ function renderFixed(h, mv, isCurrent){
       var suggestion = (!f.isSet && cat.suggestPrevious) ? previousMonthFixedAmount(cat, viewMonth) : null;
       var suggestionHtml = (suggestion != null) ?
         '<p class="empty-note" style="padding:0 0 10px">Sugestão (mês anterior): <strong>' + fmtMoney(suggestion) + '</strong> — <button type="button" class="link-btn" data-action="use-suggested-fixed" data-amount="' + esc(fmtInputAmount(suggestion)) + '">usar</button></p>' : '';
+      var interestHint = (b && b.withInterest != null) ? '<p class="field-hint" style="margin:8px 0 0">Com juros neste mês: ' + fmtMoney(b.total) + ' (o valor com juros é mudado na situação da conta).</p>' : '';
       return '<form class="fixed-row" data-catid="' + cat.id + '" data-action="edit-fixed-form">' +
         '<div class="fixed-row-top">' +
           '<input class="cat-name-input" name="name" value="' + esc(dName) + '">' +
@@ -4295,11 +4970,12 @@ function renderFixed(h, mv, isCurrent){
           '<input class="amount-input" name="amount" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" value="' + esc(dAmount) + '">' +
           '<button type="submit" class="btn primary" style="flex:none;padding:8px 14px">Salvar</button>' +
         '</div>' +
+        interestHint +
         '<div class="field" style="margin:10px 0 0"><label class="check-field"><input type="checkbox" name="autoReplicate"' + (dAutoReplicate ? ' checked' : '') + '><span>Valor fixo (repete automaticamente nos próximos meses)</span></label></div>' +
         '<div class="field" style="margin:6px 0 0"><label class="check-field"><input type="checkbox" name="suggestPrevious"' + (dSuggest ? ' checked' : '') + '><span>Sugerir o valor do mês anterior ao lançar</span></label></div>' +
       '</form>';
     }
-    if (!f.isSet){
+    if (!f.isSet || !b){
       return '<div class="fixed-row" data-catid="' + cat.id + '">' +
         '<div class="fixed-row-top">' +
           '<div class="fixed-name">' + esc(cat.name) + '</div>' +
@@ -4311,26 +4987,24 @@ function renderFixed(h, mv, isCurrent){
         '</div>' +
       '</div>';
     }
-    var overdue = isPastDue(viewMonth, cat.dueDay, f.paid);
-    var pillClass = f.paid ? 'paid' : (overdue ? 'overdue' : 'pending');
-    var pillLabel = f.paid ? 'Pago' : (overdue ? 'Atrasada' : 'Pendente');
-    var willCarry = !!(mv.carryAway && mv.carryAway.fixed[cat.id]);
-    var dueText = (cat.dueDay ? 'dia ' + cat.dueDay : 'sem vencimento') + (overdue ? ' · atrasada há ' + pluralDias(daysOverdue(viewMonth, cat.dueDay)) : '');
-    var carryNote = willCarry ? '<div class="carried-note">→ passa a contar no mês atual (' + esc(monthLabel(monthKeyToday())) + ') até ser paga</div>' : '';
-    return '<div class="fixed-row" data-catid="' + cat.id + '">' +
-      '<div class="fixed-row-top">' +
+    var parts = [keep(cat.dueDay ? 'dia ' + cat.dueDay : 'sem vencimento')];
+    billStatusBits(b).forEach(function(bit){ parts.push(esc(bit)); });
+    var risk = riskTagHtml(b);
+    if (risk) parts.push(keep(risk));
+    return '<div class="fixed-row bill-row' + (b.eff !== viewMonth ? ' moved' : '') + '" data-catid="' + cat.id + '">' +
+      '<div class="row-main">' +
         '<div class="fixed-name">' + esc(cat.name) + '</div>' +
-        '<div class="row-actions">' +
-          '<button type="button" class="icon-btn" data-action="edit-fixed" data-catid="' + cat.id + '" aria-label="Editar conta">✎</button>' +
-          delBtn +
-        '</div>' +
+        '<div class="row-sub fixed-due">' + subLine(parts) + '</div>' +
       '</div>' +
-      '<div class="fixed-row-bottom">' +
-        '<div class="fixed-due">' + dueText + '</div>' +
-        '<div class="var-amt" style="flex:1">' + fmtMoney(f.amount) + '</div>' +
-        '<button type="button" class="pill ' + pillClass + '" data-action="toggle-paid" data-catid="' + cat.id + '">' + pillLabel + '</button>' +
+      '<div class="var-amt-wrap">' +
+        '<div class="var-amt">' + fmtMoney(b.total) + '</div>' +
+        billPill(b) +
       '</div>' +
-      carryNote +
+      '<div class="row-actions">' +
+        '<button type="button" class="icon-btn" data-action="edit-fixed" data-catid="' + cat.id + '" aria-label="Editar conta">✎</button>' +
+        delBtn +
+      '</div>' +
+      (b.eff !== viewMonth ? movedNoteHtml(b) : '') +
     '</div>';
   }).join('');
   var addUi;
@@ -4403,61 +5077,39 @@ function renderLaunchBlock(mv, catName){
 function renderVariable(h, mv, isCurrent){
   var catName = {};
   h.variableCategories.forEach(function(c){ catName[c.id] = c.name; });
-  var carriedList = [].concat(
-    ((mv.carriedIn && mv.carriedIn.installments) || []).map(function(c){ return {kind:'installment', id:c.instId, name:c.name, amount:c.amount, sourceMonth:c.sourceMonth, overdueDays:c.overdueDays}; }),
-    ((mv.carriedIn && mv.carriedIn.variable) || []).map(function(c){ return {kind:'variable', id:c.id, name:c.name, amount:c.amount, sourceMonth:c.sourceMonth, overdueDays:c.overdueDays, dueIso:c.dueIso}; })
-  ).sort(function(a,b){ return b.overdueDays - a.overdueDays; });
-  var carriedHtml = '';
-  if (carriedList.length){
-    carriedHtml = '<div class="carried-block">' +
-      '<div class="carried-block-title">⏰ Atrasadas de meses anteriores</div>' +
-      carriedList.map(function(c){
-        var toggleAction = c.kind === 'installment' ? 'toggle-installment-paid' : 'toggle-variable-paid';
-        var toggleAttr = (c.kind === 'installment' ? 'data-instid="' : 'data-id="') + c.id + '"';
-        var when = c.dueIso ? 'Venceu em ' + esc(fmtDate(c.dueIso)) + ' (' + esc(monthLabel(c.sourceMonth)) + ')' : 'Venceu em ' + esc(monthLabel(c.sourceMonth));
-        return '<div class="var-row">' +
-          '<div class="row-main">' +
-            '<div class="row-title">' + esc(c.name) + '</div>' +
-            '<div class="row-sub">' + when + ' · há ' + pluralDias(c.overdueDays) + '</div>' +
-          '</div>' +
-          '<div class="var-amt-wrap">' +
-            '<div class="var-amt">' + fmtMoney(c.amount) + '</div>' +
-            '<button type="button" class="pill overdue" data-action="' + toggleAction + '" ' + toggleAttr + ' data-month="' + c.sourceMonth + '">Atrasada</button>' +
-          '</div>' +
-        '</div>';
-      }).join('') +
-    '</div>';
-  }
-  var hiddenVar = 0;
-  if (listView.status === 'paid'){
-    hiddenVar += carriedList.length + (mv.toLaunch || []).length + (mv.toLaunchBacklog || []).length;
-    carriedHtml = '';
-  }
+  var hidden = {n:0};
+  var carriedHtml = incomingBlocks((mv.incoming || []).filter(function(b){ return b.kind !== 'fixed'; }), incomingVarRow, hidden);
+  var hiddenVar = hidden.n;
+  if (listView.status === 'paid') hiddenVar += (mv.toLaunch || []).length + (mv.toLaunchBacklog || []).length;
   var launchHtml = listView.status === 'paid' ? '' : renderLaunchBlock(mv, catName);
-  // Every line reads "Categoria · Parcela · Vencimento · quem lançou"
+  // Every line reads "Categoria · Parcela · Vencimento · quem lançou" (+ previsão / juros)
   var combined = [];
-  mv.variable.forEach(function(e){
-    var due = varDueIso(e, viewMonth);
-    var parts = [esc(catName[e.categoryId] || 'Outros')];
-    if (e.recurringId && findRecurring(STATE, e.recurringId)) parts.push(keep('Mensal'));
-    if (due) parts.push(keep('Venc. ' + esc(fmtDate(due))));
-    if (e.by) parts.push(esc(e.by));
+  var ownBills = mv.bills || [];
+  ownBills.forEach(function(b){
+    if (b.kind !== 'variable') return;
+    var parts = [esc(catName[b.categoryId] || 'Outros')];
+    if (b.recurringId && findRecurring(STATE, b.recurringId)) parts.push(keep('Mensal'));
+    if (b.dueIso) parts.push(keep('Venc. ' + esc(fmtDate(b.dueIso))));
+    if (b.by) parts.push(esc(b.by));
+    billStatusBits(b).forEach(function(bit){ if (!/^atrasada/.test(bit)) parts.push(esc(capFirst(bit))); });
+    if (riskTagHtml(b)) parts.push(keep(riskTagHtml(b)));
     combined.push({
-      kind:'variable', id:e.id, desc:e.desc, name:e.desc, amount:e.amount,
-      sortKey: e.date || '', due: due,
-      sub: subLine(parts),
-      paid: !!e.paid, overdue: varIsOverdue(e, viewMonth)
+      kind:'variable', id:b.id, desc:b.desc, name:b.desc, amount:b.total,
+      sortKey: b.date || '', due: b.dueIso,
+      sub: subLine(parts), paid: b.paid, bill: b
     });
   });
-  mv.installmentsActive.forEach(function(inst){
-    var parts = [esc(catName[inst.categoryId] || 'Outros'), keep('Parcela ' + inst.index + ' de ' + inst.total)];
-    if (inst.dueDay) parts.push(keep('Venc. ' + esc(fmtDate(dateInMonth(viewMonth, inst.dueDay)))));
-    if (inst.by) parts.push(esc(inst.by));
+  ownBills.forEach(function(b){
+    if (b.kind !== 'installment') return;
+    var parts = [esc(catName[b.categoryId] || 'Outros'), keep('Parcela ' + b.index + ' de ' + b.count)];
+    if (b.dueIso) parts.push(keep('Venc. ' + esc(fmtDate(b.dueIso))));
+    if (b.by) parts.push(esc(b.by));
+    billStatusBits(b).forEach(function(bit){ if (!/^atrasada/.test(bit)) parts.push(esc(capFirst(bit))); });
+    if (riskTagHtml(b)) parts.push(keep(riskTagHtml(b)));
     combined.push({
-      kind:'installment', id:inst.id, desc:inst.desc, name:inst.desc, amount:inst.amount,
-      sortKey: viewMonth + '-' + pad2(inst.dueDay || 1), due: (inst.dueDay ? dateInMonth(viewMonth, inst.dueDay) : null),
-      sub: subLine(parts),
-      paid: inst.paid, overdue: isPastDue(viewMonth, inst.dueDay, inst.paid), total: inst.total
+      kind:'installment', id:b.id, desc:b.desc, name:b.desc, amount:b.total,
+      sortKey: b.dueIso || (viewMonth + '-01'), due: b.dueIso,
+      sub: subLine(parts), paid: b.paid, total: b.count, bill: b
     });
   });
   combined.sort(function(a,b){
@@ -4478,33 +5130,26 @@ function renderVariable(h, mv, isCurrent){
   } else {
     rows = '<div class="varlist">' + combined.map(function(it){
       var isInst = it.kind === 'installment';
+      var b = it.bill;
       var pending = isInst ? (removeConfirmInstallment === it.id) : (removeConfirm === it.id);
       var delAction = isInst ? 'delete-installment' : 'remove-variable';
       var editAction = isInst ? 'edit-installment-entry' : 'edit-variable-entry';
       var delAttr = isInst ? ('data-instid="' + it.id + '"') : ('data-id="' + it.id + '"');
-      var pillClass = it.paid ? 'paid' : (it.overdue ? 'overdue' : 'pending');
-      var pillLabel = it.paid ? 'Pago' : (it.overdue ? 'Atrasada' : 'Pendente');
-      var toggleAction = isInst ? 'toggle-installment-paid' : 'toggle-variable-paid';
-      var pillHtml = '<button type="button" class="pill ' + pillClass + '" data-action="' + toggleAction + '" ' + delAttr + ' aria-label="' + pillLabel + ' — toque para marcar como ' + (it.paid ? 'pendente' : 'pago') + '">' + pillLabel + '</button>';
-      var carryNote = '';
-      var awayMap = mv.carryAway ? (isInst ? mv.carryAway.inst : mv.carryAway.variable) : {};
-      if (awayMap[it.id]){
-        carryNote = '<div class="carried-note">→ passa a contar no mês atual (' + esc(monthLabel(monthKeyToday())) + ') até ser paga</div>';
-      }
-      return '<div class="var-row" style="flex-wrap:wrap">' +
+      var moved = b.eff !== viewMonth;
+      return '<div class="var-row' + (moved ? ' moved' : '') + '" style="flex-wrap:wrap">' +
         '<div class="row-main">' +
           '<div class="row-title">' + esc(it.desc) + '</div>' +
           '<div class="row-sub">' + it.sub + '</div>' +
         '</div>' +
         '<div class="var-amt-wrap">' +
           '<div class="var-amt">' + fmtMoney(it.amount) + '</div>' +
-          pillHtml +
+          billPill(b) +
         '</div>' +
         '<div class="row-actions">' +
           '<button type="button" class="icon-btn" data-action="' + editAction + '" ' + delAttr + ' aria-label="Editar lançamento">✎</button>' +
           '<button type="button" class="icon-btn' + (pending ? ' confirm' : '') + '" data-action="' + delAction + '" ' + delAttr + ' aria-label="' + (isInst ? 'Remover compra parcelada (todas as parcelas)' : 'Remover lançamento') + '">' + (pending ? (isInst ? 'Remover as ' + it.total + ' parcelas?' : 'Remover?') : '✕') + '</button>' +
         '</div>' +
-        carryNote +
+        (moved ? movedNoteHtml(b) : '') +
       '</div>';
     }).join('') + '</div>';
   }
@@ -4676,23 +5321,411 @@ function renderBackup(){
     installTip +
   '</section>';
 }
+var THEME_MODE_LABEL = {auto:'Automático', light:'Claro', dark:'Escuro'};
 function renderAppearance(){
+  var customOn = palette === 'custom' && validCustomColor(customColor);
   function itemsOf(group){
     return PALETTES.filter(function(p){ return p.group === group; }).map(function(p){
-      var active = palette ? (palette === p.id) : (p.id === 'padrao');
+      var active = !customOn && (palette ? (palette === p.id) : (p.id === 'padrao'));
       return '<button type="button" class="palette-item' + (active ? ' active' : '') + '" data-action="set-palette" data-palette="' + p.id + '" aria-pressed="' + (active ? 'true' : 'false') + '">' +
         '<span class="palette-dot" style="background:' + p.swatch + '"></span>' +
         '<span class="palette-name">' + esc(p.name) + '</span>' +
       '</button>';
     }).join('');
   }
-  return '<section class="card">' +
+  var chosen = customOn ? customColor.color.toUpperCase() : null;
+  var inGrid = false;
+  var swatches = CUSTOM_SWATCHES.map(function(sw){
+    var on = chosen === sw[0];
+    if (on) inGrid = true;
+    return '<button type="button" class="color-swatch' + (on ? ' active' : '') + '" data-action="set-custom-color" data-color="' + sw[0] + '" style="background:' + sw[0] + '" aria-pressed="' + (on ? 'true' : 'false') + '" aria-label="' + esc(sw[1]) + '" title="' + esc(sw[1]) + '"></button>';
+  }).join('');
+  var pickValue = (customColor && hexToRgb01(customColor.color)) ? customColor.color.toLowerCase() : '#1b4b4a';
+  var picker = '<label class="color-pick' + (customOn && !inGrid ? ' active' : '') + '" title="Outra cor"' + (customOn && !inGrid ? ' style="background:' + chosen + '"' : '') + '>' +
+    '<span aria-hidden="true">' + (customOn && !inGrid ? '' : '+') + '</span>' +
+    '<input type="color" data-action="pick-custom-color" value="' + esc(pickValue) + '" aria-label="Escolher outra cor">' +
+  '</label>';
+  var vivid = customColor ? !!customColor.vivid : true;
+  var modeChips = THEME_MODES.map(function(m){
+    var on = themeMode === m;
+    return '<button type="button" class="chip' + (on ? ' active' : '') + '" data-action="set-theme" data-value="' + m + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + THEME_MODE_LABEL[m] + '</button>';
+  }).join('');
+  return '<section class="card" id="sec-aparencia">' +
     '<div class="card-head"><div class="card-head-main"><span class="card-icon" aria-hidden="true">🎨</span><h2 class="card-title">Aparência</h2></div></div>' +
+    '<div class="theme-row">' +
+      '<div class="lt-row"><span class="lt-label">Modo</span><div class="chip-group" role="group" aria-label="Modo de cor">' + modeChips + '</div></div>' +
+      '<div class="lt-hint">' + (themeMode === 'auto' ? 'Automático segue o iPhone: claro ou escuro, como estiver no aparelho.' : 'O app fica sempre ' + (themeMode === 'light' ? 'claro' : 'escuro') + ', seja qual for o ajuste do iPhone.') + '</div>' +
+    '</div>' +
     '<div class="palette-group-label">Sóbrias</div>' +
     '<div class="palette-row">' + itemsOf('sobria') + '</div>' +
     '<div class="palette-group-label">Vivas</div>' +
     '<div class="palette-row">' + itemsOf('viva') + '</div>' +
+    '<div class="palette-group-label" style="margin-top:16px">Sua cor</div>' +
+    '<div class="color-grid">' + swatches + picker + '</div>' +
+    '<div class="field" style="margin:12px 0 0"><label class="check-field"><input type="checkbox" data-action="toggle-custom-vivid"' + (vivid ? ' checked' : '') + '><span>Topo do app colorido</span></label></div>' +
+    '<p class="custom-note">' + (customOn ?
+      'Usando a sua cor <code>' + esc(chosen) + '</code>. O app monta o tema claro e o escuro a partir dela e, se precisar, deixa a cor um pouco mais escura ou mais clara para os textos continuarem fáceis de ler.' :
+      'Toque numa cor (ou no + para escolher qualquer outra) para montar um tema com ela, no claro e no escuro.') + '</p>' +
   '</section>';
+}
+// your own color, applied right away and kept on this phone
+function setCustomColor(hex, keepVivid){
+  var rgb = hexToRgb01(hex);
+  if (!rgb) return;
+  var color = rgb01ToHex(rgb);
+  customColor = {color: color, vivid: keepVivid != null ? !!keepVivid : (customColor ? !!customColor.vivid : true)};
+  savePref(CUSTOM_COLOR_KEY, customColor);
+  palette = 'custom';
+  try { localStorage.setItem(PALETTE_KEY, palette); } catch(e) {}
+  applyPaletteAttr();
+}
+
+/* ---------- the window to change a bill's status ---------- */
+// Tapping a status no longer flips it: it opens this window, where the person picks Pago (with
+// the payment date), Pendente or "Vou pagar em…" (a forecast that moves the bill to that
+// month), and can note that it came with interest. Nothing changes until "Salvar".
+var statusSheet = null;   // {kind, home, id, keyboard, draft:{choice, paidOn, planOn, interestOn, withInterest}, error}
+var bulkPlan = null;      // {month, sel:{uid:true}}: programming several open bills for a later month
+function billUid(b){ return b.kind + '|' + b.home + '|' + b.id; }
+// the bill's own due day in that month (its last day when it has none), never before today
+function planDateIn(b, monthKey){
+  var today = todayStr();
+  var day = b.dueIso ? parseInt(b.dueIso.slice(8, 10), 10) : null;
+  var iso = day ? dateInMonth(monthKey, day) : lastDayIso(monthKey);
+  return iso < today ? today : iso;
+}
+function defaultPaidOn(b){
+  var today = todayStr();
+  if (b.paid && b.paidOn) return b.paidOn;
+  if (b.eff === b.home && b.home < monthKeyToday()){
+    // a bill of a month that already passed and never left it: most likely paid on time
+    var ref = b.dueIso || lastDayIso(b.home);
+    return ref < today ? ref : today;
+  }
+  return today;
+}
+function defaultPlanOn(b){
+  var today = todayStr();
+  if (b.planOn && b.planOn >= today) return b.planOn;
+  var todayKey = monthKeyToday();
+  return planDateIn(b, shiftMonth(b.home > todayKey ? b.home : todayKey, 1));
+}
+// how the bill would stand after a change (nothing is saved)
+function previewBill(b, change){
+  var c = {};
+  Object.keys(b).forEach(function(k){ c[k] = b[k]; });
+  Object.keys(change).forEach(function(k){ c[k] = change[k]; });
+  if (c.paid) c.planOn = null; else c.paidOn = null;
+  var today = todayStr(), todayKey = monthKeyToday();
+  c.pastDue = !c.paid && !!c.dueIso && c.dueIso < today;
+  c.carries = c.eligible !== false && c.pastDue && c.home < todayKey;
+  return settleBill(c, todayKey, today);
+}
+function planChipMonths(b){
+  var todayKey = monthKeyToday();
+  var base = b.home > todayKey ? b.home : todayKey;
+  var out = [];
+  if (b.home <= todayKey) out.push({key: todayKey, label: 'Ainda este mês'});
+  for (var i = 1; i <= 3; i++){
+    var k = shiftMonth(base, i);
+    out.push({key: k, label: capFirst(shortMonthLabel(k))});
+  }
+  return out;
+}
+function statusSheetBill(){
+  return statusSheet ? findBill(STATE, statusSheet.kind, statusSheet.home, statusSheet.id) : null;
+}
+function statusHint(b, choice, d){
+  var todayKey = monthKeyToday(), today = todayStr();
+  if (choice === 'paid'){
+    if (!isoOrNull(d.paidOn)) return 'Escolha a data em que ela foi paga.';
+    if (d.paidOn > today) return 'A data do pagamento não pode ser depois de hoje.';
+    var p = previewBill(b, {paid:true, paidOn:d.paidOn});
+    if (p.eff !== b.home) return 'Paga depois do vencimento: conta em <strong>' + esc(monthLabel(p.eff)) + '</strong>, o mês do pagamento.';
+    if (b.home < todayKey) return 'Paga até o vencimento: fica em <strong>' + esc(monthLabel(b.home)) + '</strong>, o mês da conta.';
+    return 'Conta em <strong>' + esc(monthLabel(b.home)) + '</strong>.';
+  }
+  if (choice === 'plan'){
+    if (!isoOrNull(d.planOn)) return 'Escolha o dia em que pretende pagar.';
+    if (d.planOn < today) return 'A previsão precisa ser de hoje em diante.';
+    var q = previewBill(b, {paid:false, planOn:d.planOn});
+    return (q.eff !== b.eff ? 'Sai de ' + esc(monthLabel(b.eff)) + ' e passa a contar em <strong>' : 'Conta em <strong>') + esc(monthLabel(q.eff)) + '</strong>' +
+      ' (lista, resumo e gráficos). Se a data passar sem pagar, ela volta a ficar atrasada e segue para o mês seguinte até ser paga.';
+  }
+  var r = previewBill(b, {paid:false, planOn:null});
+  if (r.eff !== r.home) return 'Ainda não foi paga e está atrasada: conta em <strong>' + esc(monthLabel(r.eff)) + '</strong> (mês atual) até ser paga.';
+  return 'Ainda não foi paga' + (r.state === 'overdue' ? ' e está atrasada' : '') + ': conta em <strong>' + esc(monthLabel(r.eff)) + '</strong>.';
+}
+function interestHint(b, raw){
+  if (String(raw || '').trim() === '') return 'Valor lançado: ' + fmtMoney(b.amount) + '. Digite quanto a conta ficou, já com juros e multa.';
+  var v = parseMoneyInput(raw);
+  if (!isFinite(v)) return 'Não entendi o valor. Digite só números, ex.: 162,34';
+  if (v <= b.amount) return 'O valor com juros precisa ser maior que o valor lançado (' + fmtMoney(b.amount) + ').';
+  var j = round2(v - b.amount);
+  return 'Juros e multa: <strong>' + fmtMoney(j) + '</strong>' + (b.amount > 0 ? ' (' + fmtShare(j / b.amount * 100) + ' a mais que os ' + fmtMoney(b.amount) + ' lançados)' : '') + '. Nas listas e gráficos a conta aparece com ' + fmtMoney(v) + '.';
+}
+function openStatusSheet(kind, home, id, fromKeyboard){
+  var b = findBill(STATE, kind, home, id);
+  if (!b) return;
+  sheetOpen = false; sheetDraft = null; editingVariable = null; launchingRecurring = null;
+  bulkPlan = null;
+  toastMsg = null;
+  statusSheet = {kind:kind, home:home, id:id, keyboard:!!fromKeyboard, error:'', draft:{
+    choice: b.state === 'paid' ? 'paid' : (b.state === 'planned' ? 'plan' : 'pending'),
+    paidOn: defaultPaidOn(b),
+    planOn: defaultPlanOn(b),
+    interestOn: b.withInterest != null,
+    withInterest: b.withInterest != null ? fmtInputAmount(b.withInterest) : ''
+  }};
+  render();
+  focusQuietly(appEl && appEl.querySelector('.status-sheet input[name="stChoice"]:checked'));
+}
+function renderStatusSheet(keepStill){
+  var b = statusSheetBill();
+  if (!b) return '';
+  var d = statusSheet.draft;
+  var today = todayStr();
+  var meta = [BILL_KIND_LABEL[b.kind] + ' de ' + monthLabel(b.home)];
+  if (b.dueIso) meta.push((b.dueIso < today && !b.paid ? 'venceu em ' : 'vence em ') + fmtDate(b.dueIso));
+  meta.push('valor lançado ' + fmtMoney(b.amount));
+  var now = 'Agora: <strong>' + BILL_STATUS_LABEL[b.state] + '</strong>' +
+    (b.state === 'planned' ? ', previsão ' + esc(fmtDate(b.planOn)) : '') +
+    (b.state === 'paid' && b.paidOn ? ', paga em ' + esc(fmtDate(b.paidOn)) : '') +
+    ' · conta em ' + esc(monthLabel(b.eff)) + (b.interest > 0 ? ' · com juros: ' + fmtMoney(b.total) : '');
+  function opt(value, title, desc){
+    var on = d.choice === value;
+    return '<label class="st-opt' + (on ? ' on' : '') + '" data-choice="' + value + '">' +
+      '<input type="radio" name="stChoice" value="' + value + '"' + (on ? ' checked' : '') + '>' +
+      '<span class="st-opt-body"><span class="st-opt-title">' + title + '</span><span class="st-opt-desc">' + desc + '</span></span>' +
+    '</label>';
+  }
+  function extra(forWhat, shown, inner){
+    return '<div class="st-extra" data-for="' + forWhat + '"' + (shown ? '' : ' hidden') + '>' + inner + '</div>';
+  }
+  var chips = planChipMonths(b).map(function(c){
+    var iso = planDateIn(b, c.key);
+    return '<button type="button" class="chip' + (d.planOn === iso ? ' active' : '') + '" data-action="status-plan-month" data-date="' + iso + '" aria-pressed="' + (d.planOn === iso ? 'true' : 'false') + '">' + esc(c.label) + '</button>';
+  }).join('');
+  var late = b.pastDue || b.lateBy;
+  return '<div class="sheet-backdrop" data-action="close-status">' +
+    '<form class="sheet status-sheet' + (keepStill ? ' still' : '') + '" data-action="status-form" role="dialog" aria-modal="true" aria-labelledby="st-title" novalidate>' +
+      '<h3 id="st-title" style="margin-bottom:14px">' + esc(b.name) + '</h3>' +
+      '<p class="st-meta">' + esc(meta.join(' · ')) + '<br>' + now + '</p>' +
+      '<fieldset class="st-group"><legend>Situação da conta</legend>' +
+        opt('paid', '✅ Pago', 'Já foi paga.') +
+        extra('paid', d.choice === 'paid',
+          '<div class="field"><label for="st-paidOn">Data do pagamento</label><input id="st-paidOn" type="date" name="paidOn" max="' + today + '" value="' + esc(d.paidOn || '') + '"></div>' +
+          '<p class="st-hint" data-hint="paid">' + statusHint(b, 'paid', d) + '</p>') +
+        opt('pending', '⏳ Pendente', 'Ainda não foi paga' + (late ? ' (está atrasada)' : '') + ', sem data prevista.') +
+        extra('pending', d.choice === 'pending', '<p class="st-hint" data-hint="pending">' + statusHint(b, 'pending', d) + '</p>') +
+        opt('plan', '📅 Vou pagar em…', 'Escolha quando pretende pagar. Dá pra adiar de novo depois.') +
+        extra('plan', d.choice === 'plan',
+          '<div class="st-chips" role="group" aria-label="Escolher o mês">' + chips + '</div>' +
+          '<div class="field"><label for="st-planOn">Previsão de pagamento</label><input id="st-planOn" type="date" name="planOn" min="' + today + '" max="' + lastDayIso(computeMaxMonth()) + '" value="' + esc(d.planOn || '') + '"></div>' +
+          '<p class="st-hint" data-hint="plan">' + statusHint(b, 'plan', d) + '</p>') +
+      '</fieldset>' +
+      '<div class="st-interest">' +
+        '<div class="field" style="margin-bottom:8px"><label class="check-field"><input type="checkbox" name="interestOn"' + (d.interestOn ? ' checked' : '') + '><span>Teve juros ou multa</span></label></div>' +
+        (late && !(b.interest > 0) ? '<p class="st-hint" style="margin:-2px 0 10px"><span class="risk-tag">pode ter juros</span> Conta atrasada costuma vir com juros e multa: confira o valor atualizado no boleto ou no app do banco.</p>' : '') +
+        extra('interest', !!d.interestOn,
+          '<div class="field"><label for="st-withInterest">Valor atualizado da conta (com juros e multa)</label><input id="st-withInterest" name="withInterest" type="text" inputmode="decimal" autocomplete="off" placeholder="' + esc(fmtInputAmount(b.amount)) + '" value="' + esc(d.withInterest || '') + '"></div>' +
+          '<p class="st-hint" data-hint="interest">' + interestHint(b, d.withInterest) + '</p>') +
+      '</div>' +
+      '<p class="st-error" role="alert">' + esc(statusSheet.error || '') + '</p>' +
+      '<div class="sheet-actions">' +
+        '<button type="button" class="btn ghost" data-action="close-status">Cancelar</button>' +
+        '<button type="submit" class="btn primary">Salvar</button>' +
+      '</div>' +
+    '</form>' +
+  '</div>';
+}
+// closing (or saving) puts the keyboard focus back on the status that opened the window
+function focusStatusPill(back){
+  if (!back || !appEl) return;
+  var pills = appEl.querySelectorAll('.pill[data-action="open-status"][data-kind="' + back.kind + '"][data-month="' + back.home + '"]');
+  for (var i = 0; i < pills.length; i++){
+    if (pills[i].getAttribute('data-id') === back.id){ focusQuietly(pills[i]); return; }
+  }
+}
+function closeStatusSheet(){
+  var back = statusSheet && statusSheet.keyboard ? {kind:statusSheet.kind, home:statusSheet.home, id:statusSheet.id} : null;
+  statusSheet = null;
+  render();
+  focusStatusPill(back);
+}
+function readStatusForm(form){
+  var d = statusSheet.draft;
+  var checked = form.querySelector('input[name="stChoice"]:checked');
+  if (checked) d.choice = checked.value;
+  if (form.elements['paidOn']) d.paidOn = form.elements['paidOn'].value;
+  if (form.elements['planOn']) d.planOn = form.elements['planOn'].value;
+  if (form.elements['interestOn']) d.interestOn = !!form.elements['interestOn'].checked;
+  if (form.elements['withInterest']) d.withInterest = form.elements['withInterest'].value;
+  return d;
+}
+// updated in place: switching the option, picking a date or typing the amount never redraws
+// the window (the keyboard and the scroll stay where they are)
+function updateStatusSheetUI(form){
+  if (!statusSheet || !form) return;
+  var b = statusSheetBill();
+  if (!b) return;
+  var d = readStatusForm(form);
+  var i;
+  var opts = form.querySelectorAll('.st-opt');
+  for (i = 0; i < opts.length; i++){
+    if (opts[i].getAttribute('data-choice') === d.choice) opts[i].classList.add('on'); else opts[i].classList.remove('on');
+  }
+  var extras = form.querySelectorAll('.st-extra');
+  for (i = 0; i < extras.length; i++){
+    var f = extras[i].getAttribute('data-for');
+    if (f === 'interest' ? d.interestOn : f === d.choice) extras[i].removeAttribute('hidden'); else extras[i].setAttribute('hidden', '');
+  }
+  ['paid', 'pending', 'plan'].forEach(function(c){
+    var hint = form.querySelector('[data-hint="' + c + '"]');
+    if (hint) hint.innerHTML = statusHint(b, c, d);
+  });
+  var ih = form.querySelector('[data-hint="interest"]');
+  if (ih) ih.innerHTML = interestHint(b, d.withInterest);
+  var chips = form.querySelectorAll('[data-action="status-plan-month"]');
+  for (i = 0; i < chips.length; i++){
+    var on = chips[i].getAttribute('data-date') === d.planOn;
+    if (on) chips[i].classList.add('active'); else chips[i].classList.remove('active');
+    chips[i].setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
+  statusSheet.error = '';
+  var err = form.querySelector('.st-error');
+  if (err) err.textContent = '';
+}
+function pickPlanMonth(el){
+  var form = el.closest ? el.closest('form[data-action="status-form"]') : null;
+  if (!form) return;
+  var input = form.elements['planOn'];
+  if (input) input.value = el.getAttribute('data-date');
+  var radio = form.querySelector('input[name="stChoice"][value="plan"]');
+  if (radio) radio.checked = true;
+  updateStatusSheetUI(form);
+}
+function saveStatusSheet(form){
+  var b = statusSheetBill();
+  if (!b){ statusSheet = null; render(); return; }
+  var d = readStatusForm(form);
+  var today = todayStr();
+  var err = '', field = null;
+  var op = {type:'setBillStatus', kind:b.kind, month:b.home, id:b.id, paid:false, paidOn:null, planOn:null, withInterest:null};
+  if (d.choice === 'paid'){
+    op.paid = true;
+    op.paidOn = d.paidOn;
+    if (!isoOrNull(d.paidOn)){ err = 'Escolha a data do pagamento.'; field = 'paidOn'; }
+    else if (d.paidOn > today){ err = 'A data do pagamento não pode ser depois de hoje.'; field = 'paidOn'; }
+  } else if (d.choice === 'plan'){
+    op.planOn = d.planOn;
+    if (!isoOrNull(d.planOn)){ err = 'Escolha a data da previsão de pagamento.'; field = 'planOn'; }
+    else if (d.planOn < today){ err = 'A previsão precisa ser de hoje em diante.'; field = 'planOn'; }
+    else if (d.planOn > lastDayIso(computeMaxMonth())){ err = 'Escolha uma data mais próxima.'; field = 'planOn'; }
+  }
+  if (!err && d.interestOn){
+    var v = parseMoneyInput(d.withInterest);
+    if (!isFinite(v)){
+      err = String(d.withInterest || '').trim() === '' ? 'Digite o valor atualizado da conta (com juros e multa), ou desmarque "Teve juros ou multa".' : 'Não entendi o valor com juros. Digite só números, ex.: 162,34';
+      field = 'withInterest';
+    } else if (v <= b.amount){
+      err = 'O valor com juros precisa ser maior que o valor lançado (' + fmtMoney(b.amount) + ').';
+      field = 'withInterest';
+    } else op.withInterest = round2(v);
+  }
+  if (err){
+    statusSheet.error = err;
+    var errEl = form.querySelector('.st-error');
+    if (errEl) errEl.textContent = err;
+    if (field && form.elements[field]) focusQuietly(form.elements[field]);
+    return;
+  }
+  var after = previewBill(b, {paid:op.paid, paidOn:op.paidOn, planOn:op.planOn, withInterest:op.withInterest});
+  var msg;
+  if (after.state === 'paid') msg = b.name + ' — marcada como paga' + (after.eff !== b.home ? ' (conta em ' + monthLabel(after.eff) + ')' : '') + '.';
+  else if (after.state === 'planned') msg = b.name + ' — programada para ' + fmtDate(op.planOn) + ' (conta em ' + monthLabel(after.eff) + ').';
+  else msg = b.name + ' — marcada como pendente' + (after.eff !== b.home ? ' (conta em ' + monthLabel(after.eff) + ' até ser paga)' : '') + '.';
+  if (op.withInterest != null) msg += ' Juros de ' + fmtMoney(after.interest) + ' anotados.';
+  var back = statusSheet.keyboard ? {kind:b.kind, home:b.home, id:b.id} : null;
+  statusSheet = null;
+  toastMsg = msg;
+  doOp(op);
+  focusStatusPill(back);
+}
+
+/* ---------- programming several open bills for a later month ---------- */
+function openBulkPlan(month){
+  if (!MONTH_KEY_RE.test(month || '') || month <= monthKeyToday()) return;
+  var sel = {};
+  openBillsWithoutPlan().forEach(function(b){ if (b.state === 'overdue') sel[billUid(b)] = true; });
+  sheetOpen = false; statusSheet = null;
+  toastMsg = null;
+  bulkPlan = {month: month, sel: sel};
+  render();
+}
+function bulkPlanCount(list){
+  return list.filter(function(b){ return !!bulkPlan.sel[billUid(b)]; }).length;
+}
+function bulkPlanButtonText(n){
+  return n ? 'Programar ' + n + ' ' + plural(n, 'conta', 'contas') : 'Programar';
+}
+function renderBulkPlanSheet(keepStill){
+  var K = bulkPlan.month;
+  var todayKey = monthKeyToday();
+  var list = openBillsWithoutPlan();
+  var late = list.filter(function(b){ return b.state === 'overdue'; });
+  var onTime = list.filter(function(b){ return b.state !== 'overdue'; });
+  function row(b){
+    var key = billUid(b);
+    var when;
+    if (b.lateBy === 'plan') when = 'previsão era ' + fmtDate(b.planOn);
+    else if (b.state === 'overdue') when = 'venceu em ' + fmtDate(b.dueIso);
+    else when = b.dueIso ? 'vence em ' + fmtDate(b.dueIso) : 'sem vencimento';
+    var sub = (b.home !== todayKey ? 'de ' + monthLabel(b.home) + ' · ' : '') + when + ' → previsão ' + fmtDate(planDateIn(b, K));
+    return '<label class="bp-row"><input type="checkbox" name="pick" value="' + esc(key) + '"' + (bulkPlan.sel[key] ? ' checked' : '') + '>' +
+      '<span class="bp-main"><span class="bp-name">' + esc(b.name) + '</span><span class="bp-sub">' + esc(sub) + '</span></span>' +
+      '<span class="bp-amt">' + fmtMoney(b.total) + '</span></label>';
+  }
+  var n = bulkPlanCount(list);
+  var all = list.length && n === list.length;
+  var body = list.length ?
+    (late.length ? '<div class="bp-group-title">Atrasadas</div><div class="bp-list">' + late.map(row).join('') + '</div>' : '') +
+    (onTime.length ? '<div class="bp-group-title">Ainda no prazo (' + esc(monthLabel(todayKey)) + ')</div><div class="bp-list">' + onTime.map(row).join('') + '</div>' : '') +
+    '<p class="lt-hint"><button type="button" class="link-btn" data-action="bulk-plan-all">' + (all ? 'Desmarcar todas' : 'Marcar todas') + '</button></p>'
+    : '<p class="empty-note">Nenhuma conta em aberto sem previsão no mês atual.</p>';
+  return '<div class="sheet-backdrop" data-action="close-bulk-plan">' +
+    '<form class="sheet bulk-plan-sheet' + (keepStill ? ' still' : '') + '" data-action="bulk-plan-form" role="dialog" aria-modal="true" aria-labelledby="bp-title" novalidate>' +
+      '<h3 id="bp-title" style="margin-bottom:8px">Programar para ' + esc(monthLabel(K)) + '</h3>' +
+      '<p class="sheet-note">Contas de ' + esc(monthLabel(todayKey)) + ' (mês atual) ainda em aberto e sem previsão. As marcadas passam a contar em <strong>' + esc(monthLabel(K)) + '</strong>, cada uma no dia do vencimento dela — dá pra mudar a data de qualquer uma depois, tocando na situação dela.</p>' +
+      body +
+      '<div class="sheet-actions">' +
+        '<button type="button" class="btn ghost" data-action="close-bulk-plan">Cancelar</button>' +
+        '<button type="submit" class="btn primary" data-role="bulk-submit"' + (n ? '' : ' disabled') + '>' + bulkPlanButtonText(n) + '</button>' +
+      '</div>' +
+    '</form>' +
+  '</div>';
+}
+function updateBulkPlanUI(form){
+  if (!bulkPlan || !form) return;
+  var boxes = form.querySelectorAll('input[name="pick"]');
+  for (var i = 0; i < boxes.length; i++){
+    if (boxes[i].checked) bulkPlan.sel[boxes[i].value] = true; else delete bulkPlan.sel[boxes[i].value];
+  }
+  var n = bulkPlanCount(openBillsWithoutPlan());
+  var btn = form.querySelector('[data-role="bulk-submit"]');
+  if (btn){ btn.textContent = bulkPlanButtonText(n); btn.disabled = !n; }
+}
+function saveBulkPlan(form){
+  if (!bulkPlan) return;
+  updateBulkPlanUI(form);
+  var K = bulkPlan.month;
+  var items = openBillsWithoutPlan().filter(function(b){ return !!bulkPlan.sel[billUid(b)]; }).map(function(b){
+    return {kind:b.kind, month:b.home, id:b.id, planOn:planDateIn(b, K)};
+  });
+  if (!items.length) return;
+  bulkPlan = null;
+  toastMsg = items.length + plural(items.length, ' conta programada', ' contas programadas') + ' para ' + monthLabel(K) + '.';
+  doOp({type:'planBills', items:items});
 }
 
 /* ---------- focus preservation across re-renders ---------- */
@@ -4839,7 +5872,7 @@ function renderMainScreen(sheetWasOpen){
   html += '<div id="sec-resumo">' +
     '<section class="card"><div class="card-head"><div class="card-head-main"><span class="card-icon" aria-hidden="true">📊</span><h2 class="card-title">Resumo do mês</h2></div>' +
       '<button type="button" class="link-btn" data-action="open-charts">Ver gráficos ›</button></div>' +
-      renderStats(totals.totalIncome, mv, totals.totalFixed, totals.paidCount, totals.setCount, totals.totalVariable, totals.totalInvestments, totals.saldo) +
+      renderStats(totals, mv) +
     '</section>' +
     (isCurrent ? renderUpcoming() : '') +
   '</div>';
@@ -4859,6 +5892,11 @@ function renderMainScreen(sheetWasOpen){
   html += '<p class="footer-note">' + esc(footerNote()) + '</p>';
   html += '</div>';
   if (sheetOpen) html += renderSheet(h, sheetWasOpen);
+  if (statusSheet){
+    if (statusSheetBill()) html += renderStatusSheet(sheetWasOpen);
+    else statusSheet = null;   // the bill was removed meanwhile
+  }
+  if (bulkPlan) html += renderBulkPlanSheet(sheetWasOpen);
   return html;
 }
 
@@ -4900,6 +5938,14 @@ function syncDraftFromField(el){
   }
 }
 function onInput(ev){
+  var stForm = sheetFormOf(ev.target, 'status-form');
+  if (stForm){ updateStatusSheetUI(stForm); return; }
+  if (ev.target && ev.target.getAttribute && ev.target.getAttribute('data-action') === 'pick-custom-color'){
+    // while the phone's color picker is open the app follows it (no redraw: it would close the
+    // picker); "change" then redraws the choices
+    setCustomColor(ev.target.value);
+    return;
+  }
   syncDraftFromField(ev.target);
   updateInstallmentPreview(ev.target);
   updateAutoPaidStatus(ev.target);
@@ -5001,14 +6047,6 @@ function onClick(ev){
   var el = ev.target && ev.target.closest ? ev.target.closest('[data-action]') : null;
   if (!el) return;
   var action = el.getAttribute('data-action');
-  if (el.getAttribute('data-from-due')){
-    // paying from "Próximos vencimentos": the row disappears, so a quick second tap must not
-    // land on (and pay) the next one
-    var nowTap = Date.now();
-    if (nowTap - lastDueTapAt < 400) return;
-    lastDueTapAt = nowTap;
-    toastMsg = (el.getAttribute('data-name') || 'Conta') + ' — marcada como paga.';
-  }
   var catId, id, w, name, inputEl, instId;
   switch (action){
     case 'prev-month':
@@ -5047,7 +6085,7 @@ function onClick(ev){
       break;
     case 'toggle-chart-table':
       var ctId = el.getAttribute('data-chart');
-      if (/^(gastos|saldo|compromissos)$/.test(ctId || '')) chartTableOpen[ctId] = !chartTableOpen[ctId];
+      if (/^(gastos|saldo|juros|compromissos)$/.test(ctId || '')) chartTableOpen[ctId] = !chartTableOpen[ctId];
       render();
       break;
     case 'toggle-unpaid-list':
@@ -5066,12 +6104,31 @@ function onClick(ev){
       editingPerson = el.getAttribute('data-person');
       render();
       break;
-    case 'toggle-paid':
-      catId = el.getAttribute('data-catid');
-      var targetMonthF = el.getAttribute('data-month') || viewMonth;
-      var mv = getMonthView(STATE, targetMonthF);
-      var cur = mv.fixed[catId] ? mv.fixed[catId].paid : false;
-      doOp({type:'toggleFixedPaid', month:targetMonthF, catId:catId, paid: !cur});
+    case 'open-status':
+      // a click made with the keyboard (Enter / space) has detail 0
+      openStatusSheet(el.getAttribute('data-kind'), el.getAttribute('data-month') || viewMonth, el.getAttribute('data-id'), !!ev && ev.detail === 0);
+      break;
+    case 'close-status':
+      closeStatusSheet();
+      break;
+    case 'status-plan-month':
+      pickPlanMonth(el);
+      break;
+    case 'open-bulk-plan':
+      openBulkPlan(el.getAttribute('data-month'));
+      break;
+    case 'close-bulk-plan':
+      bulkPlan = null;
+      render();
+      break;
+    case 'bulk-plan-all':
+      if (bulkPlan){
+        var bpList = openBillsWithoutPlan();
+        var bpAll = bpList.length && bulkPlanCount(bpList) === bpList.length;
+        bulkPlan.sel = {};
+        if (!bpAll) bpList.forEach(function(b){ bulkPlan.sel[billUid(b)] = true; });
+        render();
+      }
       break;
     case 'delete-fixed':
       catId = el.getAttribute('data-catid');
@@ -5165,20 +6222,6 @@ function onClick(ev){
         clearTimeout(removeTimerInvestment);
         removeTimerInvestment = setTimeout(function(){ removeConfirmInvestment = null; render(); }, 3000);
       }
-      break;
-    case 'toggle-installment-paid':
-      instId = el.getAttribute('data-instid');
-      var targetMonthI = el.getAttribute('data-month') || viewMonth;
-      var mvi = getMonthView(STATE, targetMonthI);
-      var curInst = mvi.installmentsActive.filter(function(i){ return i.id === instId; })[0];
-      doOp({type:'toggleInstallmentPaid', month:targetMonthI, instId:instId, paid: !(curInst && curInst.paid)});
-      break;
-    case 'toggle-variable-paid':
-      id = el.getAttribute('data-id');
-      var targetMonthV = el.getAttribute('data-month') || viewMonth;
-      var mvv = getMonthView(STATE, targetMonthV);
-      var curVar = (mvv.variable || []).filter(function(e){ return e.id === id; })[0];
-      doOp({type:'updateVariable', month:targetMonthV, entryId:id, patch:{paid: !(curVar && curVar.paid)}});
       break;
     case 'delete-installment':
       instId = el.getAttribute('data-instid');
@@ -5292,6 +6335,15 @@ function onClick(ev){
       applyPaletteAttr();
       render();
       break;
+    case 'set-custom-color':
+      setCustomColor(el.getAttribute('data-color'));
+      render();
+      break;
+    case 'set-theme':
+      var tmVal = el.getAttribute('data-value');
+      if (THEME_MODES.indexOf(tmVal) >= 0){ themeMode = tmVal; savePref(THEME_KEY, themeMode); applyPaletteAttr(); }
+      render();
+      break;
     case 'export-backup':
       exportBackup();
       break;
@@ -5397,15 +6449,38 @@ function onClick(ev){
       break;
   }
 }
+function sheetFormOf(el, action){
+  return (el && el.closest) ? el.closest('form[data-action="' + action + '"]') : null;
+}
 function onChange(ev){
   var el = ev.target;
   if (!el || !el.getAttribute) return;
+  var stForm = sheetFormOf(el, 'status-form');
+  if (stForm){ updateStatusSheetUI(stForm); return; }
+  var bpForm = sheetFormOf(el, 'bulk-plan-form');
+  if (bpForm){ updateBulkPlanUI(bpForm); return; }
   syncDraftFromField(el);
   var action = el.getAttribute('data-action');
   if (action === 'import-file'){
     var file = el.files && el.files[0];
     handleImportFile(file);
     el.value = '';
+    return;
+  }
+  if (action === 'pick-custom-color'){
+    setCustomColor(el.value);
+    render();
+    return;
+  }
+  if (action === 'toggle-custom-vivid'){
+    var base = customColor && hexToRgb01(customColor.color) ? customColor.color : null;
+    if (base && palette === 'custom') setCustomColor(base, !!el.checked);
+    else {
+      // no own color yet: the choice is kept for when one is picked
+      customColor = {color: base || '#1B4B4A', vivid: !!el.checked};
+      savePref(CUSTOM_COLOR_KEY, customColor);
+    }
+    render();
     return;
   }
   if (action === 'set-due-days'){
@@ -5445,6 +6520,16 @@ function onChange(ev){
 function onSubmit(ev){
   var form = ev.target;
   var action = form.getAttribute ? form.getAttribute('data-action') : null;
+  if (action === 'status-form'){
+    ev.preventDefault();
+    saveStatusSheet(form);
+    return;
+  }
+  if (action === 'bulk-plan-form'){
+    ev.preventDefault();
+    saveBulkPlan(form);
+    return;
+  }
   if (action === 'pin-wipe-form'){
     ev.preventDefault();
     var wipeBtn = form.querySelector('[data-action="pin-wipe"]');
@@ -5555,6 +6640,12 @@ function onSubmit(ev){
             {desc:desc, categoryId:categoryId, date:date}, repeatsRaw, targetMonth)}});
       } else if (editing && editing.kind === 'variable'){
         var patchV = {desc:desc, amount:amount, date:date, categoryId:categoryId, dueDay:dueVarD, paid:paidVar, by:who, sv:2};
+        if (currentEntry && paidVar !== !!currentEntry.paid){
+          // same rule as the status window: paying sets the payment date, unpaying clears it
+          var billEdit = findBill(STATE, 'variable', viewMonth, currentEntry.id);
+          if (paidVar){ patchV.paidOn = billEdit ? defaultPaidOn(billEdit) : todayStr(); patchV.planOn = null; }
+          else patchV.paidOn = null;
+        }
         var opV = {type:'updateVariable', month:viewMonth, entryId:editing.id, patch:patchV, newCategory:newCategory};
         if (tplCurrent){
           opV.recurringPatch = {tplId:tplCurrent.id, patch:recurringPatchFrom(tplCurrent,
