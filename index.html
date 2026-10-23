@@ -97,6 +97,22 @@ button{cursor:pointer}
 .pp-text{display:flex;justify-content:space-between;align-items:baseline;gap:4px 12px;flex-wrap:wrap;margin-top:6px;font-size:0.8125rem;color:var(--ink-soft)}
 .pp-text strong{font-family:'Space Mono',monospace;color:var(--ink);white-space:nowrap;font-variant-numeric:tabular-nums}
 .pp-text .link-btn{font-size:inherit}
+.pp-of{white-space:nowrap}
+/* this month's bills paid / to pay in another month (they still weigh on this month) */
+.moved-note{font-size:0.8125rem;margin:8px 0 0;line-height:1.45}
+.moved-note.plan{color:var(--plan)}
+.moved-note.late{color:var(--expense)}
+.moved-note.done{color:var(--ink-soft)}
+/* bills of earlier months paid with this month's money: "Depois de pagar tudo" */
+.ledger{margin-top:12px;background:var(--surface-2);border-radius:12px;padding:10px 12px}
+.lg-line{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:0.875rem;padding:3px 0}
+.lg-line > span:first-child{flex:1;min-width:0}
+.lg-line .lg-count{color:var(--ink-soft);font-size:0.8125rem}
+.lg-amt{font-family:'Space Mono',monospace;font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+.lg-amt.pos{color:var(--income)}
+.lg-amt.neg{color:var(--expense)}
+.lg-total{border-top:1px solid var(--border);margin-top:4px;padding-top:7px;font-weight:700}
+.lg-hint{font-size:0.75rem;color:var(--ink-soft);margin:6px 0 0;line-height:1.45}
 
 .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:18px;box-shadow:0 2px 8px var(--shadow)}
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px}
@@ -191,6 +207,9 @@ button.pill[data-action="open-status"]::after{content:'';width:8px;height:5px;fl
 .carried-note{width:100%;font-size:0.75rem;color:var(--expense);margin-top:-2px}
 .carried-block{background:var(--expense-soft);border-radius:12px;padding:10px 12px;margin-bottom:14px}
 .carried-block-title{font-size:0.75rem;font-weight:700;color:var(--expense);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+.carried-block-hint{font-size:0.75rem;line-height:1.4;margin:-2px 0 8px;color:var(--expense)}
+.carried-block.plan .carried-block-hint{color:var(--plan)}
+.carried-block.done .carried-block-hint{color:var(--ink-soft)}
 .carried-block .fixed-row,.carried-block .var-row{border-bottom-color:rgba(157,74,52,0.18)}
 .carried-block .fixed-row:last-child,.carried-block .var-row:last-child{border-bottom:none;padding-bottom:0}
 .carried-block .var-row:first-child,.carried-block .fixed-row:first-child{padding-top:0}
@@ -244,7 +263,6 @@ button.pill[data-action="open-status"]::after{content:'';width:8px;height:5px;fl
 .bp-amt{font-family:'Space Mono',monospace;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums;font-size:0.875rem}
 .bp-name,.bp-sub{display:block}
 .btn:disabled{opacity:.5;cursor:default}
-.moved .var-amt{color:var(--ink-soft)}
 /* appearance: color mode and your own color */
 .theme-row{margin-bottom:16px}
 .color-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:10px 6px;max-width:440px}
@@ -537,6 +555,32 @@ body.privacy-cover::after{content:'🔒';position:fixed;inset:0;display:flex;ali
 :root[data-theme="dark"]{--c-overdue:#E66767;--c-pending:#FAB219;--c-paid:#12A39A;--c-pos:#12A39A;--c-neg:#E66767;--c-invest:#3987E5;--c-muted:#5B6266}
 .qn-pill.qn-charts{background:var(--primary-soft);border-color:transparent;color:var(--primary);font-family:inherit;cursor:pointer}
 .qn-pill.qn-charts:hover,.qn-pill.qn-charts:focus-visible{border-color:var(--primary)}
+/* day-to-day spending: quick entry + its block in "Contas variáveis" */
+.qn-pill.qn-daily{background:var(--surface);border-color:var(--primary);color:var(--primary);font-family:inherit;cursor:pointer}
+.add-btn.daily-add{border-style:solid;border-color:var(--primary);background:var(--surface);color:var(--primary);display:flex;flex-direction:column;align-items:center;gap:1px}
+.add-hint{font-size:0.75rem;font-weight:400;color:var(--ink-soft)}
+.daily-block{margin-top:12px;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.daily-head{width:100%;display:flex;align-items:center;gap:10px;padding:11px 12px;border:none;background:var(--surface-2);color:var(--ink);font-family:inherit;text-align:left}
+.daily-head:focus-visible{outline:2px solid var(--primary);outline-offset:-2px}
+.dh-title{flex:1;min-width:0;font-size:0.875rem;font-weight:700}
+.dh-count{color:var(--ink-soft);font-weight:600}
+.dh-amt{font-family:'Space Mono',monospace;font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+.daily-head::after{content:'';width:10px;height:10px;flex:none;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 3.5 5 7l3.5-3.5' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 3.5 5 7l3.5-3.5' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;transition:transform .15s}
+.daily-head[aria-expanded="true"]::after{transform:rotate(180deg)}
+.daily-list{padding:0 12px}
+.daily-row{flex-wrap:nowrap}
+.daily-row .row-main{flex:1;min-width:0}
+.dl-group{margin:2px 0 14px}
+.dl-chips{display:flex;flex-wrap:wrap;gap:8px}
+.dl-chip{position:relative;display:inline-flex}
+.dl-chip input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
+.dl-chip span{display:inline-block;border:1px solid var(--border);background:var(--paper);color:var(--ink);border-radius:999px;padding:8px 13px;font-size:0.875rem;font-weight:600;cursor:pointer}
+.dl-chip.on span{background:var(--primary);border-color:var(--primary);color:var(--on-primary)}
+.dl-chip input:focus-visible + span{outline:2px solid var(--primary);outline-offset:2px}
+.dl-newcat{margin:10px 0 0}
+.dl-newcat[hidden]{display:none}
+.dl-amount{font-family:'Space Mono',monospace;font-size:1.25rem;font-weight:700}
+label .opt{font-weight:400;color:var(--ink-soft)}
 .charts-top{display:flex;align-items:center;gap:6px}
 .back-btn{background:none;border:none;padding:6px 10px 6px 0;margin-left:-2px;font-weight:700;font-size:0.9375rem;color:var(--primary);white-space:nowrap}
 :root[data-vivid] .header .back-btn{color:var(--hero-ink)}
@@ -1103,6 +1147,26 @@ function addTombstone(container, key, at){
   if (!container.deleted || typeof container.deleted !== 'object') container.deleted = {};
   container.deleted[key] = at;
 }
+// Day-to-day spending ("gasto do dia a dia") is paid by PIX, débito or dinheiro (a credit card
+// purchase is already in the card's bill)
+var DAILY_VIA = ['pix', 'debito', 'dinheiro'];
+var VIA_LABEL = {pix:'PIX', debito:'Débito', dinheiro:'Dinheiro'};
+// A day-to-day expense is always paid, on its own date; anything else about it is dropped
+function cleanDailyFields(e){
+  if (!e || typeof e !== 'object') return;
+  if ('daily' in e){
+    if (e.daily === true){
+      e.paid = true;
+      if (!ISO_DATE_RE.test(e.paidOn || '')){
+        if (ISO_DATE_RE.test(e.date || '')) e.paidOn = e.date; else delete e.paidOn;
+      }
+      delete e.planOn;
+      delete e.withInterest;
+      delete e.recurringId;
+    } else delete e.daily;
+  }
+  if ('via' in e && !(e.daily === true && VIA_LABEL.hasOwnProperty(e.via))) delete e.via;
+}
 // A bill's payment details: when it was paid ("paidOn"), when it is expected to be paid
 // ("planOn") and its updated amount when it had interest or a fine ("withInterest").
 // Anything that isn't a real date / a positive amount is dropped.
@@ -1200,6 +1264,7 @@ function normalizeState(s){
       }
     });
     m.variable.forEach(cleanBillFields);
+    m.variable.forEach(cleanDailyFields);
     Object.keys(m.installments).forEach(function(iid){ cleanBillFields(m.installments[iid]); });
     m.investments = m.investments.filter(function(e){ return e && typeof e === 'object'; });
     m.investments.forEach(function(e){ if (!e.id) e.id = uid(); e.amount = numOr0(e.amount); });
@@ -1322,19 +1387,22 @@ applyPaletteAttr();
 var appEl = null;
 var eventsBound = false;
 
-/* ---------- derived view: where every bill counts ---------- */
+/* ---------- derived view: where every bill weighs and where it is paid ---------- */
 // Every bill occurrence -- a fixed bill in a month, a parcela in a month, a variable expense
-// (in the month it was saved in) -- has a home month and counts in exactly ONE month:
-//  - paid: its home month. Paid after its due date, in a later month: the month it was paid
-//    in (that's when the money left, and a month that already passed doesn't change any more
-//    when an old bill is finally paid).
-//  - not paid, with a payment forecast ("previsão") from today on: the forecast's month
-//    (never earlier than its home month).
-//  - not paid and the forecast already passed: the current month, until it is paid.
-//  - not paid and overdue from an earlier month: the current month, until it is paid.
-//  - otherwise: its home month.
-// Totals, lists, summaries and charts all read these same results, so an amount can never
-// count twice or vanish.
+// (in the month it was saved in) -- has a home month, and:
+//  - it ALWAYS weighs on its home month's totals and saldo, paid or not, planned for later
+//    or not: a bill that couldn't be paid doesn't make its month look better;
+//  - it is paid / to be paid ("eff") in one month: its home month. Paid after its due date,
+//    in a later month: the month it was paid in. Not paid, with a payment forecast
+//    ("previsão") from today on: the forecast's month (never earlier than its home month).
+//    Not paid and overdue from an earlier month, or with a forecast that already passed: the
+//    current month, until it is paid.
+// A month lists its own bills and, apart, the bills of earlier months paid or to be paid in
+// it ("De meses anteriores"): those don't change its saldo -- they already weigh on their own
+// month -- and are taken off in "Depois de pagar tudo". Totals, lists, summaries and charts
+// all read these same results, so an amount never counts twice in a total or vanishes.
+// Day-to-day spending ("gastos do dia a dia": PIX, débito, dinheiro) is a variable expense
+// marked `daily`, always paid: it weighs on the saldo but is not a bill to pay or follow.
 var BILL_STATUS_LABEL = {paid:'Pago', pending:'Pendente', overdue:'Atrasada', planned:'Programada'};
 var BILL_KIND_LABEL = {fixed:'Conta fixa', installment:'Parcela', variable:'Conta variável'};
 function lastDayIso(monthKey){ return dateInMonth(monthKey, 31); }
@@ -1415,6 +1483,7 @@ function buildMonthBills(state, key, todayKey, today){
   ((m && m.variable) || []).forEach(function(e){
     var b = {kind:'variable', id:e.id, home:key, desc:e.desc, name:e.desc, categoryId:e.categoryId, by:e.by,
       date:e.date, recurringId:e.recurringId || null,
+      daily: !!e.daily, via: (e.daily && VIA_LABEL[e.via]) ? e.via : null,
       amount:e.amount, paid:!!e.paid,
       paidOn:isoOrNull(e.paidOn), planOn:isoOrNull(e.planOn), withInterest:positiveOrNull(e.withInterest),
       dueIso: varDueIso(e, key)};
@@ -1502,9 +1571,11 @@ function getMonthView(state, key){
     fixed: fixed,
     variable: (existing && existing.variable) || [],
     investments: (existing && existing.investments) || [],
-    bills: bills,          // this month's own bills (some may count in another month)
-    incoming: incoming,    // bills of other months that count in this one
-    counted: bills.filter(function(b){ return b.eff === key; }).concat(incoming)
+    bills: bills,          // this month's own bills: all of them weigh on its totals and saldo
+    incoming: incoming,    // bills of earlier months paid / to be paid in this month
+    counted: bills,        // what the month's totals and saldo count
+    // what is paid / to be paid in this month: its own bills that stay here + the incoming ones
+    payHere: bills.filter(function(b){ return b.eff === key; }).concat(incoming)
   };
 }
 // What the screen and the summaries need on top of the month's numbers: the monthly bills
@@ -1518,12 +1589,16 @@ function getMonthViewFull(state, key){
 }
 function computeMonthTotals(h, mv, key){
   var totalIncome = sumIncomeList(mv.income.person1) + sumIncomeList(mv.income.person2);
-  var t = {fixed:0, inst:0, plain:0, interest:0, fixedCount:0, fixedPaid:0, varCount:0, varPaid:0};
+  var t = {fixed:0, inst:0, plain:0, daily:0, dailyCount:0, interest:0, fixedCount:0, fixedPaid:0, varCount:0, varPaid:0};
   (mv.counted || []).forEach(function(b){
     if (b.kind === 'fixed'){
       t.fixed += b.total;
       t.fixedCount++;
       if (b.paid) t.fixedPaid++;
+    } else if (b.daily){
+      // day-to-day spending: always paid, not a bill to follow
+      t.daily += b.total;
+      t.dailyCount++;
     } else {
       if (b.kind === 'installment') t.inst += b.total; else t.plain += b.total;
       t.varCount++;
@@ -1531,15 +1606,23 @@ function computeMonthTotals(h, mv, key){
     }
     t.interest += b.interest;
   });
+  // bills of earlier months paid / to be paid here: not in this month's saldo
+  var inc = {total:0, count:0, months:{}};
+  (mv.incoming || []).forEach(function(b){ inc.total += b.total; inc.count++; inc.months[b.home] = true; });
   var totalInvestments = 0;
   mv.investments.forEach(function(e){ totalInvestments += e.amount; });
   var totalVariable = t.plain + t.inst;
+  var saldo = totalIncome - t.fixed - totalVariable - t.daily - totalInvestments;
   return {
     totalIncome: totalIncome, totalFixed: t.fixed, paidCount: t.fixedPaid, setCount: t.fixedCount,
     totalInstallments: t.inst, totalVariablePlain: t.plain, totalVariable: totalVariable,
     varCount: t.varCount, varPaid: t.varPaid, totalInterest: round2(t.interest),
+    totalDaily: t.daily, dailyCount: t.dailyCount,
+    totalSpent: t.fixed + totalVariable + t.daily,
     totalInvestments: totalInvestments,
-    saldo: totalIncome - t.fixed - totalVariable - totalInvestments
+    saldo: saldo,
+    incomingTotal: round2(inc.total), incomingCount: inc.count, incomingMonths: Object.keys(inc.months).sort(),
+    afterIncoming: saldo - inc.total
   };
 }
 
@@ -2044,6 +2127,38 @@ function applyOp(state, op){
       });
       m.updatedAt = at;
       break;
+    case 'saveDaily':
+      // a day-to-day expense, saved in the month of its date
+      if (op.newCategory){
+        var hasCatD = next.household.variableCategories.some(function(c){ return c.id === op.newCategory.id; });
+        if (!hasCatD){
+          next.household.variableCategories.push(op.newCategory);
+          next.household.updatedAt = at;
+        }
+      }
+      var dEntry = clone(op.entry);
+      dEntry.daily = true;
+      cleanBillFields(dEntry);
+      cleanDailyFields(dEntry);
+      dEntry.updatedAt = at;
+      if (op.entryId && op.fromMonth && op.fromMonth !== op.month){
+        // moved to another month: it gets a new id there (an id removed from a month stays
+        // removed in that month when the phones are joined)
+        var fromM = ensureMonth(next, op.fromMonth);
+        fromM.variable = fromM.variable.filter(function(e){ return e.id !== op.entryId; });
+        addTombstone(fromM, 'var:' + op.entryId, at);
+        fromM.updatedAt = at;
+      }
+      m = ensureMonth(next, op.month);
+      if (op.entryId && op.fromMonth === op.month && m.variable.some(function(e){ return e.id === op.entryId; })){
+        dEntry.id = op.entryId;
+        m.variable = m.variable.map(function(e){ return e.id === op.entryId ? dEntry : e; });
+      } else {
+        if (op.entryId) dEntry.id = op.newId || uid();   // moved (or removed meanwhile): a fresh id
+        m.variable.push(dEntry);
+      }
+      m.updatedAt = at;
+      break;
     case 'removeVariable':
       m = ensureMonth(next, op.month);
       m.variable = m.variable.filter(function(e){ return e.id !== op.entryId; });
@@ -2378,24 +2493,37 @@ function summaryBillRow(b, key){
   };
 }
 function summaryRowsOf(mv, key, kind){
-  return mv.counted.filter(function(b){ return b.kind === kind; }).map(function(b){ return summaryBillRow(b, key); });
+  return mv.bills.filter(function(b){ return b.kind === kind; }).map(function(b){ return summaryBillRow(b, key); });
 }
+// the month's own variable expenses (the day-to-day spending is summed apart)
 function summaryVariableRows(mv, key){
-  var own = mv.counted.filter(function(b){ return b.kind === 'variable' && b.home === key; }).map(function(b){ return summaryBillRow(b, key); });
+  var own = mv.bills.filter(function(b){ return b.kind === 'variable' && !b.daily; }).map(function(b){ return summaryBillRow(b, key); });
   own.sort(function(a,b){ return a.sortKey < b.sortKey ? 1 : (a.sortKey > b.sortKey ? -1 : 0); });
-  var others = mv.counted.filter(function(b){ return b.kind === 'variable' && b.home !== key; }).map(function(b){ return summaryBillRow(b, key); });
-  return own.concat(others);
+  return own;
 }
-// this month's own bills that count in another month (and why)
-function billMovedWhy(b){
-  if (b.state === 'paid') return 'paga em ' + fmtDate(b.paidOn) + ', depois do vencimento: conta em ' + monthLabel(b.eff);
-  if (b.state === 'planned') return 'programada para ' + fmtDate(b.planOn) + ': conta em ' + monthLabel(b.eff);
-  return 'atrasada: conta em ' + monthLabel(b.eff) + ' (mês atual) até ser paga';
+// bills of earlier months paid / to be paid in this month (not in this month's totals)
+function summaryIncomingRows(mv, key){
+  var order = {overdue:0, pending:1, planned:2, paid:3};
+  return (mv.incoming || []).slice().sort(function(a, b){
+    if (a.state !== b.state) return order[a.state] - order[b.state];
+    return b.total - a.total;
+  }).map(function(b){ return summaryBillRow(b, key); });
 }
-function summaryMovedRows(mv, key){
-  return mv.bills.filter(function(b){ return b.eff !== key; }).map(function(b){
-    return {name: b.name, amount: b.total, status: BILL_STATUS_LABEL[b.state], why: billMovedWhy(b), bill: b};
+// day-to-day spending of the month, by category (largest first)
+function dailySummary(mv, h){
+  var names = {};
+  h.variableCategories.forEach(function(c){ names[c.id] = c.name; });
+  var by = {}, total = 0, count = 0;
+  mv.bills.forEach(function(b){
+    if (!b.daily) return;
+    var n = names[b.categoryId] || 'Outros';
+    by[n] = (by[n] || 0) + b.total;
+    total += b.total;
+    count++;
   });
+  var cats = Object.keys(by).map(function(n){ return {name:n, amount:round2(by[n])}; });
+  cats.sort(function(a, b){ return b.amount - a.amount; });
+  return {total: round2(total), count: count, cats: cats};
 }
 // Monthly bills still waiting for this month's amount (and, in the current month, the ones
 // forgotten in earlier months). They have no amount yet, so they never enter any total.
@@ -2452,16 +2580,19 @@ function summaryData(){
   var fixedRows = summaryRowsOf(mv, key, 'fixed');
   var instRows = summaryRowsOf(mv, key, 'installment');
   var varRows = summaryVariableRows(mv, key);
+  var incomingRows = summaryIncomingRows(mv, key);
   var launchRows = summaryToLaunchRows(mv);
   return {
     mv: mv, h: h, totals: totals,
     fixedRows: fixedRows, instRows: instRows, varRows: varRows, launchRows: launchRows,
-    movedRows: summaryMovedRows(mv, key),
+    incomingRows: incomingRows,
+    daily: dailySummary(mv, h),
+    movedOut: movedOutGroups(mv, key),
     fixedPaid: countPaid(fixedRows),
     varCount: instRows.length + varRows.length,
     varPaid: countPaid(instRows) + countPaid(varRows),
     totalBills: totals.totalFixed + totals.totalVariable,
-    pending: collectPendingItems([fixedRows, instRows, varRows, launchRows])
+    pending: collectPendingItems([fixedRows, instRows, varRows, incomingRows, launchRows])
   };
 }
 function paidCountText(paid, count){
@@ -2471,11 +2602,10 @@ function buildSummaryText(){
   var d = summaryData();
   var h = d.h, mv = d.mv, totals = d.totals;
   var hasInv = totals.totalInvestments > 0;
+  var hasDaily = d.daily.count > 0;
   var lines = [];
   lines.push('📊 *Nossas Finanças — ' + monthLabel(viewMonth) + '*');
   lines.push('');
-  // this month's bills that are still unpaid but count in another month (late or planned)
-  var movedOpen = d.movedRows.filter(function(r){ return !r.bill.paid; }).length;
   if (d.pending.length){
     lines.push('⚠️ *Pendências (' + d.pending.length + ')*');
     if (d.pending.some(function(p){ return p.status === 'Atrasada'; })) lines.push('_Contas atrasadas podem ter juros e multa._');
@@ -2487,9 +2617,6 @@ function buildSummaryText(){
       else when = p.dueLabel ? 'vence ' + p.dueLabel : 'pendente';
       lines.push(statusEmoji(p.status) + '*' + p.name + '*' + (p.amount != null ? ' — ' + fmtMoney(p.amount) : '') + ' (' + when + ')');
     });
-    if (movedOpen) lines.push('↪ E mais ' + movedOpen + plural(movedOpen, ' conta deste mês sem pagar, que conta em outro mês', ' contas deste mês sem pagar, que contam em outro mês') + ' (lista no fim).');
-  } else if (movedOpen){
-    lines.push('⚠️ *' + movedOpen + plural(movedOpen, ' conta deste mês ainda não foi paga*', ' contas deste mês ainda não foram pagas*') + ' — ' + plural(movedOpen, 'ela conta', 'elas contam') + ' em outro mês (lista no fim).');
   } else {
     lines.push('✅ *Tudo em dia!* Nenhuma conta pendente ou atrasada.');
   }
@@ -2522,19 +2649,37 @@ function buildSummaryText(){
   }
   if (!d.instRows.length && !d.varRows.length && !d.launchRows.length) lines.push('(nenhuma lançada ainda)');
   lines.push('*Total: ' + fmtMoney(totals.totalVariable) + '*');
-  if (d.movedRows.length){
+  if (hasDaily){
     lines.push('');
-    lines.push('_Deste mês, mas contam em outro mês (fora dos totais):_');
-    d.movedRows.forEach(function(mr){ lines.push('↪ ' + mr.name + ' — ' + fmtMoney(mr.amount) + ' (' + mr.why + ')'); });
+    lines.push('*Gastos do dia a dia* (' + d.daily.count + ' ' + plural(d.daily.count, 'lançamento', 'lançamentos') + ')');
+    lines.push(d.daily.cats.map(function(c){ return c.name + ' ' + fmtMoney(c.amount); }).join(' · '));
+    lines.push('*Total: ' + fmtMoney(totals.totalDaily) + '*');
+  }
+  if (d.incomingRows.length){
+    lines.push('');
+    lines.push('_De meses anteriores, pagas ou a pagar neste mês (fora dos totais do mês):_');
+    d.incomingRows.forEach(function(r){ lines.push(statusEmoji(r.status) + r.name + ' — ' + fmtMoney(r.amount) + rowSuffix(r)); });
+    lines.push('*Total: ' + fmtMoney(totals.incomingTotal) + '*');
   }
   lines.push('');
   lines.push('*Total de contas (fixas + variáveis): ' + fmtMoney(d.totalBills) + '*');
   if (totals.totalInterest > 0) lines.push('Juros e multas no mês: ' + fmtMoney(totals.totalInterest) + ' (já somados nas contas)');
+  if (hasDaily) lines.push('*Gastos do dia a dia: ' + fmtMoney(totals.totalDaily) + '*');
   if (hasInv) lines.push('*Investimentos: ' + fmtMoney(totals.totalInvestments) + '*');
   lines.push('');
   lines.push('*SALDO FINAL: ' + fmtMoney(totals.saldo) + '*');
   lines.push('Receitas ' + fmtMoney(totals.totalIncome) + ' − Contas ' + fmtMoney(d.totalBills) +
+    (hasDaily ? ' − Dia a dia ' + fmtMoney(totals.totalDaily) : '') +
     (hasInv ? ' − Investimentos ' + fmtMoney(totals.totalInvestments) : '') + ' = ' + fmtMoney(totals.saldo));
+  var later = d.movedOut.planned.concat(d.movedOut.late);
+  if (later.length){
+    var payMonths = uniq(later.map(function(b){ return b.eff; })).sort();
+    lines.push('_' + later.length + plural(later.length, ' conta deste mês', ' contas deste mês') + ' (' + fmtMoney(sumTotals(later)) + ') ' +
+      plural(later.length, 'ficou', 'ficaram') + ' para pagar em ' + monthsPhrase(payMonths) + ' e ' + plural(later.length, 'continua', 'continuam') + ' neste saldo._');
+  }
+  if (d.incomingRows.length){
+    lines.push('Depois de pagar as ' + incomingLabel(totals).charAt(0).toLowerCase() + incomingLabel(totals).slice(1) + ' (' + fmtMoney(totals.incomingTotal) + '): *' + fmtMoney(totals.afterIncoming) + '*');
+  }
   return lines.join('\n');
 }
 function paletteSwatch(){
@@ -2600,6 +2745,18 @@ function buildSummaryCanvas(){
   }
   if (!d.instRows.length && !d.varRows.length && !d.launchRows.length) empty('Nenhuma lançada ainda');
   line('Total variáveis', totals.totalVariable, {bold:true});
+  if (d.daily.count){
+    gap();
+    sec('Gastos do dia a dia (' + d.daily.count + ')');
+    d.daily.cats.forEach(function(c){ line(c.name, c.amount); });
+    line('Total dia a dia', totals.totalDaily, {bold:true});
+  }
+  if (d.incomingRows.length){
+    gap();
+    sec('De meses anteriores (fora dos totais)');
+    d.incomingRows.forEach(itemLine);
+    line('Total de meses anteriores', totals.incomingTotal, {bold:true});
+  }
   gap();
   blocks.push({k:'band', label:'Total de contas (fixas + variáveis)', amount:d.totalBills});
   if (totals.totalInterest > 0) line('Juros e multas (já somados nas contas)', totals.totalInterest, {noRule:true});
@@ -2609,12 +2766,16 @@ function buildSummaryCanvas(){
   }
 
   var statement = [['', 'Receitas', totals.totalIncome], ['−', 'Contas (fixas + variáveis)', d.totalBills]];
+  if (d.daily.count) statement.push(['−', 'Gastos do dia a dia', totals.totalDaily]);
   if (hasInv) statement.push(['−', 'Investimentos', totals.totalInvestments]);
+  // bills of earlier months paid with this month's money: after the saldo
+  var afterLines = d.incomingRows.length ? [['−', incomingLabel(totals), totals.incomingTotal]] : [];
 
   // 2) sizes
   var W = 640, PAD = 28;
   var HEADER_H = 96, TOP_PAD = 30, SEC_H = 26, SUB_H = 22, ROW_H = 27, GAP_H = 18, BAND_H = 44, BEFORE_FOOTER = 26;
-  var STMT_H = 24, FOOTER_H = 34 + (statement.length - 1) * STMT_H + 14 + 38 + 24;
+  var STMT_H = 24, AFTER_H = afterLines.length ? 22 + afterLines.length * STMT_H + 34 : 0;
+  var FOOTER_H = 34 + (statement.length - 1) * STMT_H + 14 + 38 + 24 + AFTER_H;
   var CHIP_W = 74, CHIP_H = 20;
   var heights = {sec:SEC_H, sub:SUB_H, row:ROW_H, empty:ROW_H, gap:GAP_H, band:BAND_H};
   var H = HEADER_H + TOP_PAD + BEFORE_FOOTER + FOOTER_H;
@@ -2784,6 +2945,29 @@ function buildSummaryCanvas(){
   ctx.textAlign = 'right';
   ctx.font = '700 26px ' + MONO;
   ctx.fillText(fmtMoney(totals.saldo), AMT_RIGHT, sy);
+  if (afterLines.length){
+    var ay = sy + 22 + STMT_H - 4;
+    afterLines.forEach(function(s){
+      ctx.globalAlpha = 0.92;
+      ctx.textAlign = 'left';
+      ctx.font = '400 14px ' + SANS;
+      ctx.fillText(s[0], PAD, ay);
+      ctx.fillText(fitText(s[1], AMT_RIGHT - PAD - 18 - 130), PAD + 18, ay);
+      ctx.textAlign = 'right';
+      ctx.font = '400 14px ' + MONO;
+      ctx.fillText(fmtMoney(s[2]), AMT_RIGHT, ay);
+      ctx.globalAlpha = 1;
+      ay += STMT_H;
+    });
+    ay += 8;
+    ctx.textAlign = 'left';
+    ctx.font = '700 15px ' + SANS;
+    ctx.fillText('=', PAD, ay);
+    ctx.fillText('Depois de pagar tudo', PAD + 18, ay);
+    ctx.textAlign = 'right';
+    ctx.font = '700 18px ' + MONO;
+    ctx.fillText(fmtMoney(totals.afterIncoming), AMT_RIGHT, ay);
+  }
 
   return canvas;
 }
@@ -3160,7 +3344,7 @@ var PERIOD_MAX_MONTHS = 60;
 function periodRows(from, to){
   return monthRangeKeys(from, to).slice(0, PERIOD_MAX_MONTHS).map(function(k){
     var t = computeMonthTotals(STATE.household, getMonthView(STATE, k), k);
-    return {key:k, income:t.totalIncome, expenses:t.totalFixed + t.totalVariable, investments:t.totalInvestments, saldo:t.saldo};
+    return {key:k, income:t.totalIncome, expenses:t.totalSpent, investments:t.totalInvestments, saldo:t.saldo};
   });
 }
 function buildPeriodCanvas(from, to){
@@ -3347,7 +3531,8 @@ function monthSeriesRow(k){
     income: round2(t.totalIncome),
     fixed: round2(t.totalFixed),
     variable: round2(t.totalVariable),
-    expenses: round2(t.totalFixed + t.totalVariable),
+    daily: round2(t.totalDaily),
+    expenses: round2(t.totalSpent),
     investments: round2(t.totalInvestments),
     saldo: round2(t.saldo)
   };
@@ -3511,24 +3696,33 @@ function unpaidBreakdown(key){
   var mv = getMonthViewFull(STATE, key);
   var out = {
     paid: {amount:0, count:0}, pending: {amount:0, count:0}, overdue: {amount:0, count:0},
-    // this month's own bills that count in another month (late in the current month,
-    // planned for later, or paid late in a later month): only mentioned here
+    // this month's own bills paid / to be paid in another month (late in the current month,
+    // planned for later, or paid late in a later month): they are in the numbers above
     moved: {late: {amount:0, count:0}, planned: {amount:0, count:0}, paid: {amount:0, count:0}},
+    movedMonths: {late: [], planned: [], paid: []},
+    // bills of earlier months paid / to be paid in this month
+    incoming: {amount:0, count:0},
     items: [],
     toLaunch: (mv.toLaunch || []).length + (mv.toLaunchBacklog || []).length
   };
-  mv.counted.forEach(function(b){
+  // the month's own bills (not the day-to-day spending, which isn't a bill) + the earlier
+  // months' bills paid or to pay here
+  (mv.bills || []).filter(function(b){ return !b.daily; }).concat(mv.incoming || []).forEach(function(b){
     var g = b.state === 'paid' ? 'paid' : (b.state === 'overdue' ? 'overdue' : 'pending');
     out[g].amount += b.total;
     out[g].count++;
     if (!b.paid) out.items.push(b);
   });
-  mv.bills.forEach(function(b){
-    if (b.eff === key) return;
+  (mv.bills || []).forEach(function(b){
+    if (b.daily || b.eff === key) return;
     var mg = b.state === 'paid' ? 'paid' : (b.state === 'planned' ? 'planned' : 'late');
     out.moved[mg].amount += b.total;
     out.moved[mg].count++;
+    if (out.movedMonths[mg].indexOf(b.eff) < 0) out.movedMonths[mg].push(b.eff);
   });
+  (mv.incoming || []).forEach(function(b){ out.incoming.amount += b.total; out.incoming.count++; });
+  out.incoming.amount = round2(out.incoming.amount);
+  ['late', 'planned', 'paid'].forEach(function(g){ out.movedMonths[g].sort(); });
   ['paid', 'pending', 'overdue'].forEach(function(g){ out[g].amount = round2(out[g].amount); });
   ['late', 'planned', 'paid'].forEach(function(g){ out.moved[g].amount = round2(out.moved[g].amount); });
   out.total = round2(out.paid.amount + out.pending.amount + out.overdue.amount);
@@ -3552,15 +3746,19 @@ function renderUnpaidCard(key){
   if (ml.count){
     var oneM = ml.count === 1;
     notes += '<p class="chart-note">⏰ ' + ml.count + ' conta' + (oneM ? '' : 's') + ' atrasada' + (oneM ? '' : 's') + ' deste mês (' + fmtMoney(ml.amount) + ') ' +
-      (oneM ? 'passou' : 'passaram') + ' a contar em ' + esc(monthLabel(monthKeyToday())) + ', o mês atual, até ' + (oneM ? 'ser paga' : 'serem pagas') + '.</p>';
+      (oneM ? 'aparece' : 'aparecem') + ' para pagar em ' + esc(monthLabel(monthKeyToday())) + ', o mês atual, até ' + (oneM ? 'ser paga' : 'serem pagas') + '.</p>';
   }
   if (mp.count){
     notes += '<p class="chart-note">📅 ' + mp.count + plural(mp.count, ' conta deste mês (', ' contas deste mês (') + fmtMoney(mp.amount) + ') ' +
-      plural(mp.count, 'foi programada para depois e conta no mês da previsão.', 'foram programadas para depois e contam no mês da previsão.') + '</p>';
+      plural(mp.count, 'está programada', 'estão programadas') + ' para ' + esc(monthsPhrase(b.movedMonths.planned)) + ' e ' + plural(mp.count, 'continua', 'continuam') + ' na conta deste mês.</p>';
   }
   if (mpd.count){
     notes += '<p class="chart-note">✅ ' + mpd.count + plural(mpd.count, ' conta deste mês (', ' contas deste mês (') + fmtMoney(mpd.amount) + ') ' +
-      plural(mpd.count, 'foi paga com atraso em outro mês e conta lá.', 'foram pagas com atraso em outro mês e contam lá.') + '</p>';
+      plural(mpd.count, 'foi paga', 'foram pagas') + ' depois, em ' + esc(monthsPhrase(b.movedMonths.paid)) + '.</p>';
+  }
+  if (b.incoming.count){
+    notes += '<p class="chart-note">↩ Inclui ' + b.incoming.count + plural(b.incoming.count, ' conta de mês anterior (', ' contas de meses anteriores (') + fmtMoney(b.incoming.amount) + '), ' +
+      plural(b.incoming.count, 'paga ou a pagar', 'pagas ou a pagar') + ' neste mês.</p>';
   }
   if (b.toLaunch){
     notes += '<p class="chart-note">🔁 ' + (b.toLaunch === 1 ? '1 conta mensal ainda sem o valor — não entra' : b.toLaunch + ' contas mensais ainda sem o valor — não entram') + ' na conta.</p>';
@@ -3570,10 +3768,11 @@ function renderUnpaidCard(key){
   }
   var pctPaid = b.total > 0 ? b.paid.amount / b.total * 100 : 0;
   var paidTxt = b.paid.count + ' de ' + count + ' paga' + (count === 1 ? '' : 's') + (b.total > 0 ? ' (' + fmtPct(pctPaid) + ' do valor)' : '');
+  var ofWhat = b.incoming.count ? ' em contas (do mês e de meses anteriores)' : ' em contas do mês';
   var hero = '<div class="chart-hero' + (b.unpaid === 0 ? ' zero' : '') + '">' + fmtMoney(b.unpaid) + '</div>' +
     '<p class="chart-sub">' + (b.unpaid === 0 ?
-      '✅ Tudo pago em ' + esc(monthLabel(key)) + ' — ' + fmtMoney(b.total) + ' em contas do mês.' :
-      'ainda não pago em ' + esc(monthLabel(key)) + ', de ' + fmtMoney(b.total) + ' em contas do mês · ' + paidTxt) + '</p>';
+      '✅ Tudo pago em ' + esc(monthLabel(key)) + ' — ' + fmtMoney(b.total) + ofWhat + '.' :
+      'ainda não pago em ' + esc(monthLabel(key)) + ', de ' + fmtMoney(b.total) + ofWhat + ' · ' + paidTxt) + '</p>';
   var groups = [
     {id:'overdue', label:'Atrasado', icon:'⚠️', cls:'seg-overdue', g:b.overdue},
     {id:'pending', label:'Pendente', icon:'⏳', cls:'seg-pending', g:b.pending},
@@ -3697,7 +3896,7 @@ function renderSpendingChart(endKey){
   if (!keys.length) return chartCard('graf-gastos', '📊', title, '<p class="empty-note">Ainda não há meses com lançamentos até ' + esc(monthLabel(endKey)) + '.</p>');
   var todayKey = monthKeyToday();
   var rows = keys.map(monthSeriesRow);
-  var caption = '<p class="chart-caption">Contas fixas + variáveis de cada mês (parcelas incluídas). Investimentos não entram.</p>';
+  var caption = '<p class="chart-caption">Contas fixas + variáveis de cada mês (parcelas e gastos do dia a dia incluídos), cada conta no mês dela, mesmo se paga depois. Investimentos não entram.</p>';
   if (!rows.some(function(r){ return r.expenses > 0; })){
     return chartCard('graf-gastos', '📊', title, caption + '<p class="empty-note">Nenhum gasto lançado ' + esc(periodPhrase(keys)) + '.</p>');
   }
@@ -3750,7 +3949,8 @@ function renderSpendingChart(endKey){
   var legend = legendInline([['col-main-bg', 'Contas do mês'], showAvg && ['dash', 'Média'], hasFuture && ['col-main-bg future', 'Mês futuro (previsão)']]);
   var detail = '<strong>' + esc(monthLabel(sel)) + '</strong>' + (sel > todayKey ? ' (previsão)' : '') + ': ';
   if (selRow.expenses > 0){
-    detail += '<span class="money">' + fmtMoney(selRow.expenses) + '</span> em contas — fixas ' + fmtMoney(selRow.fixed) + ' + variáveis ' + fmtMoney(selRow.variable);
+    detail += '<span class="money">' + fmtMoney(selRow.expenses) + '</span> em contas — fixas ' + fmtMoney(selRow.fixed) + ' + variáveis ' + fmtMoney(selRow.variable) +
+      (selRow.daily > 0 ? ' + dia a dia ' + fmtMoney(selRow.daily) : '');
     if (showAvg && avg > 0 && sel <= todayKey){
       var diff = (selRow.expenses - avg) / avg * 100;
       detail += Math.abs(diff) < 1 ? ' · na média' : ' · ' + fmtPct(Math.abs(diff)) + (diff > 0 ? ' acima' : ' abaixo') + ' da média';
@@ -3758,14 +3958,15 @@ function renderSpendingChart(endKey){
   } else {
     detail += 'nenhum gasto lançado.';
   }
+  var anyDaily = rows.some(function(r){ return r.daily > 0; });
   var tableRows = rows.map(function(r){
-    return {cls: r.key === sel ? 'sel' : '', cells:[shortMonthLabel(r.key) + (r.key > todayKey ? '*' : ''), fmtNum(r.fixed), fmtNum(r.variable), fmtNum(r.expenses)]};
+    return {cls: r.key === sel ? 'sel' : '', cells:[shortMonthLabel(r.key) + (r.key > todayKey ? '*' : ''), fmtNum(r.fixed), fmtNum(r.variable)].concat(anyDaily ? [fmtNum(r.daily)] : []).concat([fmtNum(r.expenses)])};
   });
-  if (showAvg) tableRows.push({cls:'avg', cells:['Média', '', '', fmtNum(avg)]});
+  if (showAvg) tableRows.push({cls:'avg', cells:['Média', '', ''].concat(anyDaily ? [''] : []).concat([fmtNum(avg)])});
   return chartCard('graf-gastos', '📊', title,
     '<p class="chart-sub">' + sub + '</p>' + caption +
     legend + svg + '<p class="chart-detail" aria-live="polite">' + detail + '</p>' +
-    chartTableToggle('gastos') + chartTable('gastos', ['Mês', 'Fixas', 'Variáveis', 'Total'], tableRows) +
+    chartTableToggle('gastos') + chartTable('gastos', ['Mês', 'Fixas', 'Variáveis'].concat(anyDaily ? ['Dia a dia'] : []).concat(['Total']), tableRows) +
     (hasFuture && chartTableOpen.gastos ? FUTURE_NOTE : ''));
 }
 
@@ -3870,7 +4071,7 @@ var INTEREST_MAX_ROWS = 6;
 function renderInterestChart(endKey){
   var title = 'Juros e multas';
   var keys = chartMonthsBack(endKey, chartsView.range);
-  var caption = '<p class="chart-caption">Quanto as contas marcadas com "Teve juros ou multa" custaram a mais, no mês em que cada uma conta. Os outros gráficos já mostram essas contas com o valor total.</p>';
+  var caption = '<p class="chart-caption">Quanto as contas marcadas com "Teve juros ou multa" custaram a mais, no mês de cada conta. Os outros gráficos já mostram essas contas com o valor total.</p>';
   if (!keys.length) return chartCard('graf-juros', '💸', title, caption + '<p class="empty-note">Ainda não há meses com lançamentos até ' + esc(monthLabel(endKey)) + '.</p>');
   var todayKey = monthKeyToday();
   var rows = keys.map(interestRow);
@@ -3931,13 +4132,14 @@ function renderInterestChart(endKey){
 }
 
 /* -- 6. What is already committed in the coming months -- */
-// parcelas + fixed bills (in later months, only "valor fixo" ones have an amount) + bills of
-// other months that count there (late in the current month, or planned for that month)
+// what has to be paid in each month: parcelas + fixed bills (in later months, only "valor
+// fixo" ones have an amount) that stay in their month + bills of other months to be paid there
+// (late in the current month, or planned for that month)
 function commitmentRows(fromKey, n){
   return monthRangeKeys(fromKey, shiftMonth(fromKey, n - 1)).map(function(k){
     var mv = getMonthView(STATE, k);
     var inst = 0, fixed = 0, other = 0;
-    mv.counted.forEach(function(b){
+    mv.payHere.forEach(function(b){
       if (b.home !== k) other += b.total;
       else if (b.kind === 'installment') inst += b.total;
       else if (b.kind === 'fixed') fixed += b.total;
@@ -3969,7 +4171,7 @@ function renderCommitmentsChart(viewKey){
   var rows = commitmentRows(fromKey, chartsView.range);
   var keys = rows.map(function(r){ return r.key; });
   var toKey = keys[keys.length - 1];
-  var caption = '<p class="chart-caption">O que já está lançado de ' + esc(shortMonthLabel(fromKey)) + ' a ' + esc(shortMonthLabel(toKey)) + ': parcelas, contas fixas (nos meses seguintes, só as que têm valor fixo) e contas de outros meses que passaram a contar no mês (atrasadas ou programadas). Gastos variáveis do próprio mês e contas que mudam todo mês, como cartões, não entram.</p>';
+  var caption = '<p class="chart-caption">O que já está lançado para pagar de ' + esc(shortMonthLabel(fromKey)) + ' a ' + esc(shortMonthLabel(toKey)) + ': parcelas, contas fixas (nos meses seguintes, só as que têm valor fixo) e contas de outros meses para pagar no mês (atrasadas ou programadas). Gastos variáveis do próprio mês e contas que mudam todo mês, como cartões, não entram.</p>';
   var anything = rows.some(function(r){ return r.total > 0; });
   if (!anything) return chartCard('graf-compromissos', '🗓️', title, caption + '<p class="empty-note">Nenhuma parcela, conta com valor fixo ou conta programada nesses meses.</p>');
   var anyIncome = rows.some(function(r){ return r.income > 0; });
@@ -4136,8 +4338,9 @@ function onWindowResize(){
 }
 // chart columns are focusable: Enter or Space picks them, like a tap
 function onAppKeydown(ev){
-  if ((ev.key === 'Escape' || ev.key === 'Esc') && (statusSheet || bulkPlan)){
+  if ((ev.key === 'Escape' || ev.key === 'Esc') && (statusSheet || bulkPlan || dailySheet)){
     bulkPlan = null;
+    if (dailySheet){ closeDailySheet(); return; }
     if (statusSheet) closeStatusSheet(); else render();
     return;
   }
@@ -4513,6 +4716,7 @@ function renderQuickNav(isCurrent){
   ]);
   return '<nav class="quicknav" aria-label="Navegação rápida entre seções">' +
     '<button type="button" class="qn-pill qn-charts" data-action="open-charts"><span aria-hidden="true">📊</span> Gráficos</button>' +
+    '<button type="button" class="qn-pill qn-daily" data-action="open-daily"><span aria-hidden="true">⚡</span> Gasto do dia a dia</button>' +
     items.map(function(it){ return '<a class="qn-pill" href="#' + it[0] + '">' + it[1] + '</a>'; }).join('') +
   '</nav>';
 }
@@ -4520,7 +4724,7 @@ function renderQuickNav(isCurrent){
 // planned for a later month
 function openBillsWithoutPlan(){
   var todayKey = monthKeyToday();
-  var list = getMonthView(STATE, todayKey).counted.filter(function(b){ return b.state === 'overdue' || b.state === 'pending'; });
+  var list = getMonthView(STATE, todayKey).payHere.filter(function(b){ return !b.daily && (b.state === 'overdue' || b.state === 'pending'); });
   return list.sort(function(a, b){
     if (a.state !== b.state) return a.state === 'overdue' ? -1 : 1;
     var da = a.dueIso || '9999-99-99', db = b.dueIso || '9999-99-99';
@@ -4536,7 +4740,7 @@ function sectionLinks(bills){
 }
 function sumTotals(bills){ var s = 0; bills.forEach(function(b){ s += b.total; }); return s; }
 // bills of the current month (or late ones from before) that were planned for a later month:
-// they no longer count now, but stay in sight
+// they show up to be paid there, and stay in sight here
 function plannedLater(){
   var todayKey = monthKeyToday();
   var incoming = billIndex(STATE).incoming;
@@ -4567,8 +4771,8 @@ function renderAlerts(mv, totals){
       '<span class="alert-icon" aria-hidden="true">⏰</span>' +
       '<div class="alert-body">' +
         '<div class="alert-title">' + lateIn.length + ' conta' + (one ? '' : 's') + ' atrasada' + (one ? '' : 's') + ', somando ' + fmtMoney(sumTotals(lateIn)) + '</div>' +
-        (one ? 'Ficou pendente de um mês anterior e passou a contar no mês atual até ser paga — '
-             : 'Ficaram pendentes de meses anteriores e passaram a contar no mês atual até serem pagas — ') +
+        (one ? 'Ficou pendente de um mês anterior e aparece aqui para pagar (continua pesando no saldo do mês dela) — '
+             : 'Ficaram pendentes de meses anteriores e aparecem aqui para pagar (continuam pesando no saldo do mês delas) — ') +
         sectionLinks(lateIn) + '. Podem ter juros e multa. Se não der pra pagar agora, toque na situação e escolha quando vai pagar.' +
       '</div>' +
     '</div>';
@@ -4585,7 +4789,7 @@ function renderAlerts(mv, totals){
         '<span class="alert-icon" aria-hidden="true">📅</span>' +
         '<div class="alert-body">' +
           '<div class="alert-title">' + later.length + plural(later.length, ' conta programada para depois', ' contas programadas para depois') + ', somando ' + fmtMoney(sumTotals(later)) + '</div>' +
-          plural(later.length, 'Não conta', 'Não contam') + ' em ' + esc(monthLabel(todayKey)) + '; ' + plural(later.length, 'aparece', 'aparecem') + ' no mês da previsão: ' + monthLinks.join(' · ') + '.' +
+          plural(later.length, 'Continua pesando no saldo do mês dela', 'Continuam pesando no saldo do mês delas') + ' e ' + plural(later.length, 'aparece', 'aparecem') + ' para pagar no mês da previsão: ' + monthLinks.join(' · ') + '.' +
         '</div>' +
       '</div>';
     }
@@ -4603,7 +4807,7 @@ function renderAlerts(mv, totals){
             open.length + plural(open.length, ' conta do mês atual ainda em aberto', ' contas do mês atual ainda em aberto')) + '</div>' +
           'Em aberto agora: ' + open.length + ' ' + plural(open.length, 'conta', 'contas') + ', ' + fmtMoney(sumTotals(open)) +
           (lateCount ? ' (' + lateCount + plural(lateCount, ' atrasada', ' atrasadas') + ')' : '') + '. ' +
-          plural(open.length, 'Conta', 'Contam') + ' em ' + esc(monthLabel(todayKey)) + ' (mês atual) até ' + plural(open.length, 'ser paga', 'serem pagas') +
+          plural(open.length, 'Está', 'Estão') + ' para pagar em ' + esc(monthLabel(todayKey)) + ' (mês atual)' +
           ' — escolha as que vão ficar para ' + esc(monthLabel(viewMonth)) + '.' +
           '<div class="alert-actions"><button type="button" class="btn-mini primary" data-action="open-bulk-plan" data-month="' + viewMonth + '">Programar para ' + esc(capFirst(MONTH_NAMES[parseInt(viewMonth.slice(5, 7), 10) - 1])) + '</button></div>' +
         '</div>' +
@@ -4616,7 +4820,7 @@ function renderAlerts(mv, totals){
         '<span class="alert-icon" aria-hidden="true">📅</span>' +
         '<div class="alert-body">' +
           '<div class="alert-title">' + plannedIn.length + plural(plannedIn.length, ' conta programada', ' contas programadas') + ' para este mês, somando ' + fmtMoney(sumTotals(plannedIn)) + '</div>' +
-          (oneP ? 'É de um mês anterior e já entra nas contas e no saldo de ' : 'São de meses anteriores e já entram nas contas e no saldo de ') + esc(monthLabel(viewMonth)) + ' — ' + sectionLinks(plannedIn) + '.' +
+          (oneP ? 'É de um mês anterior: pesa no saldo do mês dela e entra em “Depois de pagar tudo” de ' : 'São de meses anteriores: pesam no saldo do mês delas e entram em “Depois de pagar tudo” de ') + esc(monthLabel(viewMonth)) + ' — ' + sectionLinks(plannedIn) + '.' +
         '</div>' +
       '</div>';
     }
@@ -4687,13 +4891,18 @@ function moneyHtml(v){
   return (neg ? '-' : '') + '<span class="cur">R$</span><wbr><span class="num">' + num + '</span>';
 }
 function renderStats(totals, mv){
-  // Bills of other months that count in this one are part of its totals, so they are counted
-  // here too; this month's bills that count in another month are not (same rule as the summary).
+  // Every bill of the month weighs on its totals and saldo, even when it is paid (or planned
+  // to be paid) in a later month; bills of earlier months paid here are shown apart, below.
   var fixedCount = totals.setCount, paidCount = totals.paidCount;
   var variableCount = totals.varCount, variablePaid = totals.varPaid;
   var toLaunchCount = (mv.toLaunch || []).length + (mv.toLaunchBacklog || []).length;
   var variableSub = (variableCount ? (variablePaid + ' de ' + variableCount + ' paga' + (variableCount === 1 ? '' : 's')) : 'nenhuma lançada') +
     (toLaunchCount ? ' · ' + toLaunchCount + ' a lançar' : '');
+  var dailyStat = '';
+  if (totals.dailyCount){
+    dailyStat = '<div class="stat"><div class="stat-label">Dia a dia</div><div class="stat-value">' + moneyHtml(totals.totalDaily) + '</div>' +
+      '<div class="stat-sub">' + totals.dailyCount + ' ' + plural(totals.dailyCount, 'gasto', 'gastos') + '</div></div>';
+  }
   var invStat = '';
   if (mv.investments && mv.investments.length){
     invStat = '<div class="stat"><div class="stat-label">Investimentos</div><div class="stat-value">' + moneyHtml(totals.totalInvestments) + '</div>' +
@@ -4707,22 +4916,77 @@ function renderStats(totals, mv){
       '<div class="stat-sub">' + (fixedCount ? (paidCount + ' de ' + fixedCount + ' paga' + (fixedCount === 1 ? '' : 's')) : 'nenhuma lançada') + '</div></div>' +
     '<div class="stat"><div class="stat-label">Variáveis</div><div class="stat-value">' + moneyHtml(totals.totalVariable) + '</div>' +
       '<div class="stat-sub">' + variableSub + '</div></div>' +
+    dailyStat +
     invStat +
     '<div class="stat"><div class="stat-label">Saldo</div><div class="stat-value ' + (saldo >= 0 ? 'income' : 'expense') + '">' + moneyHtml(saldo) + '</div>' +
       '<div class="stat-sub">' + (saldo >= 0 ? 'Sobra do mês' : 'Déficit do mês') + '</div></div>' +
   '</div>' +
   renderPayProgress(viewMonth) +
+  movedOutNote(mv, viewMonth) +
+  incomingLedger(totals) +
   (totals.totalInterest > 0 ? '<p class="stat-note">Inclui ' + fmtMoney(totals.totalInterest) + ' de juros e multas — <button type="button" class="link-btn" data-action="open-charts">ver nos gráficos</button></p>' : '');
+}
+// "Novembro de 2026", "Novembro de 2026 e Dezembro de 2026", "a, b e c"
+function monthsPhrase(keys){
+  var labels = keys.map(monthLabel);
+  if (labels.length <= 1) return labels.join('');
+  return labels.slice(0, -1).join(', ') + ' e ' + labels[labels.length - 1];
+}
+// this month's bills paid / to be paid in another month: they still weigh on this month
+function movedOutGroups(mv, key){
+  var g = {planned:[], late:[], paid:[]};
+  (mv.bills || []).forEach(function(b){
+    if (b.daily || b.eff === key) return;
+    g[b.state === 'paid' ? 'paid' : (b.state === 'planned' ? 'planned' : 'late')].push(b);
+  });
+  return g;
+}
+function movedOutNote(mv, key){
+  var g = movedOutGroups(mv, key);
+  var html = '';
+  function effMonths(list){ return uniq(list.map(function(b){ return b.eff; })).sort(); }
+  if (g.planned.length){
+    var n = g.planned.length;
+    html += '<p class="moved-note plan" data-group="planned">📅 ' + n + ' ' + plural(n, 'conta', 'contas') + ' (' + fmtMoney(sumTotals(g.planned)) + ') ' +
+      plural(n, 'ficou', 'ficaram') + ' para ' + esc(monthsPhrase(effMonths(g.planned))) + ' e ' + plural(n, 'continua', 'continuam') + ' pesando no saldo deste mês.</p>';
+  }
+  if (g.late.length){
+    var nl = g.late.length;
+    html += '<p class="moved-note late" data-group="late">⏰ ' + nl + ' ' + plural(nl, 'conta não paga', 'contas não pagas') + ' (' + fmtMoney(sumTotals(g.late)) + ') ' +
+      plural(nl, 'aparece', 'aparecem') + ' para pagar em ' + esc(monthLabel(monthKeyToday())) + ' (mês atual) e ' + plural(nl, 'continua', 'continuam') + ' pesando no saldo deste mês.</p>';
+  }
+  if (g.paid.length){
+    var np = g.paid.length;
+    html += '<p class="moved-note done" data-group="paid">✅ ' + np + ' ' + plural(np, 'conta', 'contas') + ' (' + fmtMoney(sumTotals(g.paid)) + ') ' +
+      plural(np, 'foi paga', 'foram pagas') + ' depois, em ' + esc(monthsPhrase(effMonths(g.paid))) + '.</p>';
+  }
+  return html;
+}
+// bills of earlier months paid / to be paid in this month: this month's money pays them
+function incomingLabel(totals){
+  return totals.incomingMonths.length === 1 ? 'Contas de ' + monthLabel(totals.incomingMonths[0]) : 'Contas de meses anteriores';
+}
+function incomingLedger(totals){
+  if (!totals.incomingCount) return '';
+  var after = totals.afterIncoming;
+  var one = totals.incomingMonths.length === 1;
+  return '<div class="ledger" id="incoming-ledger">' +
+    '<div class="lg-line"><span>Saldo do mês</span> <span class="lg-amt ' + (totals.saldo >= 0 ? 'pos' : 'neg') + '">' + fmtMoney(totals.saldo) + '</span></div>' +
+    '<div class="lg-line"><span>' + esc(incomingLabel(totals)) + ' <span class="lg-count">(' + totals.incomingCount + ')</span></span> <span class="lg-amt">' + fmtMoney(-totals.incomingTotal) + '</span></div>' +
+    '<div class="lg-line lg-total"><span>Depois de pagar tudo</span> <span class="lg-amt ' + (after >= 0 ? 'pos' : 'neg') + '">' + fmtMoney(after) + '</span></div>' +
+    '<p class="lg-hint">' + (one ? 'Elas já pesam no saldo de ' + esc(monthLabel(totals.incomingMonths[0])) : 'Elas já pesam no saldo dos meses delas') +
+      '; aqui entram porque são pagas com o dinheiro deste mês.</p>' +
+  '</div>';
 }
 function renderPayProgress(key){
   var b = unpaidBreakdown(key);
   if (!(b.total > 0)) return '';
   var share = b.paid.amount / b.total * 100;
-  var label = 'Pago ' + fmtMoney(b.paid.amount) + ' de ' + fmtMoney(b.total) + ' em contas do mês (' + fmtShare(share) + '); falta pagar ' + fmtMoney(b.unpaid);
+  var label = 'Pago ' + fmtMoney(b.paid.amount) + ' de ' + fmtMoney(b.total) + ' em contas (' + fmtShare(share) + '); falta pagar ' + fmtMoney(b.unpaid);
   return '<div class="pay-progress">' +
     '<div class="pp-bar" role="img" aria-label="' + esc(label) + '"><div class="pp-fill" style="width:' + Math.max(0, Math.min(100, share)).toFixed(1) + '%"></div></div>' +
     '<div class="pp-text">' +
-      '<span>Pago <strong>' + fmtMoney(b.paid.amount) + '</strong> · ' + esc(fmtShare(share)) + '</span>' +
+      '<span>Pago <strong>' + fmtMoney(b.paid.amount) + '</strong> de <span class="pp-of">' + fmtMoney(b.total) + '</span> · ' + esc(fmtShare(share)) + '</span>' +
       (b.unpaid > 0 ? '<span><button type="button" class="link-btn" data-action="open-charts">Falta pagar</button> <strong>' + fmtMoney(b.unpaid) + '</strong></span>' : '<span>✅ Tudo pago</span>') +
     '</div>' +
   '</div>';
@@ -4835,13 +5099,13 @@ function renderIncome(h, mv){
     renderIncomePerson('person2', h.person2Name, mv.income.person2) +
   '</section>';
 }
-// Bills of other months that count in this one, in up to three groups: late ones (they count
-// in the current month until paid), the ones planned for this month, and the ones paid late
-// in this month.
+// Bills of earlier months paid / to be paid in this one, in up to three groups: late ones
+// (they show up in the current month until paid), the ones planned for this month, and the
+// ones paid late in this month. They weigh on their own month's saldo, not on this one's.
 var INCOMING_GROUPS = [
-  {state:'overdue', cls:'', title:'⏰ Atrasadas de meses anteriores'},
-  {state:'planned', cls:' plan', title:'📅 Programadas para este mês'},
-  {state:'paid', cls:' done', title:'✅ Pagas neste mês, de meses anteriores'}
+  {state:'overdue', cls:'', title:'⏰ Atrasadas de meses anteriores', hint:'Pesam no saldo do mês delas; aqui aparecem para pagar.'},
+  {state:'planned', cls:' plan', title:'📅 Programadas para este mês', hint:'Pesam no saldo do mês delas; aqui aparecem para pagar.'},
+  {state:'paid', cls:' done', title:'✅ Pagas neste mês, de meses anteriores', hint:'Pesam no saldo do mês delas; foram pagas neste mês.'}
 ];
 function incomingSort(a, b){
   if (a.state === 'overdue' && b.lateDays !== a.lateDays) return (b.lateDays || 0) - (a.lateDays || 0);
@@ -4859,6 +5123,7 @@ function incomingBlocks(list, rowFn, hidden){
     if (!visible.length) return;
     html += '<div class="carried-block' + g.cls + '" data-group="' + g.state + '">' +
       '<div class="carried-block-title">' + g.title + '</div>' +
+      '<p class="carried-block-hint">' + g.hint + '</p>' +
       visible.sort(incomingSort).map(rowFn).join('') +
     '</div>';
   });
@@ -4874,12 +5139,13 @@ function billStatusBits(b){
   if (b.interest > 0) bits.push('juros ' + fmtMoney(b.interest));
   return bits;
 }
-// a bill of the month being shown that counts in another month
+// a bill of the month being shown that is paid / to be paid in another month (it still
+// weighs on this month: only where it shows up to be paid changes)
 function movedNoteHtml(b){
+  if (b.eff === b.home || b.state === 'paid') return '';   // "paga em dd/mm" is already on its line
   var cls = '', text;
-  if (b.state === 'planned'){ cls = ' plan'; text = '→ programada para ' + fmtDate(b.planOn) + ': conta em ' + monthLabel(b.eff); }
-  else if (b.state === 'paid'){ cls = ' done'; text = '→ paga em ' + fmtDate(b.paidOn) + ', depois do vencimento: conta em ' + monthLabel(b.eff); }
-  else text = '→ passa a contar no mês atual (' + monthLabel(monthKeyToday()) + ') até ser paga';
+  if (b.state === 'planned'){ cls = ' plan'; text = '→ aparece para pagar em ' + monthLabel(b.eff); }
+  else text = '→ aparece para pagar em ' + monthLabel(b.eff) + ' (mês atual) até ser paga';
   return '<div class="carried-note' + cls + '">' + esc(text) + '</div>';
 }
 // A late bill usually comes with interest and a fine: a small note, only to be aware of it
@@ -4991,7 +5257,7 @@ function renderFixed(h, mv, isCurrent){
     billStatusBits(b).forEach(function(bit){ parts.push(esc(bit)); });
     var risk = riskTagHtml(b);
     if (risk) parts.push(keep(risk));
-    return '<div class="fixed-row bill-row' + (b.eff !== viewMonth ? ' moved' : '') + '" data-catid="' + cat.id + '">' +
+    return '<div class="fixed-row bill-row' + (b.eff !== viewMonth ? ' moved' : '') + '" data-catid="' + cat.id + '"' + (b.eff !== viewMonth ? ' data-pay-month="' + b.eff + '"' : '') + '>' +
       '<div class="row-main">' +
         '<div class="fixed-name">' + esc(cat.name) + '</div>' +
         '<div class="row-sub fixed-due">' + subLine(parts) + '</div>' +
@@ -5004,7 +5270,7 @@ function renderFixed(h, mv, isCurrent){
         '<button type="button" class="icon-btn" data-action="edit-fixed" data-catid="' + cat.id + '" aria-label="Editar conta">✎</button>' +
         delBtn +
       '</div>' +
-      (b.eff !== viewMonth ? movedNoteHtml(b) : '') +
+      movedNoteHtml(b) +
     '</div>';
   }).join('');
   var addUi;
@@ -5085,8 +5351,10 @@ function renderVariable(h, mv, isCurrent){
   // Every line reads "Categoria · Parcela · Vencimento · quem lançou" (+ previsão / juros)
   var combined = [];
   var ownBills = mv.bills || [];
+  var dailyCount = ownBills.filter(function(b){ return b.daily; }).length;
+  if (listView.status === 'unpaid') hiddenVar += dailyCount;
   ownBills.forEach(function(b){
-    if (b.kind !== 'variable') return;
+    if (b.kind !== 'variable' || b.daily) return;
     var parts = [esc(catName[b.categoryId] || 'Outros')];
     if (b.recurringId && findRecurring(STATE, b.recurringId)) parts.push(keep('Mensal'));
     if (b.dueIso) parts.push(keep('Venc. ' + esc(fmtDate(b.dueIso))));
@@ -5123,10 +5391,11 @@ function renderVariable(h, mv, isCurrent){
     return false;
   }));
   var rows;
+  var dailyHtml = renderDailyBlock(mv, catName);
   if (!combined.length && hadAny){
     rows = '<p class="empty-note">Nenhum gasto ' + (listView.status === 'paid' ? 'pago' : 'em aberto') + ' neste mês.</p>';
   } else if (!combined.length){
-    rows = launchHtml ? '' : '<p class="empty-note">Nenhum gasto lançado neste mês ainda. Toque no + para adicionar.</p>';
+    rows = (launchHtml || dailyCount) ? '' : '<p class="empty-note">Nenhum gasto lançado neste mês ainda. Toque no + para adicionar.</p>';
   } else {
     rows = '<div class="varlist">' + combined.map(function(it){
       var isInst = it.kind === 'installment';
@@ -5149,12 +5418,13 @@ function renderVariable(h, mv, isCurrent){
           '<button type="button" class="icon-btn" data-action="' + editAction + '" ' + delAttr + ' aria-label="Editar lançamento">✎</button>' +
           '<button type="button" class="icon-btn' + (pending ? ' confirm' : '') + '" data-action="' + delAction + '" ' + delAttr + ' aria-label="' + (isInst ? 'Remover compra parcelada (todas as parcelas)' : 'Remover lançamento') + '">' + (pending ? (isInst ? 'Remover as ' + it.total + ' parcelas?' : 'Remover?') : '✕') + '</button>' +
         '</div>' +
-        (moved ? movedNoteHtml(b) : '') +
+        movedNoteHtml(b) +
       '</div>';
     }).join('') + '</div>';
   }
-  var addUi = '<button type="button" class="add-btn" data-action="open-sheet">+ Novo gasto variável</button>';
-  return '<section class="card" id="sec-variaveis"><div class="card-head"><div class="card-head-main"><span class="card-icon" aria-hidden="true">🛒</span><h2 class="card-title">Contas variáveis</h2></div></div>' + carriedHtml + launchHtml + rows + filterNote(hiddenVar) + addUi + '</section>';
+  var addUi = '<button type="button" class="add-btn" data-action="open-sheet">+ Novo gasto variável</button>' +
+    '<button type="button" class="add-btn daily-add" data-action="open-daily">⚡ Gasto do dia a dia <span class="add-hint">PIX, débito ou dinheiro</span></button>';
+  return '<section class="card" id="sec-variaveis"><div class="card-head"><div class="card-head-main"><span class="card-icon" aria-hidden="true">🛒</span><h2 class="card-title">Contas variáveis</h2></div></div>' + carriedHtml + launchHtml + rows + dailyHtml + filterNote(hiddenVar) + addUi + '</section>';
 }
 function renderInvestments(h, mv){
   var who = whoAmI === 'person2' ? 'person2' : 'person1';
@@ -5435,26 +5705,30 @@ function planChipMonths(b){
 function statusSheetBill(){
   return statusSheet ? findBill(STATE, statusSheet.kind, statusSheet.home, statusSheet.id) : null;
 }
+// The bill always weighs on its own month's saldo; the hints say where it shows up to be paid
 function statusHint(b, choice, d){
   var todayKey = monthKeyToday(), today = todayStr();
+  var home = '<strong>' + esc(monthLabel(b.home)) + '</strong>';
   if (choice === 'paid'){
     if (!isoOrNull(d.paidOn)) return 'Escolha a data em que ela foi paga.';
     if (d.paidOn > today) return 'A data do pagamento não pode ser depois de hoje.';
     var p = previewBill(b, {paid:true, paidOn:d.paidOn});
-    if (p.eff !== b.home) return 'Paga depois do vencimento: conta em <strong>' + esc(monthLabel(p.eff)) + '</strong>, o mês do pagamento.';
-    if (b.home < todayKey) return 'Paga até o vencimento: fica em <strong>' + esc(monthLabel(b.home)) + '</strong>, o mês da conta.';
-    return 'Conta em <strong>' + esc(monthLabel(b.home)) + '</strong>.';
+    if (p.eff !== b.home) return 'Paga depois do vencimento, em ' + esc(monthLabel(p.eff)) + ': continua no saldo de ' + home + '.';
+    if (b.home < todayKey) return 'Paga até o vencimento: fica em ' + home + ', o mês da conta.';
+    return 'Fica no saldo de ' + home + '.';
   }
   if (choice === 'plan'){
     if (!isoOrNull(d.planOn)) return 'Escolha o dia em que pretende pagar.';
     if (d.planOn < today) return 'A previsão precisa ser de hoje em diante.';
     var q = previewBill(b, {paid:false, planOn:d.planOn});
-    return (q.eff !== b.eff ? 'Sai de ' + esc(monthLabel(b.eff)) + ' e passa a contar em <strong>' : 'Conta em <strong>') + esc(monthLabel(q.eff)) + '</strong>' +
-      ' (lista, resumo e gráficos). Se a data passar sem pagar, ela volta a ficar atrasada e segue para o mês seguinte até ser paga.';
+    return (q.eff !== b.home ?
+        'Continua pesando no saldo de ' + home + ' e aparece para pagar em <strong>' + esc(monthLabel(q.eff)) + '</strong>' :
+        'Fica em ' + home + ', com a previsão de pagamento') +
+      '. Se a data passar sem pagar, ela volta a ficar atrasada e aparece no mês atual até ser paga.';
   }
   var r = previewBill(b, {paid:false, planOn:null});
-  if (r.eff !== r.home) return 'Ainda não foi paga e está atrasada: conta em <strong>' + esc(monthLabel(r.eff)) + '</strong> (mês atual) até ser paga.';
-  return 'Ainda não foi paga' + (r.state === 'overdue' ? ' e está atrasada' : '') + ': conta em <strong>' + esc(monthLabel(r.eff)) + '</strong>.';
+  if (r.eff !== r.home) return 'Ainda não foi paga e está atrasada: continua no saldo de ' + home + ' e aparece para pagar em <strong>' + esc(monthLabel(r.eff)) + '</strong> (mês atual) até ser paga.';
+  return 'Ainda não foi paga' + (r.state === 'overdue' ? ' e está atrasada' : '') + ': fica em ' + home + '.';
 }
 function interestHint(b, raw){
   if (String(raw || '').trim() === '') return 'Valor lançado: ' + fmtMoney(b.amount) + '. Digite quanto a conta ficou, já com juros e multa.';
@@ -5468,7 +5742,7 @@ function openStatusSheet(kind, home, id, fromKeyboard){
   var b = findBill(STATE, kind, home, id);
   if (!b) return;
   sheetOpen = false; sheetDraft = null; editingVariable = null; launchingRecurring = null;
-  bulkPlan = null;
+  bulkPlan = null; dailySheet = null;
   toastMsg = null;
   statusSheet = {kind:kind, home:home, id:id, keyboard:!!fromKeyboard, error:'', draft:{
     choice: b.state === 'paid' ? 'paid' : (b.state === 'planned' ? 'plan' : 'pending'),
@@ -5491,7 +5765,8 @@ function renderStatusSheet(keepStill){
   var now = 'Agora: <strong>' + BILL_STATUS_LABEL[b.state] + '</strong>' +
     (b.state === 'planned' ? ', previsão ' + esc(fmtDate(b.planOn)) : '') +
     (b.state === 'paid' && b.paidOn ? ', paga em ' + esc(fmtDate(b.paidOn)) : '') +
-    ' · conta em ' + esc(monthLabel(b.eff)) + (b.interest > 0 ? ' · com juros: ' + fmtMoney(b.total) : '');
+    (b.eff !== b.home && b.state !== 'paid' ? ' · aparece para pagar em ' + esc(monthLabel(b.eff)) : '') +
+    (b.interest > 0 ? ' · com juros: ' + fmtMoney(b.total) : '');
   function opt(value, title, desc){
     var on = d.choice === value;
     return '<label class="st-opt' + (on ? ' on' : '') + '" data-choice="' + value + '">' +
@@ -5642,9 +5917,10 @@ function saveStatusSheet(form){
   }
   var after = previewBill(b, {paid:op.paid, paidOn:op.paidOn, planOn:op.planOn, withInterest:op.withInterest});
   var msg;
-  if (after.state === 'paid') msg = b.name + ' — marcada como paga' + (after.eff !== b.home ? ' (conta em ' + monthLabel(after.eff) + ')' : '') + '.';
-  else if (after.state === 'planned') msg = b.name + ' — programada para ' + fmtDate(op.planOn) + ' (conta em ' + monthLabel(after.eff) + ').';
-  else msg = b.name + ' — marcada como pendente' + (after.eff !== b.home ? ' (conta em ' + monthLabel(after.eff) + ' até ser paga)' : '') + '.';
+  if (after.state === 'paid') msg = b.name + ' — marcada como paga.';
+  else if (after.state === 'planned') msg = b.name + ' — programada para ' + fmtDate(op.planOn) +
+    (after.eff !== b.home ? ' (aparece para pagar em ' + monthLabel(after.eff) + '; continua no saldo de ' + monthLabel(b.home) + ')' : '') + '.';
+  else msg = b.name + ' — marcada como pendente' + (after.eff !== b.home ? ' (aparece para pagar em ' + monthLabel(after.eff) + ' até ser paga)' : '') + '.';
   if (op.withInterest != null) msg += ' Juros de ' + fmtMoney(after.interest) + ' anotados.';
   var back = statusSheet.keyboard ? {kind:b.kind, home:b.home, id:b.id} : null;
   statusSheet = null;
@@ -5658,7 +5934,7 @@ function openBulkPlan(month){
   if (!MONTH_KEY_RE.test(month || '') || month <= monthKeyToday()) return;
   var sel = {};
   openBillsWithoutPlan().forEach(function(b){ if (b.state === 'overdue') sel[billUid(b)] = true; });
-  sheetOpen = false; statusSheet = null;
+  sheetOpen = false; statusSheet = null; dailySheet = null;
   toastMsg = null;
   bulkPlan = {month: month, sel: sel};
   render();
@@ -5696,7 +5972,7 @@ function renderBulkPlanSheet(keepStill){
   return '<div class="sheet-backdrop" data-action="close-bulk-plan">' +
     '<form class="sheet bulk-plan-sheet' + (keepStill ? ' still' : '') + '" data-action="bulk-plan-form" role="dialog" aria-modal="true" aria-labelledby="bp-title" novalidate>' +
       '<h3 id="bp-title" style="margin-bottom:8px">Programar para ' + esc(monthLabel(K)) + '</h3>' +
-      '<p class="sheet-note">Contas de ' + esc(monthLabel(todayKey)) + ' (mês atual) ainda em aberto e sem previsão. As marcadas passam a contar em <strong>' + esc(monthLabel(K)) + '</strong>, cada uma no dia do vencimento dela — dá pra mudar a data de qualquer uma depois, tocando na situação dela.</p>' +
+      '<p class="sheet-note">Contas de ' + esc(monthLabel(todayKey)) + ' (mês atual) ainda em aberto e sem previsão. As marcadas passam a aparecer para pagar em <strong>' + esc(monthLabel(K)) + '</strong>, cada uma no dia do vencimento dela, e continuam pesando no saldo do mês delas — dá pra mudar a data de qualquer uma depois, tocando na situação dela.</p>' +
       body +
       '<div class="sheet-actions">' +
         '<button type="button" class="btn ghost" data-action="close-bulk-plan">Cancelar</button>' +
@@ -5726,6 +6002,203 @@ function saveBulkPlan(form){
   bulkPlan = null;
   toastMsg = items.length + plural(items.length, ' conta programada', ' contas programadas') + ' para ' + monthLabel(K) + '.';
   doOp({type:'planBills', items:items});
+}
+
+/* ---------- day-to-day spending ("gasto do dia a dia") ---------- */
+// What was paid on the spot -- PIX, débito or dinheiro -- in a few taps: saved as paid, in the
+// month of its date. A credit card purchase is not entered here (it comes in the card's bill).
+var DAILY_PREF_KEY = 'gflowFinancasDailyLast';
+var dailyLast = loadPref(DAILY_PREF_KEY, {categoryId:null, via:'pix'}, function(v){
+  return !!v && typeof v === 'object' && (v.via == null || VIA_LABEL.hasOwnProperty(v.via));
+});
+var dailySheet = null;      // {mode:'add'|'edit', home, id, error, keyboard, draft}
+var dailyListOpen = false;  // the month's list of day-to-day expenses, opened or not
+function dailyDefaultDate(){
+  var todayKey = monthKeyToday();
+  return viewMonth >= todayKey ? todayStr() : lastDayIso(viewMonth);
+}
+function hasVarCat(id){
+  return STATE.household.variableCategories.some(function(c){ return c.id === id; });
+}
+function openDailySheet(id, fromKeyboard){
+  var h = STATE.household;
+  var cats = h.variableCategories;
+  var firstCat = cats.length ? cats[0].id : '__new__';
+  var draft;
+  if (id){
+    var e = findVariableEntry(viewMonth, id);
+    if (!e) return;
+    var catOfE = findCat(cats, e.categoryId);
+    draft = {
+      // a description that is just the category's name was filled in by the app
+      amount: fmtInputAmount(e.amount), desc: (catOfE && e.desc === catOfE.name) ? '' : (e.desc || ''),
+      categoryId: hasVarCat(e.categoryId) ? e.categoryId : firstCat, newCategoryName: '',
+      via: VIA_LABEL.hasOwnProperty(e.via) ? e.via : 'pix',
+      date: ISO_DATE_RE.test(e.date || '') ? e.date : dailyDefaultDate(),
+      who: (e.by && e.by === h.person2Name && e.by !== h.person1Name) ? 'person2' : 'person1'
+    };
+  } else {
+    var lastCat = dailyLast && hasVarCat(dailyLast.categoryId) ? dailyLast.categoryId : (hasVarCat('mercado') ? 'mercado' : firstCat);
+    draft = {
+      amount: '', desc: '', categoryId: lastCat, newCategoryName: '',
+      via: (dailyLast && VIA_LABEL.hasOwnProperty(dailyLast.via)) ? dailyLast.via : 'pix',
+      date: dailyDefaultDate(), who: whoAmI === 'person2' ? 'person2' : 'person1'
+    };
+  }
+  sheetOpen = false; sheetDraft = null; editingVariable = null; launchingRecurring = null;
+  statusSheet = null; bulkPlan = null; toastMsg = null;
+  dailySheet = {mode: id ? 'edit' : 'add', home: id ? viewMonth : null, id: id || null, error: '', keyboard: !!fromKeyboard, draft: draft};
+  render();
+  focusQuietly(appEl && appEl.querySelector('.daily-sheet input[name="amount"]'));
+}
+function closeDailySheet(){
+  dailySheet = null;
+  render();
+}
+function dlChip(name, value, label, on){
+  return '<label class="dl-chip' + (on ? ' on' : '') + '"><input type="radio" name="' + name + '" value="' + esc(value) + '"' + (on ? ' checked' : '') + '><span>' + esc(label) + '</span></label>';
+}
+function renderDailySheet(keepStill){
+  var h = STATE.household;
+  var d = dailySheet.draft;
+  var edit = dailySheet.mode === 'edit';
+  var catChips = h.variableCategories.map(function(c){ return dlChip('dlCat', c.id, c.name, d.categoryId === c.id); }).join('') +
+    dlChip('dlCat', '__new__', '+ Nova', d.categoryId === '__new__');
+  var viaChips = DAILY_VIA.map(function(v){ return dlChip('dlVia', v, VIA_LABEL[v], d.via === v); }).join('');
+  var whoChips = dlChip('dlWho', 'person1', h.person1Name, d.who !== 'person2') + dlChip('dlWho', 'person2', h.person2Name, d.who === 'person2');
+  return '<div class="sheet-backdrop" data-action="close-daily">' +
+    '<form class="sheet daily-sheet' + (keepStill ? ' still' : '') + '" data-action="daily-form" role="dialog" aria-modal="true" aria-labelledby="dl-title" novalidate>' +
+      '<h3 id="dl-title" style="margin-bottom:6px">' + (edit ? 'Editar gasto do dia a dia' : '⚡ Gasto do dia a dia') + '</h3>' +
+      '<p class="sheet-note">O que foi pago na hora: PIX, débito ou dinheiro. Compra no cartão de crédito não entra aqui — ela já vem na fatura do cartão.</p>' +
+      '<div class="field"><label for="dl-amount">Valor</label><input id="dl-amount" class="dl-amount" name="amount" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" value="' + esc(d.amount) + '"></div>' +
+      '<div class="field"><label for="dl-desc">O que foi? <span class="opt">(opcional)</span></label><input id="dl-desc" name="desc" autocomplete="off" placeholder="Ex.: mercado, cílios, lanche" value="' + esc(d.desc) + '"></div>' +
+      '<fieldset class="st-group dl-group"><legend>Categoria</legend><div class="dl-chips">' + catChips + '</div>' +
+        '<div class="field dl-newcat"' + (d.categoryId === '__new__' ? '' : ' hidden') + '><label for="dl-newcat">Nome da nova categoria</label><input id="dl-newcat" name="newCategoryName" autocomplete="off" placeholder="Ex.: Beleza" value="' + esc(d.newCategoryName) + '"></div>' +
+      '</fieldset>' +
+      '<fieldset class="st-group dl-group"><legend>Como pagou</legend><div class="dl-chips">' + viaChips + '</div></fieldset>' +
+      '<div class="field"><label for="dl-date">Data</label><input id="dl-date" type="date" name="date" max="' + todayStr() + '" value="' + esc(d.date) + '"></div>' +
+      '<fieldset class="st-group dl-group"><legend>Quem gastou</legend><div class="dl-chips">' + whoChips + '</div></fieldset>' +
+      '<p class="st-error" role="alert">' + esc(dailySheet.error || '') + '</p>' +
+      '<div class="sheet-actions">' +
+        '<button type="button" class="btn ghost" data-action="close-daily">Cancelar</button>' +
+        '<button type="submit" class="btn primary">' + (edit ? 'Salvar alterações' : 'Salvar gasto') + '</button>' +
+      '</div>' +
+    '</form>' +
+  '</div>';
+}
+function readDailyForm(form){
+  var d = dailySheet.draft;
+  function radio(name){ var r = form.querySelector('input[name="' + name + '"]:checked'); return r ? r.value : null; }
+  if (form.elements['amount']) d.amount = form.elements['amount'].value;
+  if (form.elements['desc']) d.desc = form.elements['desc'].value;
+  if (form.elements['newCategoryName']) d.newCategoryName = form.elements['newCategoryName'].value;
+  if (form.elements['date']) d.date = form.elements['date'].value;
+  d.categoryId = radio('dlCat') || d.categoryId;
+  d.via = radio('dlVia') || d.via;
+  d.who = radio('dlWho') || d.who;
+  return d;
+}
+// updated in place (no redraw: the keyboard and the scroll stay where they are)
+function updateDailySheetUI(form){
+  if (!dailySheet || !form) return;
+  var d = readDailyForm(form);
+  var chips = form.querySelectorAll('.dl-chip');
+  for (var i = 0; i < chips.length; i++){
+    var inp = chips[i].querySelector('input');
+    if (inp && inp.checked) chips[i].classList.add('on'); else chips[i].classList.remove('on');
+  }
+  var nc = form.querySelector('.dl-newcat');
+  if (nc){ if (d.categoryId === '__new__') nc.removeAttribute('hidden'); else nc.setAttribute('hidden', ''); }
+  dailySheet.error = '';
+  var err = form.querySelector('.st-error');
+  if (err) err.textContent = '';
+}
+function saveDailySheet(form){
+  if (!dailySheet) return;
+  var h = STATE.household;
+  var d = readDailyForm(form);
+  var today = todayStr();
+  var err = '', field = null;
+  var amount = parseMoneyInput(d.amount);
+  var newName = String(d.newCategoryName || '').trim();
+  if (!isFinite(amount) || amount <= 0){
+    err = String(d.amount || '').trim() === '' ? 'Digite o valor do gasto.' : 'Não entendi o valor. Digite só números, ex.: 25,90';
+    field = 'amount';
+  } else if (!ISO_DATE_RE.test(d.date || '')){ err = 'Escolha a data do gasto.'; field = 'date'; }
+  else if (d.date > today){ err = 'A data não pode ser depois de hoje (o gasto já foi pago).'; field = 'date'; }
+  else if (d.categoryId === '__new__' && !newName){ err = 'Digite o nome da nova categoria.'; field = 'newCategoryName'; }
+  else if (d.categoryId !== '__new__' && !hasVarCat(d.categoryId)){ err = 'Escolha a categoria.'; }
+  if (err){
+    dailySheet.error = err;
+    var errEl = form.querySelector('.st-error');
+    if (errEl) errEl.textContent = err;
+    if (field && form.elements[field]) focusQuietly(form.elements[field]);
+    return;
+  }
+  var newCategory = null, categoryId = d.categoryId;
+  if (categoryId === '__new__'){
+    var same = h.variableCategories.filter(function(c){ return String(c.name).trim().toLowerCase() === newName.toLowerCase(); })[0];
+    if (same) categoryId = same.id;
+    else { newCategory = {id: uid(), name: newName}; categoryId = newCategory.id; }
+  }
+  var via = VIA_LABEL.hasOwnProperty(d.via) ? d.via : 'pix';
+  var month = d.date.slice(0, 7);
+  var who = d.who === 'person2' ? 'person2' : 'person1';
+  var catLabel = newCategory ? newCategory.name : ((findCat(h.variableCategories, categoryId) || {}).name || 'Outros');
+  // without a description it takes the category's name (an older version of the app on the
+  // other phone shows the description as the expense's name)
+  var entry = {id: uid(), desc: String(d.desc || '').trim() || catLabel, amount: round2(amount), date: d.date, categoryId: categoryId,
+    dueDay: dayOfDate(d.date), paid: true, paidOn: d.date, by: who === 'person2' ? h.person2Name : h.person1Name, sv: 2, daily: true, via: via};
+  var op = {type: 'saveDaily', month: month, entry: entry, newCategory: newCategory, newId: uid()};
+  if (dailySheet.mode === 'edit'){
+    op.entryId = dailySheet.id;
+    op.fromMonth = dailySheet.home;
+    entry.id = dailySheet.id;
+  }
+  dailyLast = {categoryId: categoryId, via: via};
+  savePref(DAILY_PREF_KEY, dailyLast);
+  whoAmI = who;
+  try { localStorage.setItem(WHO_KEY, who); } catch(e) {}
+  toastMsg = (dailySheet.mode === 'edit' ? 'Gasto atualizado: ' : 'Gasto lançado: ') + fmtMoney(entry.amount) + ' em ' + catLabel + ' (' + VIA_LABEL[via] + ')' +
+    (month !== viewMonth ? ', em ' + monthLabel(month) : '') + '.';
+  dailySheet = null;
+  dailyListOpen = dailyListOpen || month === viewMonth;
+  doOp(op);
+}
+// the month's day-to-day expenses, in one block of the "Contas variáveis" card
+function renderDailyBlock(mv, catName){
+  var list = (mv.bills || []).filter(function(b){ return b.daily; });
+  if (!list.length || listView.status === 'unpaid') return '';
+  list.sort(function(a, b){
+    var da = a.date || '', db = b.date || '';
+    if (da !== db) return da < db ? 1 : -1;
+    return a.id < b.id ? 1 : -1;
+  });
+  var head = '<button type="button" class="daily-head" data-action="toggle-daily-list" aria-expanded="' + (dailyListOpen ? 'true' : 'false') + '">' +
+    '<span class="dh-title"><span aria-hidden="true">⚡</span> Gastos do dia a dia <span class="dh-count">· ' + list.length + '</span></span> ' +
+    '<span class="dh-amt">' + fmtMoney(round2(sumTotals(list))) + '</span>' +
+  '</button>';
+  var body = '';
+  if (dailyListOpen){
+    body = '<div class="daily-list">' + list.map(function(b){
+      var cat = catName[b.categoryId] || 'Outros';
+      var title = (b.desc && String(b.desc).trim()) ? b.desc : cat;
+      var parts = title === cat ? [] : [esc(cat)];
+      if (b.via) parts.push(keep(esc(VIA_LABEL[b.via])));
+      if (b.date) parts.push(keep(esc(fmtDate(b.date))));
+      if (b.by) parts.push(esc(b.by));
+      var pending = removeConfirm === b.id;
+      return '<div class="var-row daily-row" data-id="' + esc(b.id) + '">' +
+        '<div class="row-main"><div class="row-title">' + esc(title) + '</div><div class="row-sub">' + subLine(parts) + '</div></div>' +
+        '<div class="var-amt">' + fmtMoney(b.total) + '</div>' +
+        '<div class="row-actions">' +
+          '<button type="button" class="icon-btn" data-action="edit-daily" data-id="' + esc(b.id) + '" aria-label="Editar gasto">✎</button>' +
+          '<button type="button" class="icon-btn' + (pending ? ' confirm' : '') + '" data-action="remove-variable" data-id="' + esc(b.id) + '" aria-label="Remover gasto">' + (pending ? 'Remover?' : '✕') + '</button>' +
+        '</div>' +
+      '</div>';
+    }).join('') + '</div>';
+  }
+  return '<div class="daily-block">' + head + body + '</div>';
 }
 
 /* ---------- focus preservation across re-renders ---------- */
@@ -5897,6 +6370,7 @@ function renderMainScreen(sheetWasOpen){
     else statusSheet = null;   // the bill was removed meanwhile
   }
   if (bulkPlan) html += renderBulkPlanSheet(sheetWasOpen);
+  if (dailySheet) html += renderDailySheet(sheetWasOpen);
   return html;
 }
 
@@ -5940,6 +6414,8 @@ function syncDraftFromField(el){
 function onInput(ev){
   var stForm = sheetFormOf(ev.target, 'status-form');
   if (stForm){ updateStatusSheetUI(stForm); return; }
+  var dlForm = sheetFormOf(ev.target, 'daily-form');
+  if (dlForm){ updateDailySheetUI(dlForm); return; }
   if (ev.target && ev.target.getAttribute && ev.target.getAttribute('data-action') === 'pick-custom-color'){
     // while the phone's color picker is open the app follows it (no redraw: it would close the
     // picker); "change" then redraws the choices
@@ -6110,6 +6586,19 @@ function onClick(ev){
       break;
     case 'close-status':
       closeStatusSheet();
+      break;
+    case 'open-daily':
+      openDailySheet(null, !!ev && ev.detail === 0);
+      break;
+    case 'edit-daily':
+      openDailySheet(el.getAttribute('data-id'), !!ev && ev.detail === 0);
+      break;
+    case 'close-daily':
+      closeDailySheet();
+      break;
+    case 'toggle-daily-list':
+      dailyListOpen = !dailyListOpen;
+      render();
       break;
     case 'status-plan-month':
       pickPlanMonth(el);
@@ -6310,6 +6799,7 @@ function onClick(ev){
       }
       break;
     case 'open-sheet':
+      dailySheet = null;
       sheetOpen = true;
       sheetDraft = null;
       editingVariable = null;
@@ -6459,6 +6949,8 @@ function onChange(ev){
   if (stForm){ updateStatusSheetUI(stForm); return; }
   var bpForm = sheetFormOf(el, 'bulk-plan-form');
   if (bpForm){ updateBulkPlanUI(bpForm); return; }
+  var dlForm = sheetFormOf(el, 'daily-form');
+  if (dlForm){ updateDailySheetUI(dlForm); return; }
   syncDraftFromField(el);
   var action = el.getAttribute('data-action');
   if (action === 'import-file'){
@@ -6528,6 +7020,11 @@ function onSubmit(ev){
   if (action === 'bulk-plan-form'){
     ev.preventDefault();
     saveBulkPlan(form);
+    return;
+  }
+  if (action === 'daily-form'){
+    ev.preventDefault();
+    saveDailySheet(form);
     return;
   }
   if (action === 'pin-wipe-form'){
