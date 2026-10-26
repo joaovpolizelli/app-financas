@@ -616,6 +616,18 @@ label .opt{font-weight:400;color:var(--ink-soft)}
 .ih-date{flex:none;color:var(--ink-soft);font-family:'Space Mono',monospace;font-size:0.75rem;padding-top:1px}
 .ih-text{flex:1;min-width:0;overflow-wrap:anywhere}
 .ih-row .icon-btn{flex:none;margin:-5px 0 -5px 0}
+/* "Adiantar parcelas": the link on a purchase, the parcelas already paid, its window */
+.amort-link{width:100%;text-align:left;margin:-4px 0 0;color:var(--primary);white-space:normal;overflow-wrap:anywhere}
+.amort-ghosts{margin-top:4px}
+.amort-ghost{display:flex;gap:8px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);font-size:0.8125rem;color:var(--ink-soft);line-height:1.45}
+.amort-ghost strong{color:var(--ink)}
+.ag-check{flex:none;color:var(--income);font-weight:700}
+.ag-text{flex:1;min-width:0;overflow-wrap:anywhere}
+.am-offer{margin:-6px 0 14px;font-size:0.8125rem;color:var(--ink-soft);line-height:1.9}
+.am-offer .amort-link{display:inline;width:auto;margin:0;padding:3px 0}
+.am-info{background:var(--surface-2);border-radius:12px;padding:8px 12px;margin:-4px 0 14px}
+.am-pick,.am-save{margin:4px 0;font-size:0.875rem;color:var(--ink-soft);line-height:1.45}
+.am-pick strong,.am-save strong{color:var(--ink)}
 .charts-top{display:flex;align-items:center;gap:6px}
 .back-btn{background:none;border:none;padding:6px 10px 6px 0;margin-left:-2px;font-weight:700;font-size:0.9375rem;color:var(--primary);white-space:nowrap}
 :root[data-vivid] .header .back-btn{color:var(--hero-ink)}
@@ -1038,10 +1050,12 @@ function monthDiff(fromKey, toKey){
   var yt = parseInt(pt[0],10), mt = parseInt(pt[1],10);
   return (yt - yf) * 12 + (mt - mf);
 }
+// a purchase in installments can be as long as a house financing (35 years)
+var MAX_INSTALLMENTS = 420;
 function monthRangeKeys(from, to){
   var keys = [];
   var cur = from, guard = 0;
-  while (cur <= to && guard < 240){
+  while (cur <= to && guard < 1200){
     keys.push(cur);
     cur = shiftMonth(cur, 1);
     guard++;
@@ -1049,7 +1063,10 @@ function monthRangeKeys(from, to){
   return keys;
 }
 function monthSelectOptions(selectedKey){
-  var start = shiftMonth(monthKeyOf(new Date()), -60);
+  // every month with data (years of use), and at least the last 10 years
+  var start = shiftMonth(monthKeyOf(new Date()), -120);
+  var first = firstDataMonth();
+  if (first && first < start) start = first;
   var end = computeMaxMonth();
   var keys = monthRangeKeys(start, end);
   return keys.map(function(k){
@@ -1214,6 +1231,16 @@ function cleanBillFields(r){
     if (isFinite(wi) && wi > 0) r.withInterest = wi; else delete r.withInterest;
   }
 }
+// Parcelas paid in advance ("Adiantar parcelas"): an expense of the month it was paid in that
+// says which purchase (`amortOf`) and which of its parcelas, by number (`amortIdx`), it paid.
+function cleanAmortFields(e){
+  if (!e || typeof e !== 'object' || (!('amortOf' in e) && !('amortIdx' in e))) return;
+  var idx = Array.isArray(e.amortIdx) ? e.amortIdx.map(function(n){ return parseInt(n, 10); })
+    .filter(function(n){ return isFinite(n) && n >= 1 && n <= MAX_INSTALLMENTS; }) : [];
+  idx = uniq(idx).sort(function(a, b){ return a - b; });
+  if (typeof e.amortOf !== 'string' || !e.amortOf || !idx.length || e.daily === true){ delete e.amortOf; delete e.amortIdx; return; }
+  e.amortIdx = idx;
+}
 // The joint account's balance told for a month ("Saldo da conta"): `end` = what the account had
 // at the end of the month (or on the day `on` it was told, in the current month); `start` =
 // what it had when the month began, only used while the month before has no balance. It may be
@@ -1333,6 +1360,7 @@ function normalizeState(s){
     });
     m.variable.forEach(cleanBillFields);
     m.variable.forEach(cleanDailyFields);
+    m.variable.forEach(cleanAmortFields);
     Object.keys(m.installments).forEach(function(iid){ cleanBillFields(m.installments[iid]); });
     m.investments = m.investments.filter(function(e){ return e && typeof e === 'object'; });
     m.investments.forEach(function(e){ if (!e.id) e.id = uid(); e.amount = numOr0(e.amount); });
@@ -1536,6 +1564,9 @@ function buildMonthBills(state, key, todayKey, today){
     if (!inst || !MONTH_KEY_RE.test(inst.startMonth || '')) return;
     var idx = monthDiff(inst.startMonth, key);
     if (idx < 0 || idx >= inst.installments) return;
+    // paid in advance ("Adiantar parcelas"): no longer due here, it is in the month it was paid
+    var amortOfInst = amortIndexOf(state)[inst.id];
+    if (amortOfInst && amortOfInst[idx + 1]) return;
     var ov = m && m.installments ? m.installments[inst.id] : null;
     if (ov && typeof ov !== 'object') ov = null;
     var paid = !!(ov && ov.paid);
@@ -1559,6 +1590,7 @@ function buildMonthBills(state, key, todayKey, today){
     var b = {kind:'variable', id:e.id, home:key, desc:e.desc, name:e.desc, categoryId:e.categoryId, by:e.by,
       date:e.date, recurringId:e.recurringId || null,
       daily: !!e.daily, via: (e.daily && VIA_LABEL[e.via]) ? e.via : null,
+      amortOf: e.amortOf || null, amortIdx: e.amortOf ? e.amortIdx : null,
       amount:e.amount, paid:!!e.paid,
       paidOn:isoOrNull(e.paidOn), planOn:isoOrNull(e.planOn), withInterest:positiveOrNull(e.withInterest),
       dueIso: varDueIso(e, key)};
@@ -1575,6 +1607,22 @@ function billCacheFor(state){
   var today = todayStr();
   if (billCache.state !== state || billCache.today !== today) billCache = {state:state, today:today, months:{}, index:null};
   return billCache;
+}
+// parcelas paid in advance, by purchase: {instId: {parcela number: {month, id, date, paid}}}
+function amortIndexOf(state){
+  var c = billCacheFor(state);
+  if (c.amort) return c.amort;
+  var out = {};
+  Object.keys(state.months || {}).sort().forEach(function(k){
+    if (!MONTH_KEY_RE.test(k)) return;
+    ((state.months[k] && state.months[k].variable) || []).forEach(function(e){
+      if (!e || !e.amortOf || !Array.isArray(e.amortIdx)) return;
+      var byN = out[e.amortOf] = out[e.amortOf] || {};
+      e.amortIdx.forEach(function(n){ if (!byN[n]) byN[n] = {month:k, id:e.id, date:e.date, paid:!!e.paid, paidOn:e.paid ? isoOrNull(e.paidOn) : null}; });
+    });
+  });
+  c.amort = out;
+  return out;
 }
 function monthBills(state, key){
   var c = billCacheFor(state);
@@ -1611,13 +1659,15 @@ function billIndex(state){
   if (from && from <= lastPast) monthRangeKeys(from, lastPast).forEach(function(k){ keys[k] = true; });
   Object.keys(state.months || {}).forEach(function(k){ if (MONTH_KEY_RE.test(k)) keys[k] = true; });
   var list = Object.keys(keys).sort();
-  var incoming = {};
+  var incoming = {}, paidAhead = {};
   list.forEach(function(k){
     monthBills(state, k).forEach(function(b){
       if (b.eff !== b.home) (incoming[b.eff] = incoming[b.eff] || []).push(b);
+      // paid before its own month: the money left the account in the month it was paid
+      if (b.paid && !b.daily && b.paidOn && b.paidOn.slice(0, 7) < b.home) (paidAhead[b.paidOn.slice(0, 7)] = paidAhead[b.paidOn.slice(0, 7)] || []).push(b);
     });
   });
-  c.index = {keys: list, incoming: incoming};
+  c.index = {keys: list, incoming: incoming, paidAhead: paidAhead};
   return c.index;
 }
 function findBill(state, kind, home, id){
@@ -1726,7 +1776,9 @@ function getMonthView(state, key){
     cash: MONTH_KEY_RE.test(key) ? cashOf(state, key) : null,
     cashPrev: MONTH_KEY_RE.test(key) ? cashOf(state, shiftMonth(key, -1)) : null,
     // values of the investments told in this month (with what changed)
-    invMoves: portfolioOf(state).moves[key] || []
+    invMoves: portfolioOf(state).moves[key] || [],
+    // bills of later months already paid in this month (for the account's calculation)
+    paidAhead: billIndex(state).paidAhead[key] || []
   };
 }
 // What the screen and the summaries need on top of the month's numbers: the monthly bills
@@ -1781,8 +1833,11 @@ function computeMonthTotals(h, mv, key){
     var ownStart = (typeof mv.cash.start === 'number' && isFinite(mv.cash.start)) ? mv.cash.start : null;
     var start = prevEnd != null ? prevEnd : (ownStart != null ? ownStart : 0);
     var paidOut = 0, paidCount = 0, paidAfter = 0, paidAfterCount = 0, on = mv.cash.on || null;
-    (mv.payHere || []).forEach(function(b){
-      if (!b.paid || b.daily || b.eff !== key) return;
+    // what left the account this month: the bills paid in it, whatever month they belong to
+    var paidHere = (mv.payHere || []).filter(function(b){
+      return b.paid && !b.daily && b.eff === key && !(b.paidOn && b.paidOn.slice(0, 7) < key);
+    }).concat(mv.paidAhead || []);
+    paidHere.forEach(function(b){
       paidOut += b.total; paidCount++;
       if (on && b.paidOn && b.paidOn > on){ paidAfter += b.total; paidAfterCount++; }
     });
@@ -1874,7 +1929,7 @@ function upsertAmountLog(cat, month, amount){ setLogEntry(cat, {month:month, amo
 function upsertStop(cat, month){ setLogEntry(cat, {month:month, stop:true}); }
 function installmentRangeText(count, startMonth){
   if (!isFinite(count) || count < 2 || !startMonth || !/^\d{4}-\d{2}$/.test(startMonth)) return '';
-  if (count > 60) count = 60;
+  if (count > MAX_INSTALLMENTS) count = MAX_INSTALLMENTS;
   var endMonth = shiftMonth(startMonth, count - 1);
   var text = count + 'x — de ' + monthLabel(startMonth) + ' até ' + monthLabel(endMonth);
   if (viewMonth < startMonth || viewMonth > endMonth){
@@ -2372,6 +2427,29 @@ function applyOp(state, op){
       } else {
         if (op.entryId) dEntry.id = op.newId || uid();   // moved (or removed meanwhile): a fresh id
         m.variable.push(dEntry);
+      }
+      m.updatedAt = at;
+      break;
+    case 'saveAmort':
+      // parcelas paid in advance: an expense in the month it was paid (moved there when its date
+      // changes month, with a new id, like any other expense)
+      if (op.entryId && op.fromMonth && op.fromMonth !== op.month){
+        var fromA = ensureMonth(next, op.fromMonth);
+        fromA.variable = fromA.variable.filter(function(e){ return e.id !== op.entryId; });
+        addTombstone(fromA, 'var:' + op.entryId, at);
+        fromA.updatedAt = at;
+      }
+      var aEntry = clone(op.entry);
+      cleanBillFields(aEntry);
+      cleanAmortFields(aEntry);
+      aEntry.updatedAt = at;
+      m = ensureMonth(next, op.month);
+      if (op.entryId && op.fromMonth === op.month && m.variable.some(function(e){ return e.id === op.entryId; })){
+        aEntry.id = op.entryId;
+        m.variable = m.variable.map(function(e){ return e.id === op.entryId ? aEntry : e; });
+      } else {
+        if (op.entryId) aEntry.id = op.newId || uid();
+        m.variable.push(aEntry);
       }
       m.updatedAt = at;
       break;
@@ -3557,7 +3635,7 @@ function periodShortLabel(p){
   var a = shortMonthLabel(p.from), b = shortMonthLabel(p.to);
   return p.from === p.to ? a : a + ' a ' + b;
 }
-var PERIOD_MAX_MONTHS = 60;
+var PERIOD_MAX_MONTHS = 120;
 // each month as in its Resumo; `dup` = late bills of a month inside the period that are also in
 // this month's numbers (the total counts them once)
 function periodRows(from, to){
@@ -4385,6 +4463,8 @@ function commitmentRows(fromKey, n){
       if (b.home !== k) other += b.total;
       else if (b.kind === 'installment') inst += b.total;
       else if (b.kind === 'fixed') fixed += b.total;
+      // parcelas paid in advance (or planned to be) are parcelas of the month they are paid in
+      else if (b.kind === 'variable' && b.amortOf) inst += b.total;
     });
     return {
       key: k, installments: round2(inst), fixed: round2(fixed), other: round2(other), total: round2(inst + fixed + other),
@@ -4396,7 +4476,9 @@ function endingInstallments(fromKey, toKey){
   var out = [];
   (STATE.household.installments || []).forEach(function(inst){
     if (!inst || !MONTH_KEY_RE.test(inst.startMonth || '') || !(inst.installments > 0)) return;
-    var end = shiftMonth(inst.startMonth, inst.installments - 1);
+    var lastN = lastParcelLeft(inst);
+    if (!lastN) return;
+    var end = shiftMonth(inst.startMonth, lastN - 1);
     if (end < fromKey || end > toKey) return;
     out.push({desc: inst.desc, amount: numOr0(inst.installmentAmount), end: end});
   });
@@ -4580,8 +4662,9 @@ function onWindowResize(){
 }
 // chart columns are focusable: Enter or Space picks them, like a tap
 function onAppKeydown(ev){
-  if ((ev.key === 'Escape' || ev.key === 'Esc') && (statusSheet || bulkPlan || dailySheet || cashSheet)){
+  if ((ev.key === 'Escape' || ev.key === 'Esc') && (statusSheet || bulkPlan || dailySheet || cashSheet || amortSheet)){
     bulkPlan = null;
+    if (amortSheet){ closeAmortSheet(); return; }
     if (cashSheet){ closeCashSheet(); return; }
     if (dailySheet){ closeDailySheet(); return; }
     if (statusSheet) closeStatusSheet(); else render();
@@ -5657,6 +5740,12 @@ function renderVariable(h, mv, isCurrent){
   ownBills.forEach(function(b){
     if (b.kind !== 'variable' || b.daily) return;
     var parts = [esc(catName[b.categoryId] || 'Outros')];
+    if (b.amortOf){
+      parts.push(keep('Parcelas adiantadas'));
+      var amInst = findInstallment(b.amortOf);
+      var amSv = amInst ? amortSaving(amInst, (b.amortIdx || []).length, b.amount) : null;
+      if (amSv && amSv.saved > 0) parts.push(keep('economia de ' + esc(fmtMoney(amSv.saved))));
+    }
     if (b.recurringId && findRecurring(STATE, b.recurringId)) parts.push(keep('Mensal'));
     if (b.dueIso) parts.push(keep('Venc. ' + esc(fmtDate(b.dueIso))));
     if (b.by) parts.push(esc(b.by));
@@ -5671,6 +5760,9 @@ function renderVariable(h, mv, isCurrent){
   ownBills.forEach(function(b){
     if (b.kind !== 'installment') return;
     var parts = [esc(catName[b.categoryId] || 'Outros'), keep('Parcela ' + b.index + ' de ' + b.count)];
+    var instB = findInstallment(b.id);
+    var lastLeft = instB ? lastParcelLeft(instB) : b.count;
+    if (instB && lastLeft < b.count) parts.push(keep(lastLeft === b.index ? 'é a última' : 'termina em ' + esc(shortMonthLabel(parcelMonth(instB, lastLeft)))));
     if (b.dueIso) parts.push(keep('Venc. ' + esc(fmtDate(b.dueIso))));
     if (b.by) parts.push(esc(b.by));
     billStatusBits(b).forEach(function(bit){ if (!/^atrasada/.test(bit)) parts.push(esc(capFirst(bit))); });
@@ -5691,12 +5783,13 @@ function renderVariable(h, mv, isCurrent){
     hiddenVar++;
     return false;
   }));
+  var ghostHtml = listView.status === 'unpaid' ? '' : amortGhostRows(h, viewMonth);
   var rows;
   var dailyHtml = renderDailyBlock(mv, catName);
   if (!combined.length && hadAny){
     rows = '<p class="empty-note">Nenhum gasto ' + (listView.status === 'paid' ? 'pago' : 'em aberto') + ' neste mês.</p>';
   } else if (!combined.length){
-    rows = (launchHtml || dailyCount) ? '' : '<p class="empty-note">Nenhum gasto lançado neste mês ainda. Toque no + para adicionar.</p>';
+    rows = (launchHtml || dailyCount || ghostHtml) ? '' : '<p class="empty-note">Nenhum gasto lançado neste mês ainda. Toque no + para adicionar.</p>';
   } else {
     rows = '<div class="varlist">' + combined.map(function(it){
       var isInst = it.kind === 'installment';
@@ -5720,11 +5813,36 @@ function renderVariable(h, mv, isCurrent){
           '<button type="button" class="icon-btn' + (pending ? ' confirm' : '') + '" data-action="' + delAction + '" ' + delAttr + ' aria-label="' + (isInst ? 'Remover compra parcelada (todas as parcelas)' : 'Remover lançamento') + '">' + (pending ? (isInst ? 'Remover as ' + it.total + ' parcelas?' : 'Remover?') : '✕') + '</button>' +
         '</div>' +
         movedNoteHtml(b) +
+        (isInst && findInstallment(it.id) && amortAvailable(findInstallment(it.id)).length ?
+          '<button type="button" class="link-btn amort-link" data-action="open-amort" data-instid="' + esc(it.id) + '">⏩ Adiantar parcelas</button>' : '') +
       '</div>';
     }).join('') + '</div>';
   }
   var addUi = '<button type="button" class="add-btn" data-action="open-sheet">+ Novo gasto variável</button>';
-  return '<section class="card" id="sec-variaveis"><div class="card-head"><div class="card-head-main"><span class="card-icon" aria-hidden="true">🛒</span><h2 class="card-title">Contas variáveis</h2></div></div>' + carriedHtml + launchHtml + rows + dailyHtml + filterNote(hiddenVar) + addUi + '</section>';
+  return '<section class="card" id="sec-variaveis"><div class="card-head"><div class="card-head-main"><span class="card-icon" aria-hidden="true">🛒</span><h2 class="card-title">Contas variáveis</h2></div></div>' + carriedHtml + launchHtml + rows + ghostHtml + dailyHtml + filterNote(hiddenVar) + addUi + '</section>';
+}
+// "✓ Carro · parcela 45 de 45 (última) — já paga: adiantada em 24/10/26" (not counted here)
+function amortGhostRows(h, key){
+  var am = amortIndexOf(STATE);
+  var out = [];
+  (h.installments || []).forEach(function(inst){
+    if (!inst || !MONTH_KEY_RE.test(inst.startMonth || '') || !am[inst.id]) return;
+    var n = monthDiff(inst.startMonth, key) + 1;
+    if (n < 1 || n > inst.installments || !am[inst.id][n]) return;
+    var a = am[inst.id][n];
+    // paid: the day it was paid; not yet: the day it is planned for
+    var day = (a.paid && a.paidOn) ? a.paidOn : a.date;
+    var dated = ISO_DATE_RE.test(day || '');
+    var when = dated ? fmtDate(day) + '/' + day.slice(2, 4) : monthLabel(a.month);
+    var state = a.paid ? 'já paga: adiantada em ' + when :
+      (dated && day > todayStr() ? 'adiantamento programado para ' + when : 'adiantamento de ' + when + ', ainda não pago');
+    out.push('<div class="amort-ghost">' +
+      '<span class="ag-check" aria-hidden="true">' + (a.paid ? '✓' : '⏩') + '</span> ' +
+      '<span class="ag-text"><strong>' + esc(inst.desc) + '</strong> · parcela ' + n + ' de ' + inst.installments + (n === inst.installments ? ' (última)' : '') +
+        ' — ' + esc(state) + '</span>' +
+    '</div>');
+  });
+  return out.length ? '<div class="amort-ghosts">' + out.join('') + '</div>' : '';
 }
 function renderInvestments(h, mv){
   var who = whoAmI === 'person2' ? 'person2' : 'person1';
@@ -5906,6 +6024,7 @@ function renderSheet(h, keepStill){
       launchInfo +
       '<div class="field"><label>Descrição</label><input name="desc" placeholder="Ex.: Compras do mês" value="' + esc(draft.desc || '') + '"></div>' +
       '<div class="field" style="margin-bottom:14px"><label class="check-field' + (lockKind ? ' disabled' : '') + '"><input type="checkbox" name="isInstallment"' + (isInstallment ? ' checked' : '') + (lockKind ? ' disabled' : '') + '><span>Compra parcelada (dividir em várias vezes)' + (editingVariable ? ' — não dá pra mudar depois de criado' : '') + '</span></label></div>' +
+      (lockKind || isInstallment ? '' : amortOfferHtml()) +
       '<div class="field"><label>Categoria</label><select name="categoryId">' + catOptions + '<option value="__new__"' + (isNewCat ? ' selected' : '') + '>+ Nova categoria…</option></select></div>' +
       '<div class="field" data-newcat-field style="display:' + (isNewCat ? 'block' : 'none') + '"><label>Nome da nova categoria</label><input name="newCategoryName" placeholder="Ex.: Pet" value="' + esc(draft.newCategoryName || '') + '"></div>' +
       '<div class="field"><label>' + valorLabel + '</label><input name="amount" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" value="' + esc(draft.amount || '') + '"></div>' +
@@ -5920,6 +6039,17 @@ function renderSheet(h, keepStill){
       '</div>' +
     '</form>' +
   '</div>';
+}
+// in "Novo gasto variável": parcelas paid in advance have their own window (the purchase's link)
+function amortOfferHtml(){
+  var plans = (STATE.household.installments || []).filter(function(inst){
+    return inst && MONTH_KEY_RE.test(inst.startMonth || '') && amortAvailable(inst).length > 0;
+  });
+  if (!plans.length) return '';
+  return '<p class="am-offer"><span aria-hidden="true">⏩</span> Pagou parcelas adiantado? ' +
+    plans.map(function(inst){
+      return '<button type="button" class="link-btn amort-link" data-action="open-amort" data-instid="' + esc(inst.id) + '" aria-label="Adiantar parcelas · ' + esc(inst.desc) + '">' + esc(inst.desc) + '</button>';
+    }).join('<span aria-hidden="true"> · </span>') + '</p>';
 }
 function renderShare(){
   var html = '<section class="card">' +
@@ -6086,6 +6216,7 @@ function statusHint(b, choice, d){
     if (!isoOrNull(d.paidOn)) return 'Escolha a data em que ela foi paga.';
     if (d.paidOn > today) return 'A data do pagamento não pode ser depois de hoje.';
     var p = previewBill(b, {paid:true, paidOn:d.paidOn});
+    if (d.paidOn.slice(0, 7) < b.home) return 'Paga adiantado, em ' + esc(monthLabel(d.paidOn.slice(0, 7))) + ': fica no saldo de ' + home + ', o mês da conta (na conta conjunta, o dinheiro saiu em ' + esc(monthLabel(d.paidOn.slice(0, 7))) + ').';
     if (p.eff !== b.home) return 'Paga depois do vencimento, em ' + esc(monthLabel(p.eff)) + ': continua no saldo de ' + home + ' e entra também nas contas de ' + esc(monthLabel(p.eff)) + '.';
     if (b.home < todayKey) return 'Paga até o vencimento: fica em ' + home + ', o mês da conta.';
     return 'Fica no saldo de ' + home + '.';
@@ -6115,7 +6246,7 @@ function openStatusSheet(kind, home, id, fromKeyboard){
   var b = findBill(STATE, kind, home, id);
   if (!b) return;
   sheetOpen = false; sheetDraft = null; editingVariable = null; launchingRecurring = null;
-  bulkPlan = null; dailySheet = null; cashSheet = null;
+  bulkPlan = null; dailySheet = null; cashSheet = null; amortSheet = null;
   toastMsg = null;
   statusSheet = {kind:kind, home:home, id:id, keyboard:!!fromKeyboard, error:'', draft:{
     choice: b.state === 'paid' ? 'paid' : (b.state === 'planned' ? 'plan' : 'pending'),
@@ -6307,7 +6438,7 @@ function openBulkPlan(month){
   if (!MONTH_KEY_RE.test(month || '') || month <= monthKeyToday()) return;
   var sel = {};
   openBillsWithoutPlan().forEach(function(b){ if (b.state === 'overdue') sel[billUid(b)] = true; });
-  sheetOpen = false; statusSheet = null; dailySheet = null; cashSheet = null;
+  sheetOpen = false; statusSheet = null; dailySheet = null; cashSheet = null; amortSheet = null;
   toastMsg = null;
   bulkPlan = {month: month, sel: sel};
   render();
@@ -6419,7 +6550,7 @@ function openDailySheet(id, fromKeyboard){
     };
   }
   sheetOpen = false; sheetDraft = null; editingVariable = null; launchingRecurring = null;
-  statusSheet = null; bulkPlan = null; cashSheet = null; toastMsg = null;
+  statusSheet = null; bulkPlan = null; cashSheet = null; amortSheet = null; toastMsg = null;
   dailySheet = {mode: id ? 'edit' : 'add', home: id ? viewMonth : null, id: id || null, error: '', keyboard: !!fromKeyboard, draft: draft};
   render();
   focusQuietly(appEl && appEl.querySelector('.daily-sheet input[name="amount"]'));
@@ -6574,6 +6705,248 @@ function renderDailyBlock(mv, catName){
   return '<div class="daily-block">' + head + body + '</div>';
 }
 
+/* ---------- paying parcelas in advance ("Adiantar parcelas") ---------- */
+// A financing (car, house) or any purchase in installments: the last parcelas -- or the next
+// ones -- paid now, usually with a discount. It is an expense of the month it is paid in; those
+// parcelas leave their months (they show there as already paid) and the purchase ends earlier.
+var amortSheet = null;   // {instId, entryId, home, error, keyboard, draft:{which, count, amount, date, who}, confirmUndo}
+function findInstallment(id){
+  var list = STATE.household.installments || [];
+  for (var i = 0; i < list.length; i++){ if (list[i] && list[i].id === id) return list[i]; }
+  return null;
+}
+function parcelMonth(inst, n){ return shiftMonth(inst.startMonth, n - 1); }
+// the last parcela still to be paid in its own month (0 when all were paid in advance)
+function lastParcelLeft(inst){
+  var am = amortIndexOf(STATE)[inst.id] || {};
+  var n = inst.installments;
+  while (n > 0 && am[n]) n--;
+  return n;
+}
+// parcelas that can still be paid in advance: the ones after the month of the payment (this
+// month, unless another date is chosen), not paid yet and not paid in advance already (an
+// edited payment keeps its own). `anyMonth`: whatever their month (still to pay at all).
+function amortAvailable(inst, exceptEntryId, refMonth, anyMonth){
+  var ref = MONTH_KEY_RE.test(refMonth || '') ? refMonth : monthKeyToday();
+  var am = amortIndexOf(STATE)[inst.id] || {};
+  var out = [];
+  for (var n = 1; n <= inst.installments; n++){
+    var mine = !!(am[n] && exceptEntryId && am[n].id === exceptEntryId);
+    if (am[n] && !mine) continue;
+    var k = parcelMonth(inst, n);
+    if (k <= ref && !mine && !anyMonth) continue;
+    var rec = STATE.months[k] && STATE.months[k].installments ? STATE.months[k].installments[inst.id] : null;
+    if (rec && rec.paid && !mine) continue;
+    out.push(n);
+  }
+  return out;
+}
+// the month the payment was made in (the date typed), or this month
+function amortRefMonth(d){ return d && ISO_DATE_RE.test(d.date || '') ? d.date.slice(0, 7) : monthKeyToday(); }
+// "parcela 45", "parcelas 43 a 45", "parcelas 41, 44 e 45"
+function parcelRangeText(idxs){
+  if (idxs.length === 1) return 'parcela ' + idxs[0];
+  var contiguous = idxs[idxs.length - 1] - idxs[0] === idxs.length - 1;
+  if (contiguous && idxs.length > 2) return 'parcelas ' + idxs[0] + ' a ' + idxs[idxs.length - 1];
+  return 'parcelas ' + idxs.slice(0, -1).join(', ') + ' e ' + idxs[idxs.length - 1];
+}
+function amortPick(inst, d, exceptEntryId){
+  var avail = amortAvailable(inst, exceptEntryId, amortRefMonth(d));
+  var count = parseInt(d.count, 10);
+  if (!isFinite(count) || count < 1) return {avail: avail, idxs: []};
+  count = Math.min(count, avail.length);
+  var idxs = d.which === 'next' ? avail.slice(0, count) : avail.slice(avail.length - count);
+  // it pays off the purchase when nothing else is left to pay (not even a late or this month's parcela)
+  var left = amortAvailable(inst, exceptEntryId, null, true);
+  return {avail: avail, idxs: idxs.sort(function(a, b){ return a - b; }), all: idxs.length > 0 && idxs.length === left.length};
+}
+function amortDescFor(inst, idxs, quits){
+  var N = inst.installments, last = idxs[idxs.length - 1] === N;
+  if (quits) return inst.desc + ' — quitação (' + parcelRangeText(idxs) + ' de ' + N + ')';
+  return inst.desc + ' — ' + parcelRangeText(idxs) + ' de ' + N +
+    (last ? (idxs.length === 1 ? ' (última)' : ' (as últimas)') : '') + (idxs.length === 1 ? ' adiantada' : ' adiantadas');
+}
+// what the parcelas would cost without paying in advance, and the saving
+function amortSaving(inst, count, amount){
+  var full = round2(numOr0(inst.installmentAmount) * count);
+  return {full: full, saved: round2(full - amount)};
+}
+function openAmortSheet(instId, entryId, home, fromKeyboard){
+  var inst = findInstallment(instId);
+  if (!inst) return;
+  var who = whoAmI === 'person2' ? 'person2' : 'person1';
+  var draft = {which: 'last', count: '1', amount: '', date: todayStr(), who: who};
+  if (entryId){
+    var e = findVariableEntry(home, entryId);
+    if (!e) return;
+    var idxs = (e.amortIdx || []).slice(), k = idxs.length || 1;
+    var av = amortAvailable(inst, entryId, ISO_DATE_RE.test(e.date || '') ? e.date.slice(0, 7) : null);
+    var asNext = av.slice(0, k).join(',') === idxs.join(','), asLast = av.slice(av.length - k).join(',') === idxs.join(',');
+    draft = {which: (asNext && !asLast) ? 'next' : 'last',
+      count: String(k), amount: fmtInputAmount(e.amount), date: ISO_DATE_RE.test(e.date || '') ? e.date : todayStr(),
+      who: (e.by && e.by === STATE.household.person2Name && e.by !== STATE.household.person1Name) ? 'person2' : 'person1'};
+  }
+  sheetOpen = false; sheetDraft = null; editingVariable = null; launchingRecurring = null;
+  statusSheet = null; bulkPlan = null; dailySheet = null; cashSheet = null; toastMsg = null;
+  amortSheet = {instId: instId, entryId: entryId || null, home: entryId ? home : null, error: '', keyboard: !!fromKeyboard, draft: draft, confirmUndo: false};
+  render();
+  focusQuietly(appEl && appEl.querySelector('.amort-sheet input[name="amCount"]'));
+}
+function closeAmortSheet(){
+  var kb = amortSheet && amortSheet.keyboard;
+  amortSheet = null;
+  render();
+  if (kb) focusQuietly(appEl && appEl.querySelector('[data-action="open-amort"]'));
+}
+// the lines that follow what is typed: which parcelas, and the saving
+function amortInfoHtml(inst){
+  var d = amortSheet.draft;
+  var pick = amortPick(inst, d, amortSheet.entryId);
+  if (!pick.avail.length) return '<p class="am-pick">Nenhuma parcela depois de ' + esc(monthLabel(amortRefMonth(d))) + ' para adiantar. Confira a data do pagamento.</p>';
+  if (!pick.idxs.length) return '<p class="am-pick">Escolha quantas parcelas.</p>';
+  var months = pick.idxs.map(function(n){ return parcelMonth(inst, n); });
+  var when = months.length === 1 ? shortMonthLabel(months[0]) : shortMonthLabel(months[0]) + ' a ' + shortMonthLabel(months[months.length - 1]);
+  var html = '<p class="am-pick"><strong>' + esc(capFirst(parcelRangeText(pick.idxs))) + '</strong> de ' + inst.installments + ' · ' + esc(when) +
+    (pick.all ? ' · <strong>quita a compra</strong>' : '') + '</p>';
+  var amount = parseMoneyInput(d.amount);
+  if (isFinite(amount) && amount > 0){
+    var sv = amortSaving(inst, pick.idxs.length, amount);
+    html += '<p class="am-save">' + (sv.saved > 0 ?
+      'Sem adiantar: ' + fmtMoney(sv.full) + ' · você economiza <strong>' + fmtMoney(sv.saved) + '</strong> (' + fmtPct(sv.saved / sv.full * 100) + ')' :
+      'Sem adiantar: ' + fmtMoney(sv.full) + ' · sem desconto') + '</p>';
+  }
+  return html;
+}
+// "Dá para adiantar até 43 (de nov/26 a mai/30)." -- after the month of the payment
+function amortCountHint(inst){
+  var avail = amortAvailable(inst, amortSheet.entryId, amortRefMonth(amortSheet.draft));
+  if (!avail.length) return 'Nenhuma parcela depois de ' + shortMonthLabel(amortRefMonth(amortSheet.draft)) + '.';
+  var a = shortMonthLabel(parcelMonth(inst, avail[0])), b = shortMonthLabel(parcelMonth(inst, avail[avail.length - 1]));
+  return avail.length === 1 ? 'Dá para adiantar 1 (' + a + ').' : 'Dá para adiantar até ' + avail.length + ' (de ' + a + ' a ' + b + ').';
+}
+function renderAmortSheet(keepStill){
+  var inst = findInstallment(amortSheet.instId);
+  if (!inst) return '';
+  var d = amortSheet.draft;
+  var h = STATE.household;
+  var avail = amortAvailable(inst, amortSheet.entryId, amortRefMonth(d));
+  var left = amortAvailable(inst, amortSheet.entryId, null, true);
+  var N = inst.installments, lastN = lastParcelLeft(inst);
+  var head = '<p class="sheet-note">Parcela de <strong>' + fmtMoney(numOr0(inst.installmentAmount)) + '</strong> · ' + N + ' ' + plural(N, 'parcela', 'parcelas') +
+    (lastN ? ' · ' + (lastN < N ? 'agora termina em ' : 'termina em ') + esc(shortMonthLabel(parcelMonth(inst, lastN))) : '') +
+    '. Pagar as últimas costuma sair bem mais barato.</p>';
+  var body;
+  if (!left.length){
+    body = '<p class="empty-note">Não há parcelas para adiantar: ' + (lastN ? 'as que faltam já estão pagas.' : 'a compra já está quitada.') + '</p>';
+  } else {
+    var whichChips = dlChip('amWhich', 'last', 'As últimas', d.which !== 'next') + dlChip('amWhich', 'next', 'As próximas', d.which === 'next');
+    var whoChips = dlChip('amWho', 'person1', h.person1Name, d.who !== 'person2') + dlChip('amWho', 'person2', h.person2Name, d.who === 'person2');
+    body =
+      '<fieldset class="st-group dl-group"><legend>Quais parcelas</legend><div class="dl-chips">' + whichChips + '</div></fieldset>' +
+      '<div class="field"><label for="am-count">Quantas parcelas</label><input id="am-count" name="amCount" type="number" inputmode="numeric" min="1" max="' + Math.max(avail.length, 1) + '" value="' + esc(d.count) + '" aria-describedby="am-count-hint">' +
+        '<p class="field-hint" id="am-count-hint">' + esc(amortCountHint(inst)) + '</p></div>' +
+      '<div class="field"><label for="am-amount">Quanto pagou no total</label><input id="am-amount" class="dl-amount" name="amAmount" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" value="' + esc(d.amount) + '">' +
+        '<p class="field-hint">O valor cobrado, já com o desconto.</p></div>' +
+      '<div class="am-info" aria-live="polite">' + amortInfoHtml(inst) + '</div>' +
+      '<div class="field"><label for="am-date">Data do pagamento</label><input id="am-date" name="amDate" type="date" value="' + esc(d.date) + '">' +
+        '<p class="field-hint">Com uma data futura, fica programado (pendente) até lá.</p></div>' +
+      '<fieldset class="st-group dl-group"><legend>Quem está lançando</legend><div class="dl-chips">' + whoChips + '</div></fieldset>';
+  }
+  return '<div class="sheet-backdrop" data-action="close-amort">' +
+    '<form class="sheet amort-sheet' + (keepStill ? ' still' : '') + '" data-action="amort-form" role="dialog" aria-modal="true" aria-labelledby="am-title" novalidate>' +
+      '<h3 id="am-title" style="margin-bottom:6px">⏩ ' + (amortSheet.entryId ? 'Editar adiantamento' : 'Adiantar parcelas') + ' · ' + esc(inst.desc) + '</h3>' +
+      head + body +
+      '<p class="st-error" role="alert">' + esc(amortSheet.error || '') + '</p>' +
+      '<div class="sheet-actions">' +
+        '<button type="button" class="btn ghost" data-action="close-amort">Cancelar</button>' +
+        (left.length ? '<button type="submit" class="btn primary">Salvar</button>' : '') +
+      '</div>' +
+      (amortSheet.entryId ? '<button type="button" class="link-btn cs-clear" data-action="undo-amort">' + (amortSheet.confirmUndo ? 'Toque de novo para desfazer' : 'Desfazer o adiantamento (as parcelas voltam)') + '</button>' : '') +
+    '</form>' +
+  '</div>';
+}
+function readAmortForm(form){
+  var d = amortSheet.draft;
+  function radio(name){ var r = form.querySelector('input[name="' + name + '"]:checked'); return r ? r.value : null; }
+  if (form.elements['amCount']) d.count = form.elements['amCount'].value;
+  if (form.elements['amAmount']) d.amount = form.elements['amAmount'].value;
+  if (form.elements['amDate']) d.date = form.elements['amDate'].value;
+  d.which = radio('amWhich') || d.which;
+  d.who = radio('amWho') || d.who;
+}
+// updated in place (no redraw: the keyboard and the scroll stay where they are)
+function updateAmortSheetUI(form){
+  if (!amortSheet || !form) return;
+  readAmortForm(form);
+  var chips = form.querySelectorAll('.dl-chip');
+  for (var i = 0; i < chips.length; i++){
+    var inp = chips[i].querySelector('input');
+    if (inp && inp.checked) chips[i].classList.add('on'); else chips[i].classList.remove('on');
+  }
+  var inst = findInstallment(amortSheet.instId);
+  var box = form.querySelector('.am-info');
+  if (box && inst) box.innerHTML = amortInfoHtml(inst);
+  // the payment's date decides which parcelas are still ahead
+  var hint = form.querySelector('#am-count-hint');
+  if (hint && inst){
+    var txt = amortCountHint(inst);
+    if (hint.textContent !== txt) hint.textContent = txt;
+    var cnt = form.elements['amCount'];
+    if (cnt) cnt.setAttribute('max', String(Math.max(amortAvailable(inst, amortSheet.entryId, amortRefMonth(amortSheet.draft)).length, 1)));
+  }
+  amortSheet.error = '';
+  var err = form.querySelector('.st-error');
+  if (err) err.textContent = '';
+}
+function amortError(form, msg, field){
+  amortSheet.error = msg;
+  var errEl = form.querySelector('.st-error');
+  if (errEl) errEl.textContent = msg;
+  if (field && form.elements[field]) focusQuietly(form.elements[field]);
+}
+function saveAmortSheet(form){
+  if (!amortSheet) return;
+  var inst = findInstallment(amortSheet.instId);
+  if (!inst){ amortSheet = null; render(); return; }
+  readAmortForm(form);
+  var d = amortSheet.draft;
+  if (!ISO_DATE_RE.test(d.date || '')) return amortError(form, 'Escolha a data do pagamento.', 'amDate');
+  var pick = amortPick(inst, d, amortSheet.entryId);
+  if (!pick.avail.length) return amortError(form, 'Não há parcelas depois de ' + monthLabel(amortRefMonth(d)) + ' para adiantar. Confira a data do pagamento.', 'amDate');
+  var count = parseInt(d.count, 10);
+  if (!/^\d+$/.test(String(d.count == null ? '' : d.count).trim()) || !isFinite(count) || count < 1 || count > pick.avail.length) return amortError(form, pick.avail.length === 1 ? 'Dá para adiantar só 1 parcela.' : 'Escolha quantas parcelas (de 1 a ' + pick.avail.length + ').', 'amCount');
+  var amount = parseMoneyInput(d.amount);
+  if (!isFinite(amount) || amount <= 0) return amortError(form, !String(d.amount || '').trim() ? 'Digite quanto pagou.' :
+    (isFinite(amount) ? 'O valor precisa ser maior que zero.' : 'Não entendi o valor. Digite só números, ex.: 500,00.'), 'amAmount');
+  var firstMonth = parcelMonth(inst, pick.idxs[0]);
+  if (d.date.slice(0, 7) >= firstMonth) return amortError(form, 'A data precisa ser antes do mês da ' + parcelRangeText([pick.idxs[0]]) + ' (' + monthLabel(firstMonth) + ').', 'amDate');
+  amount = round2(amount);
+  var h = STATE.household, today = todayStr();
+  var who = d.who === 'person2' ? 'person2' : 'person1';
+  var paid = d.date <= today;
+  var entry = {id: uid(), desc: amortDescFor(inst, pick.idxs, pick.all), amount: amount, date: d.date, categoryId: inst.categoryId,
+    dueDay: dayOfDate(d.date), paid: paid, sv: 2, by: who === 'person2' ? h.person2Name : h.person1Name,
+    amortOf: inst.id, amortIdx: pick.idxs};
+  if (paid) entry.paidOn = d.date;
+  var op = {type: 'saveAmort', month: d.date.slice(0, 7), entry: entry, newId: uid()};
+  if (amortSheet.entryId){ op.entryId = amortSheet.entryId; op.fromMonth = amortSheet.home; entry.id = amortSheet.entryId; }
+  var sv = amortSaving(inst, pick.idxs.length, amount);
+  whoAmI = who;
+  try { localStorage.setItem(WHO_KEY, who); } catch(e) {}
+  toastMsg = (pick.all ? inst.desc + ' quitado' : inst.desc + ': ' + pick.idxs.length + ' ' + plural(pick.idxs.length, 'parcela adiantada', 'parcelas adiantadas')) +
+    ' por ' + fmtMoney(amount) + (sv.saved > 0 ? ' (economia de ' + fmtMoney(sv.saved) + ')' : '') + (paid ? '' : ', programado para ' + fmtDate(d.date)) + '.';
+  amortSheet = null;
+  doOp(op);
+}
+function undoAmort(){
+  if (!amortSheet || !amortSheet.entryId) return;
+  if (!amortSheet.confirmUndo){ amortSheet.confirmUndo = true; render(); return; }
+  var month = amortSheet.home, id = amortSheet.entryId;
+  amortSheet = null;
+  toastMsg = 'Adiantamento desfeito: as parcelas voltaram para os meses delas.';
+  doOp({type: 'removeVariable', month: month, entryId: id});
+}
+
 /* ---------- the joint account's balance ("Saldo da conta") ---------- */
 // Told once a month (at its end), together with what the investments are worth: the app works
 // out the day-to-day spending by itself -- nothing to enter by hand.
@@ -6607,7 +6980,7 @@ function openCashSheet(month, fromKeyboard, focusInv){
       isNew: !!(same && same.first), origChoice: choice, choice: choice, value: fmtInputAmount(p.value)};
   });
   sheetOpen = false; sheetDraft = null; editingVariable = null; launchingRecurring = null;
-  statusSheet = null; bulkPlan = null; dailySheet = null; toastMsg = null;
+  statusSheet = null; bulkPlan = null; dailySheet = null; amortSheet = null; toastMsg = null;
   cashSheet = {month:month, saveDate:saveDate, error:'', keyboard:!!fromKeyboard, hadEnd:!!cur, prevEnd: prev ? prev.end : null,
     rows:rows, newOpen:false, confirmClear:false,
     draft:{end: cur ? fmtInputAmount(cur.end) : '', start: (rec && typeof rec.start === 'number') ? fmtInputAmount(rec.start) : '',
@@ -7052,6 +7425,10 @@ function renderMainScreen(sheetWasOpen){
   if (bulkPlan) html += renderBulkPlanSheet(sheetWasOpen);
   if (dailySheet) html += renderDailySheet(sheetWasOpen);
   if (cashSheet) html += renderCashSheet(sheetWasOpen);
+  if (amortSheet){
+    if (findInstallment(amortSheet.instId)) html += renderAmortSheet(sheetWasOpen);
+    else amortSheet = null;   // the purchase was removed meanwhile
+  }
   return html;
 }
 
@@ -7099,6 +7476,8 @@ function onInput(ev){
   if (dlForm){ updateDailySheetUI(dlForm); return; }
   var csForm = sheetFormOf(ev.target, 'cash-form');
   if (csForm){ updateCashSheetUI(csForm, ev.target.type !== 'radio'); return; }
+  var amForm = sheetFormOf(ev.target, 'amort-form');
+  if (amForm){ updateAmortSheetUI(amForm); return; }
   if (ev.target && ev.target.getAttribute && ev.target.getAttribute('data-action') === 'pick-custom-color'){
     // while the phone's color picker is open the app follows it (no redraw: it would close the
     // picker); "change" then redraws the choices
@@ -7269,6 +7648,15 @@ function onClick(ev){
       break;
     case 'close-status':
       closeStatusSheet();
+      break;
+    case 'open-amort':
+      openAmortSheet(el.getAttribute('data-instid'), null, null, !!ev && ev.detail === 0);
+      break;
+    case 'close-amort':
+      closeAmortSheet();
+      break;
+    case 'undo-amort':
+      undoAmort();
       break;
     case 'open-cash':
       openCashSheet(el.getAttribute('data-month') || viewMonth, !!ev && ev.detail === 0, false);
@@ -7467,7 +7855,10 @@ function onClick(ev){
       id = el.getAttribute('data-id');
       var mvEditV = getMonthView(STATE, viewMonth);
       var entryEdit = (mvEditV.variable || []).filter(function(e){ return e.id === id; })[0];
-      if (entryEdit){
+      if (entryEdit && entryEdit.amortOf && findInstallment(entryEdit.amortOf)){
+        // parcelas paid in advance are edited in their own window
+        openAmortSheet(entryEdit.amortOf, entryEdit.id, viewMonth, !!ev && ev.detail === 0);
+      } else if (entryEdit){
         var tplEdit = entryEdit.recurringId ? findRecurring(STATE, entryEdit.recurringId) : null;
         sheetDraft = {desc:entryEdit.desc, categoryId:entryEdit.categoryId, amount:fmtInputAmount(entryEdit.amount), date:entryEdit.date, paidStatus:(entryEdit.paid ? 'paid' : 'pending'), repeats:!!(tplEdit && recurringContinuesAfter(tplEdit, viewMonth)), isInstallment:false};
         editingVariable = {kind:'variable', id:entryEdit.id};
@@ -7517,7 +7908,7 @@ function onClick(ev){
       }
       break;
     case 'open-sheet':
-      dailySheet = null; cashSheet = null;
+      dailySheet = null; cashSheet = null; amortSheet = null;
       sheetOpen = true;
       sheetDraft = null;
       editingVariable = null;
@@ -7671,6 +8062,8 @@ function onChange(ev){
   if (dlForm){ updateDailySheetUI(dlForm); return; }
   var csForm = sheetFormOf(el, 'cash-form');
   if (csForm){ updateCashSheetUI(csForm, el.type !== 'radio'); return; }
+  var amForm = sheetFormOf(el, 'amort-form');
+  if (amForm){ updateAmortSheetUI(amForm); return; }
   syncDraftFromField(el);
   var action = el.getAttribute('data-action');
   if (action === 'import-file'){
@@ -7752,6 +8145,11 @@ function onSubmit(ev){
     saveCashSheet(form);
     return;
   }
+  if (action === 'amort-form'){
+    ev.preventDefault();
+    saveAmortSheet(form);
+    return;
+  }
   if (action === 'pin-wipe-form'){
     ev.preventDefault();
     var wipeBtn = form.querySelector('[data-action="pin-wipe"]');
@@ -7819,7 +8217,7 @@ function onSubmit(ev){
         render();
         return;
       }
-      if (count > 60) count = 60;
+      if (count > MAX_INSTALLMENTS) count = MAX_INSTALLMENTS;
       var start = startRaw && /^\d{4}-\d{2}$/.test(startRaw) ? startRaw : viewMonth;
       var due = null;
       if (dueRaw !== ''){
