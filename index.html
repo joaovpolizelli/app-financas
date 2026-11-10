@@ -118,7 +118,6 @@ button{cursor:pointer}
 .pp-of{white-space:nowrap}
 /* this month's bills paid / to pay in another month (they still weigh on this month) */
 .moved-note{font-size:0.8125rem;margin:8px 0 0;line-height:1.45}
-.moved-note.plan{color:var(--plan)}
 .moved-note.late{color:var(--expense)}
 .moved-note.done{color:var(--ink-soft)}
 /* ledgers: the joint account's balance */
@@ -210,7 +209,6 @@ button{cursor:pointer}
 .pill.paid{background:var(--income-soft);color:var(--income)}
 .pill.pending{background:var(--surface-2);color:var(--ink-soft)}
 .pill.overdue{background:var(--expense-soft);color:var(--expense)}
-.pill.planned{background:var(--plan-soft);color:var(--plan)}
 span.pill{cursor:default}
 button.pill[data-action="open-status"]{gap:5px}
 button.pill[data-action="open-status"]::after{content:'';width:8px;height:5px;flex:none;background:currentColor;opacity:.8;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat}
@@ -229,26 +227,19 @@ button.pill[data-action="open-status"]::after{content:'';width:8px;height:5px;fl
 .carried-block{background:var(--expense-soft);border-radius:12px;padding:10px 12px;margin-bottom:14px}
 .carried-block-title{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:0.8125rem;font-weight:700;color:var(--expense);margin-bottom:8px}
 .carried-block-title .cb-total{white-space:nowrap;font-variant-numeric:tabular-nums}
-.carried-block.plan .carried-block-title{color:var(--plan)}
 .carried-block.done .carried-block-title{color:var(--ink-soft)}
 .carried-block-hint{font-size:0.75rem;line-height:1.4;margin:-2px 0 8px;color:var(--expense)}
-.carried-block.plan .carried-block-hint{color:var(--plan)}
 .carried-block.done .carried-block-hint{color:var(--ink-soft)}
 .carried-block .fixed-row,.carried-block .var-row{border-bottom-color:rgba(157,74,52,0.18)}
 .carried-block .fixed-row:last-child,.carried-block .var-row:last-child{border-bottom:none;padding-bottom:0}
 .carried-block .var-row:first-child,.carried-block .fixed-row:first-child{padding-top:0}
 .carried-row .fixed-due{flex-basis:100%}
 .carried-block .pill.overdue{background:var(--surface);box-shadow:inset 0 0 0 1px var(--expense)}
-/* bills from earlier months that count in this one: planned for it / paid late in it */
-.carried-block.plan{background:var(--plan-soft)}
-.carried-block.plan .carried-block-title{color:var(--plan)}
-.carried-block.plan .fixed-row,.carried-block.plan .var-row{border-bottom-color:var(--plan-line)}
-.carried-block .pill.planned{background:var(--surface);box-shadow:inset 0 0 0 1px var(--plan)}
+/* bills from earlier months paid late in this one */
 .carried-block.done{background:var(--surface-2)}
 .carried-block.done .carried-block-title{color:var(--ink-soft)}
 .carried-block.done .fixed-row,.carried-block.done .var-row{border-bottom-color:var(--border)}
 .carried-block.done .pill.paid{background:var(--surface);box-shadow:inset 0 0 0 1px var(--income)}
-.carried-note.plan{color:var(--plan)}
 .carried-note.done{color:var(--ink-soft)}
 .alert-banner.info{background:var(--plan-soft);color:var(--plan)}
 .alert-actions{margin-top:8px}
@@ -469,7 +460,6 @@ button.pill[data-action="open-status"]::after{content:'';width:8px;height:5px;fl
 .due-date .dd{font-weight:700;font-size:1rem}
 .due-date .mm{font-size:0.6875rem;text-transform:uppercase;letter-spacing:.04em}
 .due-row.is-overdue .due-date{background:var(--expense-soft);color:var(--expense)}
-.due-row.is-planned .due-date{background:var(--plan-soft);color:var(--plan)}
 .due-total{display:flex;justify-content:space-between;align-items:center;gap:10px;border-top:1px solid var(--border);margin-top:4px;padding-top:10px;font-size:0.875rem;font-weight:700}
 /* period image */
 .history-image{margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
@@ -1778,20 +1768,21 @@ var eventsBound = false;
 /* ---------- derived view: where every bill weighs and where it is paid ---------- */
 // Every bill occurrence -- a fixed bill in a month, a parcela in a month, a variable expense
 // (in the month it was saved in) -- has a home month, and:
-//  - it ALWAYS weighs on its home month's totals and saldo, paid or not, planned for later
-//    or not: a bill that couldn't be paid doesn't make its month look better;
+//  - it ALWAYS weighs on its home month's totals and saldo, paid or not: a bill that couldn't
+//    be paid doesn't make its month look better;
 //  - it is paid / to be paid ("eff") in one month: its home month. Paid after its due date,
-//    in a later month: the month it was paid in. Not paid, with a payment forecast
-//    ("previsão") from today on: the forecast's month (never earlier than its home month).
-//    Not paid and overdue from an earlier month, or with a forecast that already passed: the
-//    current month, until it is paid.
+//    in a later month: the month it was paid in. Not paid and overdue from an earlier month:
+//    the current month, until it is paid;
+//  - a payment forecast ("Vou pagar em…", `planOn`) is only a reminder shown next to the bill:
+//    it never moves the bill nor changes its state (past its due date and not paid, a bill is
+//    "Atrasada", with a forecast or not).
 // A month counts its own bills (all of them, even the ones paid or to be paid later: a bill
 // that could not be paid keeps weighing on its month) and also the bills of earlier months
 // paid or to be paid in it: this month's money pays them, so they are in its totals and saldo
 // too. Charts of spending per month and period totals count each bill once, in its own month.
 // Day-to-day spending ("gastos do dia a dia": PIX, débito, dinheiro) is a variable expense
 // marked `daily`, always paid: it weighs on the saldo but is not a bill to pay or follow.
-var BILL_STATUS_LABEL = {paid:'Pago', pending:'Pendente', overdue:'Atrasada', planned:'Programada'};
+var BILL_STATUS_LABEL = {paid:'Pago', pending:'Pendente', overdue:'Atrasada'};
 var BILL_KIND_LABEL = {fixed:'Conta fixa', installment:'Parcela', variable:'Conta variável'};
 function lastDayIso(monthKey){ return dateInMonth(monthKey, 31); }
 function isoOrNull(v){ return ISO_DATE_RE.test(v || '') ? v : null; }
@@ -1810,22 +1801,21 @@ function settleBill(b, todayKey, today){
     b.paidLate = !!(b.paidOn && b.paidOn > (b.dueIso || lastDayIso(b.home)));
     var pm = b.paidLate ? b.paidOn.slice(0, 7) : null;
     b.eff = (pm && pm > b.home) ? pm : b.home;
-  } else if (b.planOn && b.planOn >= today){
-    b.state = 'planned';
-    var plm = b.planOn.slice(0, 7);
-    b.eff = plm > b.home ? plm : b.home;
-  } else if (b.planOn){
-    // the forecast passed and it wasn't paid: late again, and it follows the current month
-    b.state = 'overdue';
-    b.lateBy = 'plan';
-    b.eff = todayKey > b.home ? todayKey : b.home;
   } else {
+    // not paid: late once its due date passed (a forecast, `planOn`, is only a reminder and
+    // changes nothing here); a late bill of an earlier month counts in the current month
     b.state = b.pastDue ? 'overdue' : 'pending';
     if (b.pastDue) b.lateBy = 'due';
     b.eff = b.carries ? todayKey : b.home;
   }
-  b.lateDays = b.lateBy === 'plan' ? daysFromTo(b.planOn, today) : ((b.lateBy === 'due' && b.dueIso) ? daysFromTo(b.dueIso, today) : null);
+  b.lateDays = (b.lateBy === 'due' && b.dueIso) ? daysFromTo(b.dueIso, today) : null;
   return b;
+}
+// The payment forecast ("Vou pagar em…") is only a reminder next to an unpaid bill:
+// "previsão 10/11", or "previsão era 05/11" once that day passed without it being paid
+function planNote(b){
+  if (!b || b.paid || !isoOrNull(b.planOn)) return '';
+  return (b.planOn < todayStr() ? 'previsão era ' : 'previsão ') + fmtDate(b.planOn);
 }
 // A fixed bill that is not in a month: "Excluir só deste mês" (the month's record says skip)
 // or "Excluir deste mês em diante" (the month is after the bill's last month)
@@ -3280,11 +3270,11 @@ function handleImportFile(file){
 function summaryBillRow(b, key){
   var incoming = b.home !== key;
   var suffix = '';
-  if (incoming) suffix = (b.state === 'overdue' && b.lateBy === 'due') ? ' (venceu em ' + monthLabel(b.home) + ')' : ' (de ' + monthLabel(b.home) + ')';
+  if (incoming) suffix = b.state === 'overdue' ? ' (venceu em ' + monthLabel(b.home) + ')' : ' (de ' + monthLabel(b.home) + ')';
   var notes = [];
-  if (b.state === 'planned') notes.push('previsão ' + fmtDate(b.planOn));
-  else if (b.lateBy === 'plan') notes.push('previsão era ' + fmtDate(b.planOn));
-  else if (b.state === 'paid' && b.paidLate) notes.push('paga em ' + fmtDate(b.paidOn));
+  if (b.state === 'paid' && b.paidLate) notes.push('paga em ' + fmtDate(b.paidOn));
+  var plan = planNote(b);
+  if (plan) notes.push(plan);
   if (b.interest > 0) notes.push('juros ' + fmtMoney(b.interest));
   if (b.estimated) notes.push('estimado');
   return {
@@ -3293,14 +3283,14 @@ function summaryBillRow(b, key){
     shortName: b.name + (incoming ? ' (' + shortMonthLabel(b.home) + ')' : ''),
     amount: b.total, paid: b.paid, status: BILL_STATUS_LABEL[b.state],
     dueLabel: b.dueIso ? dueLabelFor(b.dueIso, key) : null,
-    planLabel: b.planOn ? fmtDate(b.planOn) : null,
+    planNote: plan,
     interest: b.interest, notes: notes, sortKey: b.date || '', bill: b
   };
 }
 // bills of earlier months paid / to be paid in this month come after the month's own ones
 // (they are in its totals too), the late ones first
 function summaryIncomingOf(mv, key, kind){
-  var order = {overdue:0, pending:1, planned:2, paid:3};
+  var order = {overdue:0, pending:1, paid:2};
   return (mv.incoming || []).filter(function(b){ return b.kind === kind; }).sort(function(a, b){
     if (a.state !== b.state) return order[a.state] - order[b.state];
     return b.total - a.total;
@@ -3361,7 +3351,6 @@ function summaryToLaunchRows(mv){
 function statusEmoji(status){
   if (status === 'Atrasada') return '🔴 ';
   if (status === 'Pendente') return '🟡 ';
-  if (status === 'Programada') return '📅 ';
   if (status === 'A lançar') return '⏳ ';
   return '';
 }
@@ -3375,7 +3364,7 @@ function rowSuffix(r){
   (r.notes || []).forEach(function(n){ parts.push(n); });
   return parts.length ? ' (' + parts.join(', ') + ')' : '';
 }
-var PENDING_ORDER = {'Atrasada':0, 'Pendente':1, 'Programada':2, 'A lançar':3};
+var PENDING_ORDER = {'Atrasada':0, 'Pendente':1, 'A lançar':2};
 function collectPendingItems(lists){
   var items = [];
   lists.forEach(function(list){
@@ -3427,10 +3416,10 @@ function buildSummaryText(){
     if (d.pending.some(function(p){ return p.status === 'Atrasada'; })) lines.push('_Contas atrasadas podem ter juros e multa._');
     d.pending.forEach(function(p){
       var when;
-      if (p.status === 'Atrasada') when = (p.bill && p.bill.lateBy === 'plan') ? 'previsão era ' + p.planLabel : (p.dueLabel ? 'venceu ' + p.dueLabel : 'atrasada');
-      else if (p.status === 'Programada') when = 'previsão ' + p.planLabel;
+      if (p.status === 'Atrasada') when = p.dueLabel ? 'venceu ' + p.dueLabel : 'atrasada';
       else if (p.status === 'A lançar') when = 'falta lançar o valor' + (p.dueLabel ? ((p.dueIso && p.dueIso < todayStr()) ? ', venceu ' : ', vence ') + p.dueLabel : '');
       else when = p.dueLabel ? 'vence ' + p.dueLabel : 'pendente';
+      if (p.planNote) when += ', ' + p.planNote;
       lines.push(statusEmoji(p.status) + '*' + p.name + '*' + (p.amount != null ? ' — ' + rowAmtText(p) : '') + ' (' + when + ')');
     });
   } else {
@@ -3493,7 +3482,7 @@ function buildSummaryText(){
     (hasInv ? (totals.totalInvestments >= 0 ? ' − Investimentos ' + fmtMoney(totals.totalInvestments) : ' + Resgates ' + fmtMoney(-totals.totalInvestments)) : '') +
     (totals.unexplainedIn > 0 ? ' + Entrou sem lançar ' + fmtMoney(totals.unexplainedIn) : '') + ' = ' + fmtMoney(totals.saldo));
   if (totals.cash) lines.push('🏦 Na conta conjunta' + (totals.cash.on ? ' em ' + fmtDate(totals.cash.on) : '') + ': *' + fmtMoney(totals.cash.end) + '*');
-  var later = d.movedOut.planned.concat(d.movedOut.late);
+  var later = d.movedOut.late;
   if (later.length){
     var payMonths = uniq(later.map(function(b){ return b.eff; })).sort();
     lines.push('_' + later.length + plural(later.length, ' conta deste mês', ' contas deste mês') + ' (' + fmtMoney(sumTotals(later)) + ') ' +
@@ -3520,7 +3509,6 @@ function buildSummaryCanvas(){
     'Pago': {bg:'#DCF0E2', fg:'#1F6A37'},
     'Pendente': {bg:'#FBEBC8', fg:'#7E5207'},
     'Atrasada': {bg:'#F8DED6', fg:'#A3361F'},
-    'Programada': {bg:'#E2ECF8', fg:'#1F5FA8'},
     'A lançar': {bg:'#E3E8EE', fg:'#3A4756'}
   };
   var SANS = 'system-ui,-apple-system,"Segoe UI",Roboto,sans-serif';
@@ -3534,7 +3522,8 @@ function buildSummaryCanvas(){
   function empty(t){ blocks.push({k:'empty', t:t}); }
   function gap(){ blocks.push({k:'gap'}); }
   function itemLine(r){
-    var due = r.status === 'Programada' && r.planLabel ? 'prev. ' + r.planLabel : r.dueLabel;
+    var due = r.dueLabel;
+    if (r.planNote) due = (due ? due + ' · ' : '') + r.planNote.replace(/^previsão/, 'prev.');
     if (r.interest > 0) due = (due ? due + ' · ' : '') + 'juros ' + fmtMoney(r.interest);
     if (r.estimated) due = (due ? due + ' · ' : '') + 'estimado';
     line(r.shortName || r.name, r.amount, {status:r.status, due:due, approx: !!r.estimated});
@@ -4100,14 +4089,14 @@ function fieldDiffs(state, a, b, ch){
   });
   return out;
 }
-// "como paga (29/10/26)", "programada para 10/11/26", "como pendente", "com juros (R$ 120,00)"
+// "como paga (29/10/26)", "com previsão para 10/11/26", "como pendente", "com juros (R$ 120,00)"
 // (`masc`: "como pago", for "o gasto")
 function statusChangeText(b, a, masc){
   b = b || {}; a = a || {};
   var parts = [];
   var bp = !!b.paid, ap = !!a.paid;
   if (ap && (!bp || (b.paidOn || '') !== (a.paidOn || ''))) parts.push((masc ? 'como pago' : 'como paga') + (ISO_DATE_RE.test(a.paidOn || '') ? ' (' + fmtDate(a.paidOn) + '/' + a.paidOn.slice(2, 4) + ')' : ''));
-  else if (!ap && a.planOn && a.planOn !== b.planOn) parts.push((masc ? 'programado para ' : 'programada para ') + fmtDate(a.planOn) + '/' + a.planOn.slice(2, 4));
+  else if (!ap && a.planOn && a.planOn !== b.planOn) parts.push('com previsão para ' + fmtDate(a.planOn) + '/' + a.planOn.slice(2, 4));
   else if (!ap && (bp || (b.planOn && !a.planOn))) parts.push('como pendente');
   if ((a.withInterest || null) !== (b.withInterest || null)) parts.push(a.withInterest ? 'com juros (' + fmtMoney(numOr0(a.withInterest)) + ')' : 'sem juros');
   return parts.join(', ');
@@ -4357,7 +4346,7 @@ function logChange(prev, next, kind, title, extra){
   var mainLine = lines[mainIdx] || null;
   var main = mainLine ? mainLine.text : 'Alteração';
   extra = extra || {};
-  // a change of several things may be named by its message ("3 contas programadas para Dezembro")
+  // a change of several things may be named by its message ("Previsão de pagamento em Dezembro de 2026 anotada em 3 contas")
   if (!title && changes.length > 1 && extra.toastTitle && String(extra.toastTitle).indexOf('••') < 0) title = String(extra.toastTitle).replace(/\.$/, '');
   var entry = {id: 'a' + uid(), at: new Date().toISOString(), by: whoCurrentName(), kind: kind,
     title: title || (changes.length === 1 ? main : main + ' (e mais ' + (changes.length - 1) + ')'),
@@ -4500,7 +4489,7 @@ var snapIndex = [];
 var snapLoaded = false;
 var SNAP_REASON = {daily:'cópia do dia', 'import':'antes de importar um backup', restore:'antes de recuperar uma cópia', manual:'feita por você', update:'antes desta atualização do app'};
 // the first time a new version of the app opens the data, it keeps a copy of it exactly as it was
-var APP_VERSION = '14';
+var APP_VERSION = '15';
 var APP_VERSION_KEY = 'gflowFinancasAppVersion';
 function keepCopyBeforeUpdate(){
   var seen = null;
@@ -4814,9 +4803,9 @@ function addDaysIso(iso, n){
   var d = new Date(parseInt(p[0],10), parseInt(p[1],10) - 1, parseInt(p[2],10) + n);
   return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
 }
-// Everything unpaid that is due -- or expected to be paid (its "previsão") -- between today
-// and today + `days` (and, if asked, what is late and counts in the current month), wherever
-// it was entered, earliest first. Paid bills never show up.
+// Everything unpaid that is due between today and today + `days` (and, if asked, what is late
+// and counts in the current month), wherever it was entered, earliest first. Paid bills never
+// show up; a forecast ("previsão") is only a reminder on the row.
 // fixed bills and parcelas of an earlier month say which month they are from; a variable
 // expense goes by its own due date, whatever month it was saved in
 function upcomingName(b, todayKey){ return b.name + (b.kind !== 'variable' && b.home < todayKey ? ' (de ' + monthLabel(b.home) + ')' : ''); }
@@ -4835,10 +4824,8 @@ function collectUpcoming(days, showOverdue){
   Object.keys(keys).sort().forEach(function(k){
     monthBills(STATE, k).forEach(function(b){
       if (b.paid) return;
-      if (b.state === 'planned'){
-        if (inWindow(b.planOn)) add(b, b.planOn);
-      } else if (b.state === 'overdue'){
-        if (showOverdue && b.eff >= todayKey) add(b, b.lateBy === 'plan' ? b.planOn : b.dueIso);
+      if (b.state === 'overdue'){
+        if (showOverdue && b.eff >= todayKey) add(b, b.dueIso);
       } else if (b.dueIso && inWindow(b.dueIso)){
         add(b, b.dueIso);
       }
@@ -4869,12 +4856,6 @@ function relativeDue(due){
   if (d === -1) return 'venceu ontem';
   return 'venceu há ' + (-d) + ' dias';
 }
-function relativePlan(day){
-  var d = daysFromTo(todayStr(), day);
-  if (d === 0) return 'previsão de pagamento: hoje';
-  if (d === 1) return 'previsão de pagamento: amanhã';
-  return 'previsão de pagamento: em ' + d + ' dias';
-}
 // the little status button on a bill: it opens the window to change the status
 // a tap on the row of a bill from an earlier month opens its situation (like its tag)
 function statusRowAttrs(b){
@@ -4882,7 +4863,7 @@ function statusRowAttrs(b){
 }
 function billPill(b){
   var label = BILL_STATUS_LABEL[b.state];
-  return '<button type="button" class="pill ' + (b.state === 'paid' ? 'paid' : (b.state === 'overdue' ? 'overdue' : (b.state === 'planned' ? 'planned' : 'pending'))) + '"' +
+  return '<button type="button" class="pill ' + (b.state === 'paid' ? 'paid' : (b.state === 'overdue' ? 'overdue' : 'pending')) + '"' +
     ' data-action="open-status" data-kind="' + b.kind + '" data-id="' + esc(b.id) + '" data-month="' + b.home + '"' +
     ' aria-haspopup="dialog" aria-label="' + esc(label + ': ' + b.name + ' — toque para mudar a situação') + '">' + label + '</button>';
 }
@@ -4903,7 +4884,6 @@ function renderUpcoming(){
     body = '<div class="due-list">' + items.map(function(it){
       if (it.amount == null) toLaunch++; else total += it.amount;
       var b = it.bill;
-      var planned = !!(b && b.state === 'planned');
       var overdue = b ? b.state === 'overdue' : it.due < today;
       var dd = it.due.slice(8, 10), mm = (MONTH_NAMES[parseInt(it.due.slice(5, 7), 10) - 1] || '').slice(0, 3);
       var action, when;
@@ -4912,12 +4892,11 @@ function renderUpcoming(){
         when = relativeDue(it.due);
       } else {
         action = billPill(b);
-        if (planned) when = relativePlan(it.due);
-        else if (b.lateBy === 'plan') when = 'previsão era ' + fmtDate(b.planOn) + ' · há ' + pluralDias(b.lateDays);
-        else when = relativeDue(it.due);
+        when = relativeDue(it.due);
+        if (planNote(b)) when += ' · ' + planNote(b);
         if (b.interest > 0) when += ' · com juros';
       }
-      return '<div class="due-row' + (overdue ? ' is-overdue' : (planned ? ' is-planned' : '')) + '">' +
+      return '<div class="due-row' + (overdue ? ' is-overdue' : '') + '">' +
         '<div class="due-date" aria-hidden="true"><span class="dd">' + dd + '</span><span class="mm">' + mm + '</span></div>' +
         '<div class="row-main">' +
           '<div class="row-title">' + esc(it.name) + '</div>' +
@@ -5335,16 +5314,14 @@ function chartCard(id, icon, title, inner){
 }
 
 /* -- 1. What is still unpaid in the month (pending + overdue) -- */
-// the date that matters for an unpaid bill: its forecast when it has one, else its due date
-function billWhenIso(b){ return (b.state === 'planned' || b.lateBy === 'plan') ? b.planOn : b.dueIso; }
 function unpaidBreakdown(key){
   var mv = getMonthViewFull(STATE, key);
   var out = {
     paid: {amount:0, count:0}, pending: {amount:0, count:0}, overdue: {amount:0, count:0},
     // this month's own bills paid / to be paid in another month (late in the current month,
-    // planned for later, or paid late in a later month): they are in the numbers above
-    moved: {late: {amount:0, count:0}, planned: {amount:0, count:0}, paid: {amount:0, count:0}},
-    movedMonths: {late: [], planned: [], paid: []},
+    // or paid late in a later month): they are in the numbers above
+    moved: {late: {amount:0, count:0}, paid: {amount:0, count:0}},
+    movedMonths: {late: [], paid: []},
     // bills of earlier months paid / to be paid in this month
     incoming: {amount:0, count:0},
     items: [],
@@ -5360,22 +5337,22 @@ function unpaidBreakdown(key){
   });
   (mv.bills || []).forEach(function(b){
     if (b.daily || b.eff === key) return;
-    var mg = b.state === 'paid' ? 'paid' : (b.state === 'planned' ? 'planned' : 'late');
+    var mg = b.state === 'paid' ? 'paid' : 'late';
     out.moved[mg].amount += b.total;
     out.moved[mg].count++;
     if (out.movedMonths[mg].indexOf(b.eff) < 0) out.movedMonths[mg].push(b.eff);
   });
   (mv.incoming || []).forEach(function(b){ out.incoming.amount += b.total; out.incoming.count++; });
   out.incoming.amount = round2(out.incoming.amount);
-  ['late', 'planned', 'paid'].forEach(function(g){ out.movedMonths[g].sort(); });
+  ['late', 'paid'].forEach(function(g){ out.movedMonths[g].sort(); });
   ['paid', 'pending', 'overdue'].forEach(function(g){ out[g].amount = round2(out[g].amount); });
-  ['late', 'planned', 'paid'].forEach(function(g){ out.moved[g].amount = round2(out.moved[g].amount); });
+  ['late', 'paid'].forEach(function(g){ out.moved[g].amount = round2(out.moved[g].amount); });
   out.total = round2(out.paid.amount + out.pending.amount + out.overdue.amount);
   out.unpaid = round2(out.pending.amount + out.overdue.amount);
   out.items.sort(function(a, b){
     var ao = a.state === 'overdue', bo = b.state === 'overdue';
     if (ao !== bo) return ao ? -1 : 1;
-    var da = billWhenIso(a) || '9999-99-99', db = billWhenIso(b) || '9999-99-99';
+    var da = a.dueIso || '9999-99-99', db = b.dueIso || '9999-99-99';
     if (da !== db) return da < db ? -1 : 1;
     return b.total - a.total;
   });
@@ -5387,15 +5364,11 @@ function renderUnpaidCard(key){
   var b = unpaidBreakdown(key);
   var count = b.paid.count + b.pending.count + b.overdue.count;
   var notes = '';
-  var ml = b.moved.late, mp = b.moved.planned, mpd = b.moved.paid;
+  var ml = b.moved.late, mpd = b.moved.paid;
   if (ml.count){
     var oneM = ml.count === 1;
     notes += '<p class="chart-note">⏰ ' + ml.count + ' conta' + (oneM ? '' : 's') + ' atrasada' + (oneM ? '' : 's') + ' deste mês (' + fmtMoney(ml.amount) + ') ' +
       (oneM ? 'aparece' : 'aparecem') + ' para pagar em ' + esc(monthLabel(monthKeyToday())) + ', o mês atual, até ' + (oneM ? 'ser paga' : 'serem pagas') + '.</p>';
-  }
-  if (mp.count){
-    notes += '<p class="chart-note">📅 ' + mp.count + plural(mp.count, ' conta deste mês (', ' contas deste mês (') + fmtMoney(mp.amount) + ') ' +
-      plural(mp.count, 'está programada', 'estão programadas') + ' para ' + esc(monthsPhrase(b.movedMonths.planned)) + ' e ' + plural(mp.count, 'continua', 'continuam') + ' na conta deste mês.</p>';
   }
   if (mpd.count){
     notes += '<p class="chart-note">✅ ' + mpd.count + plural(mpd.count, ' conta deste mês (', ' contas deste mês (') + fmtMoney(mpd.amount) + ') ' +
@@ -5433,24 +5406,20 @@ function renderUnpaidCard(key){
       '<span class="lg-name"><span aria-hidden="true">' + x.icon + '</span> ' + x.label + ' <span class="lg-count">· ' + x.g.count + ' conta' + (x.g.count === 1 ? '' : 's') + '</span></span> ' +
       '<span class="lg-val">' + fmtMoney(x.g.amount) + '</span></div>';
   }).join('') + '</div>';
-  var plannedCount = b.items.filter(function(it){ return it.state === 'planned'; }).length;
-  if (plannedCount) legend += '<p class="lt-hint">' + plannedCount + plural(plannedCount, ' delas está programada (com previsão de pagamento).', ' delas estão programadas (com previsão de pagamento).') + '</p>';
   var list = '';
   if (b.items.length){
     list = '<button type="button" class="btn ghost chart-list-btn" data-action="toggle-unpaid-list" aria-expanded="' + (unpaidListOpen ? 'true' : 'false') + '">' +
       (unpaidListOpen ? 'Ocultar a lista' : 'Ver ' + (b.items.length === 1 ? 'a conta que falta' : 'as ' + b.items.length + ' contas que faltam')) + '</button>';
     if (unpaidListOpen){
       list += '<div class="due-list unpaid-list">' + b.items.map(function(it){
-        var due = billWhenIso(it);
+        var due = it.dueIso;
         var dd = due ? due.slice(8, 10) : '—';
         var mm = due ? shortMonthName(due.slice(0, 7)) : '';
-        var when;
-        if (it.state === 'planned') when = relativePlan(due);
-        else if (it.lateBy === 'plan') when = 'previsão era ' + fmtDate(it.planOn);
-        else when = due ? relativeDue(due) : 'sem vencimento';
+        var when = due ? relativeDue(due) : 'sem vencimento';
+        if (planNote(it)) when += ' · ' + planNote(it);
         if (it.interest > 0) when += ' · com juros';
-        var cls = it.state === 'overdue' ? 'overdue' : (it.state === 'planned' ? 'planned' : 'pending');
-        return '<div class="due-row' + (it.state === 'overdue' ? ' is-overdue' : (it.state === 'planned' ? ' is-planned' : '')) + '">' +
+        var cls = it.state === 'overdue' ? 'overdue' : 'pending';
+        return '<div class="due-row' + (it.state === 'overdue' ? ' is-overdue' : '') + '">' +
           '<div class="due-date" aria-hidden="true"><span class="dd">' + dd + '</span><span class="mm">' + mm + '</span></div>' +
           '<div class="row-main"><div class="row-title">' + esc(it.name) + (it.home !== key ? ' <span class="lg-count">(de ' + esc(monthLabel(it.home)) + ')</span>' : '') + '</div>' +
           '<div class="row-sub">' + UNPAID_KIND[it.kind] + ' · ' + esc(when) + (riskTagHtml(it) ? ' ' + riskTagHtml(it) : '') + '</div></div>' +
@@ -5784,13 +5753,13 @@ function renderInterestChart(endKey){
   return chartCard('graf-juros', '💸', title,
     '<p class="chart-sub">' + sub + '</p>' + caption + svg +
     '<p class="chart-detail" aria-live="polite">' + detail + '</p>' + list + chartTableToggle('juros') + table +
-    (hasFuture && chartTableOpen.juros ? '<p class="lt-hint">* mês futuro: contas programadas para lá que já têm o valor com juros.</p>' : ''));
+    (hasFuture && chartTableOpen.juros ? '<p class="lt-hint">* mês futuro: contas desse mês que já têm o valor com juros.</p>' : ''));
 }
 
 /* -- 6. What is already committed in the coming months -- */
 // what has to be paid in each month: parcelas + fixed bills (in later months, only "valor
 // fixo" ones have an amount) that stay in their month + bills of other months to be paid there
-// (late in the current month, or planned for that month)
+// (late ones, in the current month)
 function commitmentRows(fromKey, n){
   return monthRangeKeys(fromKey, shiftMonth(fromKey, n - 1)).map(function(k){
     var mv = getMonthView(STATE, k);
@@ -5831,9 +5800,9 @@ function renderCommitmentsChart(viewKey){
   var rows = commitmentRows(fromKey, chartsView.range);
   var keys = rows.map(function(r){ return r.key; });
   var toKey = keys[keys.length - 1];
-  var caption = '<p class="chart-caption">O que já está lançado para pagar de ' + esc(shortMonthLabel(fromKey)) + ' a ' + esc(shortMonthLabel(toKey)) + ': parcelas, contas fixas (nos meses seguintes, só as que têm valor fixo) e contas de outros meses para pagar no mês (atrasadas ou programadas). Gastos variáveis do próprio mês e contas que mudam todo mês, como cartões, não entram.</p>';
+  var caption = '<p class="chart-caption">O que já está lançado para pagar de ' + esc(shortMonthLabel(fromKey)) + ' a ' + esc(shortMonthLabel(toKey)) + ': parcelas, contas fixas (nos meses seguintes, só as que têm valor fixo) e contas de outros meses para pagar no mês (atrasadas, no mês atual). Gastos variáveis do próprio mês e contas que mudam todo mês, como cartões, não entram.</p>';
   var anything = rows.some(function(r){ return r.total > 0; });
-  if (!anything) return chartCard('graf-compromissos', '🗓️', title, caption + '<p class="empty-note">Nenhuma parcela, conta com valor fixo ou conta programada nesses meses.</p>');
+  if (!anything) return chartCard('graf-compromissos', '🗓️', title, caption + '<p class="empty-note">Nenhuma parcela, conta com valor fixo ou conta atrasada nesses meses.</p>');
   var anyIncome = rows.some(function(r){ return r.income > 0; });
   var anyOther = rows.some(function(r){ return r.other > 0; });
   var sel = pickFor('compromissos', keys, fromKey);
@@ -6935,11 +6904,11 @@ function lateFromText(list){
   var homes = uniq(list.map(function(b){ return b.home; })).filter(function(k){ return MONTH_KEY_RE.test(k || ''); });
   return homes.length === 1 ? 'De ' + monthLabel(homes[0]) : 'De meses anteriores';
 }
-// the current month's unpaid bills without a forecast (late ones first): what can still be
-// planned for a later month
+// the current month's unpaid bills without a forecast from today on (late ones first): what
+// can get one from a later month's screen (only a reminder: they stay where they are)
 function openBillsWithoutPlan(){
-  var todayKey = monthKeyToday();
-  var list = getMonthView(STATE, todayKey).payHere.filter(function(b){ return !b.daily && (b.state === 'overdue' || b.state === 'pending'); });
+  var todayKey = monthKeyToday(), today = todayStr();
+  var list = getMonthView(STATE, todayKey).payHere.filter(function(b){ return !b.daily && !b.paid && !(b.planOn && b.planOn >= today); });
   return list.sort(function(a, b){
     if (a.state !== b.state) return a.state === 'overdue' ? -1 : 1;
     var da = a.dueIso || '9999-99-99', db = b.dueIso || '9999-99-99';
@@ -6954,18 +6923,6 @@ function sectionLinks(bills){
   return links.join(' · ');
 }
 function sumTotals(bills){ var s = 0; bills.forEach(function(b){ s += b.total; }); return s; }
-// bills of the current month (or late ones from before) that were planned for a later month:
-// they show up to be paid there, and stay in sight here
-function plannedLater(){
-  var todayKey = monthKeyToday();
-  var incoming = billIndex(STATE).incoming;
-  var out = [];
-  Object.keys(incoming).sort().forEach(function(k){
-    if (k <= todayKey) return;
-    incoming[k].forEach(function(b){ if (b.home <= todayKey && b.state === 'planned') out.push(b); });
-  });
-  return out;
-}
 function renderAlerts(mv, totals){
   var html = '';
   if (saveFailed){
@@ -6990,25 +6947,9 @@ function renderAlerts(mv, totals){
       '</div>' +
     '</div>';
   }
-  if (viewMonth === todayKey){
-    var later = plannedLater();
-    if (later.length){
-      var byMonth = {};
-      later.forEach(function(b){ (byMonth[b.eff] = byMonth[b.eff] || []).push(b); });
-      var monthLinks = Object.keys(byMonth).sort().map(function(k){
-        return '<button type="button" class="link-btn" data-action="goto-month" data-month="' + k + '">' + esc(monthLabel(k)) + ' (' + byMonth[k].length + ')</button>';
-      });
-      html += '<div class="alert-banner info" id="later-banner">' +
-        '<span class="alert-icon" aria-hidden="true">📅</span>' +
-        '<div class="alert-body">' +
-          '<div class="alert-title">' + later.length + plural(later.length, ' conta programada para depois', ' contas programadas para depois') + ', somando ' + fmtMoney(sumTotals(later)) + '</div>' +
-          plural(later.length, 'Continua no saldo do mês dela', 'Continuam no saldo do mês delas') + ' e ' + plural(later.length, 'entra', 'entram') + ' também nas contas do mês da previsão: ' + monthLinks.join(' · ') + '.' +
-        '</div>' +
-      '</div>';
-    }
-  }
   if (viewMonth > todayKey){
-    // planning a later month: what is still open now can be moved here
+    // looking at a later month: the bills still open now, without a forecast, can get one for
+    // it -- only a reminder: they stay in the current month until paid
     var open = openBillsWithoutPlan();
     if (open.length){
       var lateCount = open.filter(function(b){ return b.state === 'overdue'; }).length;
@@ -7020,20 +6961,9 @@ function renderAlerts(mv, totals){
             open.length + plural(open.length, ' conta do mês atual ainda em aberto', ' contas do mês atual ainda em aberto')) + '</div>' +
           'Em aberto agora: ' + open.length + ' ' + plural(open.length, 'conta', 'contas') + ', ' + fmtMoney(sumTotals(open)) +
           (lateCount ? ' (' + lateCount + plural(lateCount, ' atrasada', ' atrasadas') + ')' : '') + '. ' +
-          plural(open.length, 'Está', 'Estão') + ' para pagar em ' + esc(monthLabel(todayKey)) + ' (mês atual)' +
-          ' — escolha as que vão ficar para ' + esc(monthLabel(viewMonth)) + '.' +
-          '<div class="alert-actions"><button type="button" class="btn-mini primary" data-action="open-bulk-plan" data-month="' + viewMonth + '">Programar para ' + esc(capFirst(MONTH_NAMES[parseInt(viewMonth.slice(5, 7), 10) - 1])) + '</button></div>' +
-        '</div>' +
-      '</div>';
-    }
-    var plannedIn = incoming.filter(function(b){ return b.state === 'planned'; });
-    if (plannedIn.length){
-      var oneP = plannedIn.length === 1;
-      html += '<div class="alert-banner info">' +
-        '<span class="alert-icon" aria-hidden="true">📅</span>' +
-        '<div class="alert-body">' +
-          '<div class="alert-title">' + plannedIn.length + plural(plannedIn.length, ' conta programada', ' contas programadas') + ' para este mês · ' + fmtMoney(sumTotals(plannedIn)) + '</div>' +
-          lateFromText(plannedIn) + ', ' + (oneP ? 'conta' : 'contam') + ' no saldo deste mês · ' + sectionLinks(plannedIn) +
+          plural(open.length, 'Fica', 'Ficam') + ' em ' + esc(monthLabel(todayKey)) + ' (mês atual) até ' + plural(open.length, 'ser paga', 'serem pagas') +
+          ' — se pretende pagar em ' + esc(monthLabel(viewMonth)) + ', anote a previsão.' +
+          '<div class="alert-actions"><button type="button" class="btn-mini primary" data-action="open-bulk-plan" data-month="' + viewMonth + '">Previsão para ' + esc(capFirst(MONTH_NAMES[parseInt(viewMonth.slice(5, 7), 10) - 1])) + '</button></div>' +
         '</div>' +
       '</div>';
     }
@@ -7115,8 +7045,8 @@ function moneyHtml(v){
   return (neg ? '-' : '') + '<span class="cur">R$</span><wbr><span class="num">' + num + '</span>';
 }
 function renderStats(totals, mv){
-  // Every bill of the month weighs on its totals and saldo, even when it is paid (or planned
-  // to be paid) in a later month; bills of earlier months paid here are shown apart, below.
+  // Every bill of the month weighs on its totals and saldo, even when it is paid (or still to
+  // be paid, late) in a later month; bills of earlier months paid here count here too.
   var fixedCount = totals.setCount, paidCount = totals.paidCount;
   var variableCount = totals.varCount, variablePaid = totals.varPaid;
   var toLaunchCount = (mv.toLaunch || []).length + (mv.toLaunchBacklog || []).length;
@@ -7217,10 +7147,10 @@ function monthsPhrase(keys){
 }
 // this month's bills paid / to be paid in another month: they still weigh on this month
 function movedOutGroups(mv, key){
-  var g = {planned:[], late:[], paid:[]};
+  var g = {late:[], paid:[]};
   (mv.bills || []).forEach(function(b){
     if (b.daily || b.eff === key) return;
-    g[b.state === 'paid' ? 'paid' : (b.state === 'planned' ? 'planned' : 'late')].push(b);
+    g[b.state === 'paid' ? 'paid' : 'late'].push(b);
   });
   return g;
 }
@@ -7228,11 +7158,6 @@ function movedOutNote(mv, key){
   var g = movedOutGroups(mv, key);
   var html = '';
   function effMonths(list){ return uniq(list.map(function(b){ return b.eff; })).sort(); }
-  if (g.planned.length){
-    var n = g.planned.length;
-    html += '<p class="moved-note plan" data-group="planned">📅 ' + n + ' ' + plural(n, 'conta', 'contas') + ' (' + fmtMoney(sumTotals(g.planned)) + ') ' +
-      plural(n, 'ficou', 'ficaram') + ' para ' + esc(monthsPhrase(effMonths(g.planned))) + ' e ' + plural(n, 'continua', 'continuam') + ' pesando no saldo deste mês.</p>';
-  }
   if (g.late.length){
     var nl = g.late.length;
     html += '<p class="moved-note late" data-group="late">⏰ ' + nl + ' ' + plural(nl, 'conta não paga', 'contas não pagas') + ' (' + fmtMoney(sumTotals(g.late)) + ') ' +
@@ -7376,17 +7301,16 @@ function renderIncome(h, mv){
     renderIncomePerson('person2', h.person2Name, mv.income.person2) +
   '</section>';
 }
-// Bills of earlier months paid / to be paid in this one, in up to three groups: late ones
-// (they show up in the current month until paid), the ones planned for this month, and the
-// ones paid late in this month. They weigh on their own month's saldo, not on this one's.
+// Bills of earlier months paid / to be paid in this one, in two groups: the late ones (they
+// show up in the current month until paid, with a forecast or not) and the ones paid late in
+// this month.
 var INCOMING_GROUPS = [
   {state:'overdue', cls:'', title:'⏰ Atrasadas de meses anteriores'},
-  {state:'planned', cls:' plan', title:'📅 Programadas para este mês'},
   {state:'paid', cls:' done', title:'✅ Pagas neste mês, de meses anteriores'}
 ];
 function incomingSort(a, b){
   if (a.state === 'overdue' && b.lateDays !== a.lateDays) return (b.lateDays || 0) - (a.lateDays || 0);
-  var da = (a.state === 'paid' ? a.paidOn : billWhenIso(a)) || '', db = (b.state === 'paid' ? b.paidOn : billWhenIso(b)) || '';
+  var da = (a.state === 'paid' ? a.paidOn : a.dueIso) || '', db = (b.state === 'paid' ? b.paidOn : b.dueIso) || '';
   if (da !== db) return da < db ? -1 : 1;
   return b.total - a.total;
 }
@@ -7405,13 +7329,14 @@ function incomingBlocks(list, rowFn, hidden){
   });
   return html;
 }
-// "previsão 10/11", "paga em 22/10", "juros R$ 12,34": what the row adds to the due date
+// "atrasada há 3 dias", "paga em 22/10", "previsão 10/11", "juros R$ 12,34": what the row
+// adds to the due date
 function billStatusBits(b){
   var bits = [];
-  if (b.state === 'overdue' && b.lateBy === 'due') bits.push('atrasada há ' + pluralDias(b.lateDays));
-  else if (b.state === 'overdue') bits.push('previsão era ' + fmtDate(b.planOn) + ' (há ' + pluralDias(b.lateDays) + ')');
-  else if (b.state === 'planned') bits.push('previsão ' + fmtDate(b.planOn));
+  if (b.state === 'overdue' && b.lateDays != null) bits.push('atrasada há ' + pluralDias(b.lateDays));
   else if (b.state === 'paid' && b.paidLate) bits.push('paga em ' + fmtDate(b.paidOn));
+  var plan = planNote(b);
+  if (plan) bits.push(plan);
   if (b.interest > 0) bits.push('juros ' + fmtMoney(b.interest));
   return bits;
 }
@@ -7419,10 +7344,7 @@ function billStatusBits(b){
 // weighs on this month: only where it shows up to be paid changes)
 function movedNoteHtml(b){
   if (b.eff === b.home || b.state === 'paid') return '';   // "paga em dd/mm" is already on its line
-  var cls = '', text;
-  if (b.state === 'planned'){ cls = ' plan'; text = '→ aparece para pagar em ' + monthLabel(b.eff); }
-  else text = '→ aparece para pagar em ' + monthLabel(b.eff) + ' (mês atual) até ser paga';
-  return '<div class="carried-note' + cls + '">' + esc(text) + '</div>';
+  return '<div class="carried-note">' + esc('→ aparece para pagar em ' + monthLabel(b.eff) + ' (mês atual) até ser paga') + '</div>';
 }
 // A late bill usually comes with interest and a fine: a small note, only to be aware of it
 // (until the updated amount is noted in its status window).
@@ -7430,11 +7352,9 @@ function riskTagHtml(b){
   return (b.state === 'overdue' && !(b.interest > 0)) ? '<span class="risk-tag" title="Conta atrasada costuma ter juros e multa">pode ter juros</span>' : '';
 }
 function incomingFixedRow(b){
-  var sub;
-  if (b.state === 'overdue' && b.lateBy === 'due') sub = 'venceu em ' + monthLabel(b.home) + ' · há ' + pluralDias(b.lateDays);
-  else if (b.state === 'overdue') sub = 'de ' + monthLabel(b.home) + ' · previsão era ' + fmtDate(b.planOn) + ' · há ' + pluralDias(b.lateDays);
-  else if (b.state === 'planned') sub = 'de ' + monthLabel(b.home) + ' · previsão ' + fmtDate(b.planOn);
-  else sub = 'de ' + monthLabel(b.home) + ' · paga em ' + fmtDate(b.paidOn);
+  var sub = b.state === 'paid' ? 'de ' + monthLabel(b.home) + ' · paga em ' + fmtDate(b.paidOn) :
+    'venceu em ' + monthLabel(b.home) + (b.lateDays != null ? ' · há ' + pluralDias(b.lateDays) : '');
+  if (planNote(b)) sub += ' · ' + planNote(b);
   if (b.interest > 0) sub += ' · juros ' + fmtMoney(b.interest);
   var risk = riskTagHtml(b);
   return '<div class="fixed-row carried-row bill-row"' + statusRowAttrs(b) + '>' +
@@ -7450,11 +7370,9 @@ function incomingFixedRow(b){
   '</div>';
 }
 function incomingVarRow(b){
-  var when;
-  if (b.state === 'overdue' && b.lateBy === 'due') when = (b.dueIso ? 'Venceu em ' + fmtDate(b.dueIso) + ' (' + monthLabel(b.home) + ')' : 'Venceu em ' + monthLabel(b.home)) + ' · há ' + pluralDias(b.lateDays);
-  else if (b.state === 'overdue') when = 'De ' + monthLabel(b.home) + ' · previsão era ' + fmtDate(b.planOn) + ' · há ' + pluralDias(b.lateDays);
-  else if (b.state === 'planned') when = 'De ' + monthLabel(b.home) + ' · previsão ' + fmtDate(b.planOn);
-  else when = 'De ' + monthLabel(b.home) + ' · paga em ' + fmtDate(b.paidOn);
+  var when = b.state === 'paid' ? 'De ' + monthLabel(b.home) + ' · paga em ' + fmtDate(b.paidOn) :
+    (b.dueIso ? 'Venceu em ' + fmtDate(b.dueIso) + ' (' + monthLabel(b.home) + ')' : 'Venceu em ' + monthLabel(b.home)) + (b.lateDays != null ? ' · há ' + pluralDias(b.lateDays) : '');
+  if (planNote(b)) when += ' · ' + planNote(b);
   if (b.interest > 0) when += ' · juros ' + fmtMoney(b.interest);
   var risk = riskTagHtml(b);
   return '<div class="var-row carried-row"' + statusRowAttrs(b) + '>' +
@@ -8501,10 +8419,11 @@ function setCustomColor(hex, keepVivid){
 
 /* ---------- the window to change a bill's status ---------- */
 // Tapping a status no longer flips it: it opens this window, where the person picks Pago (with
-// the payment date), Pendente or "Vou pagar em…" (a forecast that moves the bill to that
-// month), and can note that it came with interest. Nothing changes until "Salvar".
+// the payment date), Pendente or "Vou pagar em…" (a forecast: only a reminder, the bill stays
+// where it is and is late once its due date passes), and can note that it came with interest.
+// Nothing changes until "Salvar".
 var statusSheet = null;   // {kind, home, id, keyboard, draft:{choice, paidOn, planOn, interestOn, withInterest}, error}
-var bulkPlan = null;      // {month, sel:{uid:true}}: programming several open bills for a later month
+var bulkPlan = null;      // {month, sel:{uid:true}}: a forecast in a later month for several open bills
 function billUid(b){ return b.kind + '|' + b.home + '|' + b.id; }
 // the bill's own due day in that month (its last day when it has none), never before today
 function planDateIn(b, monthKey){
@@ -8571,11 +8490,11 @@ function statusHint(b, choice, d){
   if (choice === 'plan'){
     if (!isoOrNull(d.planOn)) return 'Escolha o dia em que pretende pagar.';
     if (d.planOn < today) return 'A previsão precisa ser de hoje em diante.';
+    // only a reminder: the bill stays where it is, late once its due date passes
     var q = previewBill(b, {paid:false, planOn:d.planOn});
-    return (q.eff !== b.home ?
-        'Continua no saldo de ' + home + ' e entra também nas contas de <strong>' + esc(monthLabel(q.eff)) + '</strong>' :
-        'Fica em ' + home + ', com a previsão de pagamento') +
-      '. Se a data passar sem pagar, ela volta a ficar atrasada e aparece no mês atual até ser paga.';
+    if (q.state === 'overdue') return 'É só um lembrete: ela já venceu e fica atrasada' + (q.eff !== q.home ? ', nas contas de <strong>' + esc(monthLabel(q.eff)) + '</strong> (mês atual),' : '') + ' até ser paga.';
+    if (q.dueIso && d.planOn > q.dueIso) return 'É só um lembrete: ela fica em ' + home + ' e, se não for paga até o vencimento (' + esc(fmtDate(q.dueIso)) + '), passa a contar como atrasada.';
+    return 'É só um lembrete: ela fica em ' + home + ', em aberto até ser paga.';
   }
   var r = previewBill(b, {paid:false, planOn:null});
   if (r.eff !== r.home) return 'Ainda não foi paga e está atrasada: continua no saldo de ' + home + ' e entra também nas contas de <strong>' + esc(monthLabel(r.eff)) + '</strong> (mês atual) até ser paga.';
@@ -8596,7 +8515,7 @@ function openStatusSheet(kind, home, id, fromKeyboard){
   bulkPlan = null; dailySheet = null; cashSheet = null; amortSheet = null; invSheet = null;
   toastMsg = null;
   statusSheet = {kind:kind, home:home, id:id, keyboard:!!fromKeyboard, error:'', draft:{
-    choice: b.state === 'paid' ? 'paid' : (b.state === 'planned' ? 'plan' : 'pending'),
+    choice: b.state === 'paid' ? 'paid' : (b.planOn && b.planOn >= todayStr() ? 'plan' : 'pending'),
     paidOn: defaultPaidOn(b),
     planOn: defaultPlanOn(b),
     interestOn: b.withInterest != null,
@@ -8614,7 +8533,7 @@ function renderStatusSheet(keepStill){
   if (b.dueIso) meta.push((b.dueIso < today && !b.paid ? 'venceu em ' : 'vence em ') + fmtDate(b.dueIso));
   meta.push('valor lançado ' + fmtMoney(b.amount));
   var now = 'Agora: <strong>' + BILL_STATUS_LABEL[b.state] + '</strong>' +
-    (b.state === 'planned' ? ', previsão ' + esc(fmtDate(b.planOn)) : '') +
+    (planNote(b) ? ', ' + esc(planNote(b)) : '') +
     (b.state === 'paid' && b.paidOn ? ', paga em ' + esc(fmtDate(b.paidOn)) : '') +
     (b.eff !== b.home && b.state !== 'paid' ? ' · aparece para pagar em ' + esc(monthLabel(b.eff)) : '') +
     (b.interest > 0 ? ' · com juros: ' + fmtMoney(b.total) : '');
@@ -8644,7 +8563,7 @@ function renderStatusSheet(keepStill){
           '<p class="st-hint" data-hint="paid">' + statusHint(b, 'paid', d) + '</p>') +
         opt('pending', '⏳ Pendente', 'Ainda não foi paga' + (late ? ' (está atrasada)' : '') + ', sem data prevista.') +
         extra('pending', d.choice === 'pending', '<p class="st-hint" data-hint="pending">' + statusHint(b, 'pending', d) + '</p>') +
-        opt('plan', '📅 Vou pagar em…', 'Escolha quando pretende pagar. Dá pra adiar de novo depois.') +
+        opt('plan', '📅 Vou pagar em…', 'Só um lembrete de quando pretende pagar.') +
         extra('plan', d.choice === 'plan',
           '<div class="st-chips" role="group" aria-label="Escolher o mês">' + chips + '</div>' +
           '<div class="field"><label for="st-planOn">Previsão de pagamento</label><input id="st-planOn" type="date" name="planOn" min="' + today + '" max="' + lastDayIso(computeMaxMonth()) + '" value="' + esc(d.planOn || '') + '"></div>' +
@@ -8769,8 +8688,8 @@ function saveStatusSheet(form){
   var after = previewBill(b, {paid:op.paid, paidOn:op.paidOn, planOn:op.planOn, withInterest:op.withInterest});
   var msg;
   if (after.state === 'paid') msg = b.name + ' — marcada como paga.';
-  else if (after.state === 'planned') msg = b.name + ' — programada para ' + fmtDate(op.planOn) +
-    (after.eff !== b.home ? ' (entra nas contas de ' + monthLabel(after.eff) + ' e continua no saldo de ' + monthLabel(b.home) + ')' : '') + '.';
+  else if (d.choice === 'plan') msg = b.name + ' — previsão de pagamento: ' + fmtDate(op.planOn) + '.' +
+    (after.state !== 'overdue' ? '' : (b.state === 'overdue' ? ' Continua atrasada até ser paga.' : ' Já venceu: fica atrasada até ser paga.'));
   else msg = b.name + ' — marcada como pendente' + (after.eff !== b.home ? ' (entra nas contas de ' + monthLabel(after.eff) + ' até ser paga)' : '') + '.';
   if (op.withInterest != null) msg += ' Juros de ' + fmtMoney(after.interest) + ' anotados.';
   var back = statusSheet.keyboard ? {kind:b.kind, home:b.home, id:b.id} : null;
@@ -8780,7 +8699,7 @@ function saveStatusSheet(form){
   focusStatusPill(back);
 }
 
-/* ---------- programming several open bills for a later month ---------- */
+/* ---------- a forecast in a later month for several open bills (only a reminder) ---------- */
 function openBulkPlan(month){
   if (!MONTH_KEY_RE.test(month || '') || month <= monthKeyToday()) return;
   var sel = {};
@@ -8794,7 +8713,7 @@ function bulkPlanCount(list){
   return list.filter(function(b){ return !!bulkPlan.sel[billUid(b)]; }).length;
 }
 function bulkPlanButtonText(n){
-  return n ? 'Programar ' + n + ' ' + plural(n, 'conta', 'contas') : 'Programar';
+  return n ? 'Anotar em ' + n + ' ' + plural(n, 'conta', 'contas') : 'Anotar';
 }
 function renderBulkPlanSheet(keepStill){
   var K = bulkPlan.month;
@@ -8805,8 +8724,7 @@ function renderBulkPlanSheet(keepStill){
   function row(b){
     var key = billUid(b);
     var when;
-    if (b.lateBy === 'plan') when = 'previsão era ' + fmtDate(b.planOn);
-    else if (b.state === 'overdue') when = 'venceu em ' + fmtDate(b.dueIso);
+    if (b.state === 'overdue') when = 'venceu em ' + fmtDate(b.dueIso);
     else when = b.dueIso ? 'vence em ' + fmtDate(b.dueIso) : 'sem vencimento';
     var sub = (b.home !== todayKey ? 'de ' + monthLabel(b.home) + ' · ' : '') + when + ' → previsão ' + fmtDate(planDateIn(b, K));
     return '<label class="bp-row"><input type="checkbox" name="pick" value="' + esc(key) + '"' + (bulkPlan.sel[key] ? ' checked' : '') + '>' +
@@ -8822,8 +8740,8 @@ function renderBulkPlanSheet(keepStill){
     : '<p class="empty-note">Nenhuma conta em aberto sem previsão no mês atual.</p>';
   return '<div class="sheet-backdrop" data-action="close-bulk-plan">' +
     '<form class="sheet bulk-plan-sheet' + (keepStill ? ' still' : '') + '" data-action="bulk-plan-form" role="dialog" aria-modal="true" aria-labelledby="bp-title" novalidate>' +
-      '<h3 id="bp-title" style="margin-bottom:8px">Programar para ' + esc(monthLabel(K)) + '</h3>' +
-      '<p class="sheet-note">Contas de ' + esc(monthLabel(todayKey)) + ' (mês atual) ainda em aberto e sem previsão. As marcadas passam a aparecer para pagar em <strong>' + esc(monthLabel(K)) + '</strong>, cada uma no dia do vencimento dela, e continuam pesando no saldo do mês delas — dá pra mudar a data de qualquer uma depois, tocando na situação dela.</p>' +
+      '<h3 id="bp-title" style="margin-bottom:8px">Previsão para ' + esc(monthLabel(K)) + '</h3>' +
+      '<p class="sheet-note">Contas de ' + esc(monthLabel(todayKey)) + ' (mês atual) em aberto e sem previsão. As marcadas ganham a previsão de pagamento em <strong>' + esc(monthLabel(K)) + '</strong>, cada uma no dia do vencimento dela. É só um lembrete: continuam em ' + esc(monthLabel(todayKey)) + ' até serem pagas.</p>' +
       body +
       '<div class="sheet-actions">' +
         '<button type="button" class="btn ghost" data-action="close-bulk-plan">Cancelar</button>' +
@@ -8851,7 +8769,7 @@ function saveBulkPlan(form){
   });
   if (!items.length) return;
   bulkPlan = null;
-  toastMsg = items.length + plural(items.length, ' conta programada', ' contas programadas') + ' para ' + monthLabel(K) + '.';
+  toastMsg = 'Previsão de pagamento em ' + monthLabel(K) + ' anotada em ' + items.length + ' ' + plural(items.length, 'conta', 'contas') + '.';
   doOp({type:'planBills', items:items});
 }
 
