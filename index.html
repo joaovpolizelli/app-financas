@@ -598,6 +598,11 @@ label .opt{font-weight:400;color:var(--ink-soft)}
 .cl-title{font-size:0.875rem;font-weight:700}
 .lg-line.lg-sub{border-top:1px dashed var(--border);margin-top:2px;padding-top:5px}
 .lg-hint.warn{color:var(--expense)}
+.cash-forecast .lg-total .lg-amt{font-size:0.9375rem}
+.inc-fell{border:none;margin:10px 0 0;padding:0}
+.inc-fell legend{font-size:0.8125rem;font-weight:700;color:var(--ink-soft);margin-bottom:4px;padding:0}
+.inc-fell .check-field{display:flex;align-items:center;gap:10px;margin:0;padding:6px 0;font-size:0.9375rem;font-weight:600;color:var(--ink);cursor:pointer}
+.inc-fell .check-field input{width:18px;height:18px;accent-color:var(--primary);flex:none;margin:0}
 .cs-start{font-size:0.875rem;color:var(--ink-soft);margin:-4px 0 14px;line-height:1.45}
 .cs-start strong{color:var(--ink);white-space:nowrap}
 .cash-preview{background:var(--surface-2);border-radius:12px;padding:8px 12px;margin:6px 0 0}
@@ -1593,7 +1598,14 @@ function normalizeState(s){
     ['person1', 'person2'].forEach(function(p){
       if (Array.isArray(m.income[p])){
         m.income[p] = m.income[p].filter(function(e){ return e && typeof e === 'object'; });
-        m.income[p].forEach(function(e){ if (!e.id) e.id = uid(); e.amount = numOr0(e.amount); });
+        m.income[p].forEach(function(e){
+          if (!e.id) e.id = uid();
+          e.amount = numOr0(e.amount);
+          // the day it falls (1-31) and, for that month only, "Já caiu" / "Ainda não caiu"
+          if (typeof e.day === 'string' && /^\d{1,2}$/.test(e.day)) e.day = parseInt(e.day, 10);
+          if ('day' in e && !incomeDay(e)) delete e.day;
+          if ('fell' in e && e.fell !== 'no' && !ISO_DATE_RE.test(e.fell || '')) delete e.fell;
+        });
       }
     });
     Object.keys(m.fixed).forEach(function(cid){
@@ -2213,11 +2225,15 @@ function computeMonthTotals(h, mv, key){
       paidOut += b.total; paidCount++;
       if (on && b.paidOn && b.paidOn > on){ paidAfter += b.total; paidAfterCount++; }
     });
-    var expected = start + totalIncome + invRedeemed - paidOut - invApplied;
+    // only the income already in on the balance's date (the rest comes later: it isn't
+    // day-to-day spending)
+    var split = incomeSplit(mv.income, key, on || lastDayIso(key));
+    var expected = start + split.inn + invRedeemed - paidOut - invApplied;
     var spent = round2(expected - mv.cash.end);
     cash = {start: round2(start), startKnown: prevEnd != null || ownStart != null,
       startFrom: prevEnd != null ? shiftMonth(key, -1) : null,
-      income: round2(totalIncome), redeemed: invRedeemed, paid: round2(paidOut), paidCount: paidCount,
+      income: split.inn, incomeLater: split.later, laterParts: split.laterParts,
+      redeemed: invRedeemed, paid: round2(paidOut), paidCount: paidCount,
       applied: invApplied, expected: round2(expected), end: mv.cash.end, on: on, spent: spent,
       manual: round2(t.daily), paidAfter: round2(paidAfter), paidAfterCount: paidAfterCount};
     daily = spent;          // below zero: money came in that was not entered
@@ -2476,13 +2492,66 @@ function resolveIncomeForMonth(state, key, person){
   if (!bestKey) return [];
   var prevList = resolveIncomeList(months[bestKey].income[person], months[bestKey].updatedAt);
   return prevList.filter(function(e){ return e && e.replicate; }).map(function(e){
-    return {id:e.id, label:e.label, amount:e.amount, replicate:true, updatedAt: e.updatedAt || ''};
+    return withIncomeDay({id:e.id, label:e.label, amount:e.amount, replicate:true, updatedAt: e.updatedAt || ''}, e);
   });
 }
 function sumIncomeList(list){
   var s = 0;
   (list || []).forEach(function(e){ s += e.amount; });
   return s;
+}
+// The day an income falls in the account (1-31), or null when it wasn't told: then it counts as
+// in since the start of the month (as before round 17).
+function incomeDay(e){
+  var d = e ? e.day : null;
+  return (typeof d === 'number' && isFinite(d) && Math.floor(d) === d && d >= 1 && d <= 31) ? d : null;
+}
+// a copy of an income for another month keeps its day (not "Já caiu" / "Ainda não caiu")
+function withIncomeDay(copy, e){
+  var d = incomeDay(e);
+  if (d) copy.day = d;
+  return copy;
+}
+// The date an income falls in the month `key` (the day kept inside the month: 31 → 30/11)
+function incomeDate(e, key){
+  var d = incomeDay(e);
+  return d ? dateInMonth(key, d) : null;
+}
+// "Já caiu" marked in the month: the date it was marked (from then on the money is in the account)
+function incomeFellOn(e){ return ISO_DATE_RE.test((e && e.fell) || '') ? e.fell : null; }
+// Whether an income of the month `key` is already in the account on the date `iso`: "Já caiu"
+// (since the day it was marked) / "Ainda não caiu" marked in that month come first, then its day;
+// without a day, it is in.
+function incomeInOn(e, key, iso){
+  if (e.fell === 'no') return false;
+  var fo = incomeFellOn(e);
+  if (fo) return !iso || fo <= iso;
+  var dt = incomeDate(e, key);
+  return !dt || !iso || dt <= iso;
+}
+// The month's income on the date `iso`: what is already in and what is still to come
+function incomeSplit(income, key, iso){
+  var out = {inn:0, later:0, laterParts:[]};
+  ['person1', 'person2'].forEach(function(p){
+    ((income || {})[p] || []).forEach(function(e){
+      if (!e || !isFinite(e.amount)) return;
+      if (incomeInOn(e, key, iso)) out.inn += e.amount;
+      else { out.later += e.amount; out.laterParts.push({e:e, person:p, date: e.fell === 'no' ? null : (incomeFellOn(e) || incomeDate(e, key))}); }
+    });
+  });
+  out.inn = round2(out.inn);
+  out.later = round2(out.later);
+  return out;
+}
+// What an income's line says about it in the current month: "recebida 05/11", "a receber 20/11"
+// (null in other months, or without a day and without "Já caiu" / "Ainda não caiu")
+function incomeTag(e, key){
+  if (key !== monthKeyToday()) return null;
+  var dt = incomeDate(e, key), fo = incomeFellOn(e);
+  if (!dt && !e.fell) return null;
+  var inn = incomeInOn(e, key, todayStr());
+  if (inn) return {inn: true, text: 'recebida' + ((fo || dt) ? ' ' + fmtDate(fo || dt) : '')};
+  return {inn: false, text: 'a receber' + (dt && e.fell !== 'no' ? ' ' + fmtDate(dt) : '')};
 }
 function ensureIncomeArray(state, m, monthKey, person){
   if (!Array.isArray(m.income[person])){
@@ -2491,7 +2560,7 @@ function ensureIncomeArray(state, m, monthKey, person){
       m.income[person] = resolveIncomeList(raw, m.updatedAt);
     } else {
       m.income[person] = resolveIncomeForMonth(state, monthKey, person).map(function(e){
-        return {id:e.id, label:e.label, amount:e.amount, replicate:!!e.replicate, updatedAt:e.updatedAt || ''};
+        return withIncomeDay({id:e.id, label:e.label, amount:e.amount, replicate:!!e.replicate, updatedAt:e.updatedAt || ''}, e);
       });
     }
   }
@@ -2545,6 +2614,9 @@ function applyOp(state, op){
         if (op.label != null) incEntry.label = op.label;
         if (op.amount != null) incEntry.amount = op.amount;
         if (op.replicate != null) incEntry.replicate = !!op.replicate;
+        // the day it falls (null: none) and, for this month, "Já caiu" / "Ainda não caiu" (null: by the day)
+        if ('day' in op){ if (op.day) incEntry.day = op.day; else delete incEntry.day; }
+        if ('fell' in op){ if (op.fell === 'no' || ISO_DATE_RE.test(op.fell || '')) incEntry.fell = op.fell; else delete incEntry.fell; }
         incEntry.updatedAt = at;
       }
       m.updatedAt = at;
@@ -3341,7 +3413,8 @@ function sumRowAmounts(rows){ var t = 0; rows.forEach(function(r){ t += r.amount
 // what makes up a person's income, entry by entry (an entry without a name is "Renda")
 function incomeParts(list){
   return (list || []).filter(function(e){ return e && isFinite(e.amount); }).map(function(e){
-    return {name: (typeof e.label === 'string' && e.label.trim()) || 'Renda', amount: e.amount};
+    var tag = incomeTag(e, viewMonth);
+    return {name: (typeof e.label === 'string' && e.label.trim()) || 'Renda', amount: e.amount, tag: tag ? tag.text : null};
   });
 }
 // The summary's sections: the late bills apart (the longest overdue first, with their own total),
@@ -3376,7 +3449,8 @@ function summaryData(){
     varPaid: countPaid(instRows) + countPaid(varRows),
     totalBills: totals.totalFixed + totals.totalVariable,
     // without the account balance the saldo can't see what went on PIX / débito
-    noCash: !totals.cash && (totals.totalIncome > 0 || totals.totalSpent > 0)
+    noCash: !totals.cash && (totals.totalIncome > 0 || totals.totalSpent > 0),
+    forecast: cashForecast(key, mv, totals)
   };
 }
 function cashNoteText(key){
@@ -3398,7 +3472,7 @@ function buildSummaryText(){
   lines.push('*Receitas*');
   [[h.person1Name, mv.income.person1], [h.person2Name, mv.income.person2]].forEach(function(p){
     lines.push(p[0] + ': ' + fmtMoney(sumIncomeList(p[1])));
-    incomeParts(p[1]).forEach(function(e){ lines.push('   • ' + e.name + ': ' + fmtMoney(e.amount)); });
+    incomeParts(p[1]).forEach(function(e){ lines.push('   • ' + e.name + ': ' + fmtMoney(e.amount) + (e.tag ? ' (' + e.tag + ')' : '')); });
   });
   lines.push('*Total: ' + fmtMoney(totals.totalIncome) + '*');
   function billLine(r){ return statusEmoji(r.status) + r.name + ' — ' + rowAmtText(r) + rowSuffix(r); }
@@ -3460,7 +3534,15 @@ function buildSummaryText(){
     (hasInv ? (totals.totalInvestments >= 0 ? ' − Investimentos ' + fmtMoney(totals.totalInvestments) : ' + Resgates ' + fmtMoney(-totals.totalInvestments)) : '') +
     (totals.unexplainedIn > 0 ? ' + Entrou sem lançar ' + fmtMoney(totals.unexplainedIn) : '') + ' = ' + fmtMoney(totals.saldo));
   if (d.noCash) lines.push('_' + cashNoteText(viewMonth) + '._');
-  if (totals.cash) lines.push('🏦 Na conta conjunta' + (totals.cash.on ? ' em ' + fmtDate(totals.cash.on) : '') + ': *' + fmtMoney(totals.cash.end) + '*');
+  if (d.forecast && !d.forecast.stale){
+    lines.push('');
+    forecastLines(d.forecast).forEach(function(l, i){
+      var txt = l.label + ': ' + fmtMoney(l.amount);
+      // "🏦 *Na conta hoje (11/11): R$ 1,87*" … "= *Sobra depois de pagar tudo: R$ 2.001,87*"
+      lines.push(i === 0 ? '🏦 *' + txt + '*' : (l.kind === 'total' ? txt.slice(0, 2) + '*' + txt.slice(2) + '*' : txt));
+    });
+    d.forecast.notes.forEach(function(n){ lines.push('_' + n + '_'); });
+  } else if (totals.cash) lines.push('🏦 Na conta conjunta' + (totals.cash.on ? ' em ' + fmtDate(totals.cash.on) : '') + ': *' + fmtMoney(totals.cash.end) + '*');
   var later = d.movedOut.late;
   if (later.length){
     var payMonths = uniq(later.map(function(b){ return b.eff; })).sort();
@@ -3482,6 +3564,7 @@ function buildSummaryCanvas(){
   var hasInv = totals.invApplied > 0 || totals.invRedeemed > 0;
 
   var accent = paletteSwatch();
+  var ctx0Font;
   var PAPER = '#F7F8F8', INK = '#1D2428', INK_SOFT = '#56626A', BORDER = '#DCE2E4', BAND = '#E9EDEF';
   var ON_ACCENT = '#FFFFFF', NEGATIVE = '#A6402A';
   var CHIP = {
@@ -3509,7 +3592,7 @@ function buildSummaryCanvas(){
   // a person's income and, below it, what makes it up
   function incomeLines(name, list){
     line(name, sumIncomeList(list));
-    incomeParts(list).forEach(function(e){ blocks.push({k:'part', label:e.name, amount:e.amount}); });
+    incomeParts(list).forEach(function(e){ blocks.push({k:'part', label:e.name, amount:e.amount, tag:e.tag}); });
   }
 
   sec('Receitas');
@@ -3567,7 +3650,7 @@ function buildSummaryCanvas(){
     }
     line('Investimentos' + (totals.invRedeemed > 0 ? ' (aplicado − resgatado)' : ''), totals.totalInvestments, {bold:true, noRule:true});
   }
-  if (totals.cash){
+  if (totals.cash && !(d.forecast && !d.forecast.stale)){
     gap();
     line('Na conta conjunta' + (totals.cash.on ? ' em ' + fmtDate(totals.cash.on) : ''), totals.cash.end, {bold:true, noRule:true});
   }
@@ -3582,9 +3665,16 @@ function buildSummaryCanvas(){
   var HEADER_H = 96, TOP_PAD = 30, SEC_H = 26, SUB_H = 22, ROW_H = 27, PART_H = 22, GAP_H = 18, BAND_H = 44, BEFORE_FOOTER = 26;
   var STMT_H = 24, NOTE_H = 24;
   var FOOTER_H = 34 + (statement.length - 1) * STMT_H + 14 + 38 + 24 + (d.noCash ? NOTE_H : 0);
+  // the forecast, below the footer (as in the text, after the saldo final)
+  var fc = d.forecast && !d.forecast.stale ? d.forecast : null;
+  var fcLines = fc ? forecastLines(fc) : [];
+  var FC_ROW = 27, FC_NOTE = 17;
+  ctx0Font = '400 12.5px ' + SANS;
+  var fcNoteLines = fc ? wrapCanvasText(fc.notes.join(' '), W - 2 * PAD, ctx0Font) : [];
+  var FC_H = fc ? 30 + SEC_H + fcLines.length * FC_ROW + 8 + fcNoteLines.length * FC_NOTE + 22 : 0;
   var CHIP_W = 74, CHIP_H = 20;
   var heights = {sec:SEC_H, sub:SUB_H, row:ROW_H, part:PART_H, empty:ROW_H, gap:GAP_H, band:BAND_H};
-  var H = HEADER_H + TOP_PAD + BEFORE_FOOTER + FOOTER_H;
+  var H = HEADER_H + TOP_PAD + BEFORE_FOOTER + FOOTER_H + FC_H;
   blocks.forEach(function(b){ H += heights[b.k]; });
 
   var canvas = document.createElement('canvas');
@@ -3660,7 +3750,16 @@ function buildSummaryCanvas(){
       ctx.fillStyle = INK_SOFT;
       ctx.textAlign = 'left';
       ctx.font = '400 13px ' + SANS;
-      ctx.fillText(fitText(b.label, AMT_RIGHT - amtW - 20 - PAD - 18), PAD + 18, y - 3);
+      var partMax = AMT_RIGHT - amtW - 20 - PAD - 18;
+      var tagW = 0;
+      if (b.tag){ ctx.font = '400 11.5px ' + SANS; tagW = ctx.measureText(b.tag).width + 8; ctx.font = '400 13px ' + SANS; }
+      var partLbl = fitText(b.label, partMax - tagW);
+      ctx.fillText(partLbl, PAD + 18, y - 3);
+      if (b.tag){
+        var plW = ctx.measureText(partLbl).width;
+        ctx.font = '400 11.5px ' + SANS;
+        ctx.fillText(b.tag, PAD + 18 + plW + 8, y - 3);
+      }
       ctx.textAlign = 'right';
       ctx.font = '400 13px ' + MONO;
       ctx.fillText(fmtMoney(b.amount), AMT_RIGHT, y - 3);
@@ -3727,7 +3826,7 @@ function buildSummaryCanvas(){
   });
 
   // footer: how the month closes, with the actual totals
-  var footerY = H - FOOTER_H;
+  var footerY = H - FC_H - FOOTER_H;
   ctx.fillStyle = totals.saldo >= 0 ? accent : NEGATIVE;
   ctx.fillRect(0, footerY, W, FOOTER_H);
   ctx.fillStyle = ON_ACCENT;
@@ -3767,7 +3866,52 @@ function buildSummaryCanvas(){
     ctx.font = '400 12.5px ' + SANS;
     ctx.fillText(fitText(cashNoteText(viewMonth), W - 2 * PAD), PAD, sy + NOTE_H);
   }
+  if (fc){
+    var fy0 = H - FC_H + 30;
+    ctx.fillStyle = INK_SOFT;
+    ctx.textAlign = 'left';
+    ctx.font = '700 13px ' + SANS;
+    ctx.fillText('PREVISÃO NA CONTA', PAD, fy0);
+    var ly = fy0 + SEC_H;
+    fcLines.forEach(function(l){
+      if (l.kind === 'sub' || l.kind === 'total'){
+        ctx.strokeStyle = BORDER;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(PAD, ly - 19.5);
+        ctx.lineTo(W - PAD, ly - 19.5);
+        ctx.stroke();
+      }
+      var strong = l.kind === 'total' || l.kind === 'base';
+      ctx.fillStyle = l.kind === 'total' && l.neg ? NEGATIVE : INK;
+      ctx.textAlign = 'left';
+      ctx.font = (strong ? '700 ' : '400 ') + '15px ' + SANS;
+      ctx.fillText(fitText(l.label, AMT_RIGHT - amtW - 20 - PAD), PAD, ly);
+      ctx.textAlign = 'right';
+      ctx.font = (strong ? '700 ' : '400 ') + '15px ' + MONO;
+      ctx.fillText(fmtMoney(l.amount), AMT_RIGHT, ly);
+      ly += FC_ROW;
+    });
+    ctx.fillStyle = INK_SOFT;
+    ctx.textAlign = 'left';
+    ctx.font = ctx0Font;
+    ly += 8 - FC_ROW + FC_NOTE + 2;
+    fcNoteLines.forEach(function(t){ ctx.fillText(t, PAD, ly); ly += FC_NOTE; });
+  }
   return canvas;
+}
+// the words of `text` in lines no wider than `maxW` (with the canvas font `font`)
+var wrapCtx = null;
+function wrapCanvasText(text, maxW, font){
+  if (!wrapCtx) wrapCtx = document.createElement('canvas').getContext('2d');
+  wrapCtx.font = font;
+  var words = String(text).split(/\s+/), lines = [], cur = '';
+  words.forEach(function(w){
+    var t = cur ? cur + ' ' + w : w;
+    if (cur && wrapCtx.measureText(t).width > maxW){ lines.push(cur); cur = w; } else cur = t;
+  });
+  if (cur) lines.push(cur);
+  return lines;
 }
 // a summary made to be shared always has the amounts, even with them hidden on the screen
 function withRealValues(fn){
@@ -4061,12 +4205,15 @@ function q(t){ return '"' + t + '"'; }
 var FIELD_LABEL = {desc:'Descrição', name:'Nome', label:'Nome', amount:'Valor', value:'Saldo', date:'Data', paidOn:'Pago em', planOn:'Previsão',
   withInterest:'Valor com juros', paid:'Situação', categoryId:'Categoria', dueDay:'Vencimento', installmentAmount:'Valor da parcela',
   installments:'Parcelas', startMonth:'Primeira parcela', endMonth:'Repete até', autoReplicate:'Valor fixo', suggestPrevious:'Sugerir valor anterior',
-  estimated:'Valor estimado', replicate:'Repetir nos próximos meses', end:'Saldo', start:'Começo do mês', skip:'Pulada', kind:'Tipo', amountLog:'Valor fixo dos próximos meses', items:'Opções'};
+  estimated:'Valor estimado', replicate:'Repetir nos próximos meses', end:'Saldo', start:'Começo do mês', skip:'Pulada', kind:'Tipo', amountLog:'Valor fixo dos próximos meses', items:'Opções',
+  day:'Dia em que cai', fell:'Neste mês'};
 var MONEY_FIELDS = {amount:1, value:1, withInterest:1, installmentAmount:1, end:1, start:1};
 var DATE_FIELDS = {date:1, paidOn:1, planOn:1};
 var SKIP_FIELDS = {updatedAt:1, createdAt:1, by:1, sv:1, id:1, logV:1, defaultAmount:1, recurringId:1, amortOf:1, amortIdx:1, amortFull:1, on:1, daily:1, via:1, dueOffset:1};
 function fieldText(state, f, v, ch){
+  if (f === 'fell') return ISO_DATE_RE.test(v || '') ? 'já caiu (' + fmtDate(v) + ')' : (v === 'no' ? 'ainda não caiu' : 'pelo dia');
   if (v == null || v === '') return '—';
+  if (f === 'day') return 'dia ' + v;
   if (MONEY_FIELDS[f]) return fmtMoney(numOr0(v));
   if (DATE_FIELDS[f]) return ISO_DATE_RE.test(v) ? fmtDate(v) + '/' + v.slice(2, 4) : String(v);
   if (f === 'paid') return v ? 'Pago' : 'Pendente';
@@ -4218,7 +4365,7 @@ function describeChange(ch, prev, next){
       al.forEach(function(e){ Am[e.id] = e; });
       var added = [], removed = [], edited = [];
       al.forEach(function(e){
-        if (!Bm[e.id]){ added.push(e); details.push('Incluiu ' + q(e.label) + ' — ' + fmtMoney(numOr0(e.amount)) + (e.replicate ? ', repete nos próximos meses' : '')); }
+        if (!Bm[e.id]){ added.push(e); details.push('Incluiu ' + q(e.label) + ' — ' + fmtMoney(numOr0(e.amount)) + (incomeDay(e) ? ', cai dia ' + incomeDay(e) : '') + (e.replicate ? ', repete nos próximos meses' : '')); }
         else if (stableStr(Bm[e.id]) !== stableStr(e)){
           var fd = fieldDiffs(next, Bm[e.id], e, ch);
           if (fd.length){ edited.push(e); details.push(q(e.label) + ': ' + fd.join('; ')); }
@@ -4229,7 +4376,11 @@ function describeChange(ch, prev, next){
       if (added.length + removed.length + edited.length === 1){
         var one = added[0] || removed[0] || edited[0];
         noun = 'a renda ' + q(one.label) + ' de ' + who;
-        if (added.length) return {verb:'add', text:'Incluiu ' + noun + ' — ' + fmtMoney(numOr0(one.amount)) + mo, details: one.replicate ? ['Repete nos próximos meses'] : [], noun:noun, mo:mo};
+        if (added.length) return {verb:'add', text:'Incluiu ' + noun + ' — ' + fmtMoney(numOr0(one.amount)) + mo, details: (incomeDay(one) ? ['Cai dia ' + incomeDay(one)] : []).concat(one.replicate ? ['Repete nos próximos meses'] : []), noun:noun, mo:mo};
+        // only "Já caiu" / "Ainda não caiu" changed
+        if (!removed.length && fieldDiffs(next, Bm[one.id], one, ch).length === 1 && (Bm[one.id].fell || null) !== (one.fell || null)){
+          return {verb:'edit', text:(incomeFellOn(one) ? 'Marcou que ' + noun + ' já caiu' : (one.fell === 'no' ? 'Marcou que ' + noun + ' ainda não caiu' : 'Voltou ' + noun + ' para o dia em que cai')) + mo, details:[], noun:noun, mo:mo};
+        }
         if (removed.length) return {verb:'del', text:'Excluiu ' + noun + ' — ' + fmtMoney(numOr0(one.amount)) + mo, details:[], noun:noun, mo:mo};
         return {verb:'edit', text:'Editou ' + noun + mo, details: fieldDiffs(next, Bm[one.id], one, ch), noun:noun, mo:mo};
       }
@@ -4493,7 +4644,7 @@ var snapIndex = [];
 var snapLoaded = false;
 var SNAP_REASON = {daily:'cópia do dia', 'import':'antes de importar um backup', restore:'antes de recuperar uma cópia', manual:'feita por você', update:'antes desta atualização do app'};
 // the first time a new version of the app opens the data, it keeps a copy of it exactly as it was
-var APP_VERSION = '16';
+var APP_VERSION = '17';
 var APP_VERSION_KEY = 'gflowFinancasAppVersion';
 function keepCopyBeforeUpdate(){
   var seen = null;
@@ -7036,6 +7187,8 @@ function renderStats(totals, mv){
       '<div class="stat-sub">' + esc(invSub) + '</div></div>';
   }
   var saldo = totals.saldo;
+  // the income that hasn't fallen yet (current month)
+  var incomeLaterToday = viewMonth === monthKeyToday() ? incomeSplit(mv.income, viewMonth, todayStr()).later : 0;
   // the saldo only counts what went on PIX / débito once the account balance is told
   var heroNote = '';
   if (!totals.cash && (totals.totalIncome > 0 || totals.totalSpent > 0)){
@@ -7046,7 +7199,7 @@ function renderStats(totals, mv){
       '</div>' +
   '<div class="stats">' +
     '<div class="stat"><div class="stat-label">Renda</div><div class="stat-value income">' + moneyHtml(totals.totalIncome) + '</div>' +
-      '<div class="stat-sub">' + esc(STATE.household.person1Name) + ' + ' + esc(STATE.household.person2Name) + '</div></div>' +
+      '<div class="stat-sub">' + (incomeLaterToday > 0 ? esc(fmtMoney(incomeLaterToday)) + ' a receber' : esc(STATE.household.person1Name) + ' + ' + esc(STATE.household.person2Name)) + '</div></div>' +
     '<div class="stat"><div class="stat-label">Contas fixas</div><div class="stat-value">' + moneyHtml(totals.totalFixed) + '</div>' +
       '<div class="stat-sub">' + (fixedCount ? (paidCount + ' de ' + fixedCount + ' paga' + (fixedCount === 1 ? '' : 's')) : 'nenhuma lançada') + '</div></div>' +
     '<div class="stat"><div class="stat-label">Variáveis</div><div class="stat-value">' + moneyHtml(totals.totalVariable) + '</div>' +
@@ -7058,7 +7211,78 @@ function renderStats(totals, mv){
   movedOutNote(mv, viewMonth) +
   carriedNote(totals) +
   (totals.totalInterest > 0 ? '<p class="stat-note">Inclui ' + fmtMoney(totals.totalInterest) + ' de juros e multas — <button type="button" class="link-btn" data-action="open-charts">ver nos gráficos</button></p>' : '') +
-  cashBlock(totals, viewMonth);
+  cashBlock(totals, viewMonth) +
+  forecastBlock(cashForecast(viewMonth, mv, totals));
+}
+// Até o fim do mês (the current month, with the account balance told): what is in the account on
+// the balance's date, + the income still to come = in the account after it falls; − the bills
+// still to pay = left after paying everything (or missing, in red). Nothing is taken as paid.
+// When something changed the account after that date (a bill paid, income that fell), the
+// balance must be told again first.
+function cashForecast(key, mv, totals){
+  if (key !== monthKeyToday() || !totals.cash) return null;
+  var c = totals.cash, today = todayStr();
+  var parts = c.laterParts || [];
+  var fellSince = parts.filter(function(p){ return p.e.fell !== 'no' && p.date && p.date <= today; });
+  if (c.paidAfterCount || fellSince.length){
+    return {stale: true, on: c.on, paidAfterCount: c.paidAfterCount, paidAfter: c.paidAfter, fellSince: round2(sumOf(fellSince))};
+  }
+  var b = unpaidBreakdown(key);
+  if (!(c.incomeLater > 0) && !(b.unpaid > 0)) return null;
+  var dated = parts.every(function(p){ return p.e.fell !== 'no' && p.date; });
+  var days = uniq(parts.map(function(p){ return p.date ? parseInt(p.date.slice(8, 10), 10) : null; }).filter(Boolean)).sort(function(x, y){ return x - y; });
+  var recvLabel = 'A receber', afterLabel = 'Na conta depois de receber';
+  if (dated && days.length === 1){ recvLabel = 'A receber dia ' + days[0]; afterLabel = 'Na conta depois do dia ' + days[0]; }
+  else if (dated && days.length > 1){ recvLabel = 'A receber dias ' + listPhrase(days.map(String)); afterLabel = 'Na conta depois do dia ' + days[days.length - 1]; }
+  var after = round2(c.end + c.incomeLater);
+  var left = round2(after - b.unpaid);
+  var notes = [];
+  // the saldo final is the month's result; the account also has what it started the month with
+  var finalAmt = b.unpaid > 0 ? left : after;
+  if (c.startKnown && Math.abs(c.start) >= 0.01 && Math.abs(finalAmt - (c.start + totals.saldo)) < 0.01){
+    notes.push(c.start > 0 ? 'Inclui ' + fmtMoney(c.start) + ' que já estavam na conta no começo do mês (por isso é maior que o saldo final).' :
+      'Desconta ' + fmtMoney(-c.start) + ' que faltavam na conta no começo do mês (por isso é menor que o saldo final).');
+  }
+  if (b.toLaunch) notes.push('Fora ' + b.toLaunch + ' ' + plural(b.toLaunch, 'conta', 'contas') + ' a lançar (valor ainda não informado).');
+  notes.push(c.on === today ? 'Sem contar os próximos gastos no PIX e no débito.' : 'Sem contar os gastos no PIX e no débito depois de ' + fmtDate(c.on) + '.');
+  return {on: c.on, onToday: c.on === today, end: c.end, later: c.incomeLater, recvLabel: recvLabel, afterLabel: afterLabel,
+    after: after, unpaid: b.unpaid, left: left, notes: notes};
+}
+function sumOf(parts){ var t = 0; parts.forEach(function(p){ t += p.e.amount; }); return t; }
+// "5", "5 e 20", "5, 15 e 20"
+function listPhrase(items){
+  if (items.length <= 1) return items.join('');
+  return items.slice(0, -1).join(', ') + ' e ' + items[items.length - 1];
+}
+// the forecast's lines, the same in the app, the text and the image
+function forecastLines(f){
+  var out = [{label: 'Na conta ' + (f.onToday ? 'hoje (' + fmtDate(f.on) + ')' : 'em ' + fmtDate(f.on)), amount: f.end, kind: 'base'}];
+  if (f.later > 0){
+    out.push({label: '+ ' + f.recvLabel, amount: f.later, kind: 'plus'});
+    if (f.unpaid > 0) out.push({label: '= ' + f.afterLabel, amount: f.after, kind: 'sub'});
+  }
+  if (f.unpaid > 0) out.push({label: '− Contas que ainda faltam pagar', amount: f.unpaid, kind: 'minus'});
+  if (f.unpaid > 0) out.push({label: f.left >= 0 ? '= Sobra depois de pagar tudo' : '= Falta para pagar tudo', amount: Math.abs(f.left), kind: 'total', neg: f.left < 0});
+  else out.push({label: '= ' + f.afterLabel, amount: f.after, kind: 'total', neg: f.after < 0});
+  return out;
+}
+function forecastBlock(f){
+  if (!f) return '';
+  var head = '<div class="cl-head"><span class="cl-title">📅 Previsão na conta</span></div>';
+  if (f.stale){
+    var why = [];
+    if (f.paidAfterCount) why.push(plural(f.paidAfterCount, 'foi paga 1 conta', 'foram pagas ' + f.paidAfterCount + ' contas') + ' (' + fmtMoney(f.paidAfter) + ')');
+    if (f.fellSince > 0) why.push('caiu renda (' + fmtMoney(f.fellSince) + ')');
+    return '<div class="ledger cash-ledger cash-forecast" id="cash-forecast">' + head +
+      '<p class="lg-hint">Depois de ' + esc(fmtDate(f.on)) + ' ' + why.join(' e ') + '. <button type="button" class="link-btn" data-action="open-cash" data-month="' + monthKeyToday() + '">Atualize o saldo da conta</button> para ver a previsão.</p>' +
+    '</div>';
+  }
+  return '<div class="ledger cash-ledger cash-forecast" id="cash-forecast">' + head +
+    forecastLines(f).map(function(l){
+      return '<div class="lg-line' + (l.kind === 'sub' ? ' lg-sub' : (l.kind === 'total' ? ' lg-total' : '')) + '"><span>' + esc(l.label) + '</span> <span class="lg-amt' + (l.kind === 'total' ? (l.neg ? ' neg' : ' pos') : '') + '">' + fmtMoney(l.amount) + '</span></div>';
+    }).join('') +
+    f.notes.map(function(n){ return '<p class="lg-hint">' + esc(n) + '</p>'; }).join('') +
+  '</div>';
 }
 // a month with anything in it whose account balance was not told yet
 function monthNeedsCash(k){
@@ -7099,13 +7323,16 @@ function cashBlock(totals, key){
   if (!c.startKnown){
     hints.push('<p class="lg-hint">Contei R$ 0,00 no começo do mês. Se tinha dinheiro na conta, <button type="button" class="link-btn" data-action="open-cash" data-month="' + key + '">informe quanto</button>.</p>');
   }
+  if (c.incomeLater > 0){
+    hints.push('<p class="lg-hint">Não conta ' + fmtMoney(c.incomeLater) + ' de renda que cai depois de ' + esc(fmtDate(c.on)) + ' (ainda não estava na conta).</p>');
+  }
   hints.push('<p class="lg-hint">É o que saiu da conta sem ser conta paga nem investimento: PIX, débito, dinheiro…' +
     (c.manual > 0 ? ' Inclui ' + fmtMoney(c.manual) + ' lançados à mão.' : '') +
     (key === todayKey ? ' O mês ainda não acabou: no fim dele, atualize o saldo.' : '') + '</p>');
   return '<div class="ledger cash-ledger" id="cash-ledger">' +
     '<div class="cl-head"><span class="cl-title">🏦 Conta conjunta</span> <button type="button" class="link-btn" data-action="open-cash" data-month="' + key + '">Atualizar saldo</button></div>' +
     line(startLabel, c.start) +
-    line('+ Renda', c.income) +
+    line(c.incomeLater > 0 ? '+ Renda que já caiu <span class="lg-count">(até ' + esc(fmtDate(c.on)) + ')</span>' : '+ Renda', c.income) +
     (c.redeemed > 0 ? line('+ Resgates de investimentos', c.redeemed) : '') +
     line('− Contas pagas <span class="lg-count">(' + c.paidCount + ')</span>', c.paid) +
     (c.applied > 0 ? line('− Aplicado nos investimentos', c.applied) : '') +
@@ -7229,6 +7456,19 @@ function renderIncomePerson(person, personName, list){
       var dLabel = d.label != null ? d.label : entry.label;
       var dAmount = d.amount != null ? d.amount : fmtInputAmount(entry.amount);
       var dReplicate = d.replicate != null ? d.replicate : !!entry.replicate;
+      var dDay = d.day != null ? d.day : (incomeDay(entry) ? String(incomeDay(entry)) : '');
+      var eDay = incomeDay(entry);
+      // without a day "Já caiu" is how it is anyway
+      var dFell = d.fell != null ? d.fell : (entry.fell === 'no' ? 'no' : (incomeFellOn(entry) && eDay ? 'yes' : 'auto'));
+      // in the current month: when it falls by the day, or "Já caiu" / "Ainda não caiu" this month
+      var fellOpts = eDay ? [['auto', 'Pelo dia em que cai (dia ' + eDay + ')'], ['yes', 'Já caiu'], ['no', 'Ainda não caiu']] : [['auto', 'Já caiu'], ['no', 'Ainda não caiu']];
+      var fellUi = viewMonth === monthKeyToday() ?
+        '<fieldset class="inc-fell"><legend>Neste mês</legend>' +
+          fellOpts.map(function(o){
+            return '<label class="check-field"><input type="radio" name="fell" value="' + o[0] + '"' + (dFell === o[0] ? ' checked' : '') + '><span>' + o[1] + '</span></label>';
+          }).join('') +
+          '<p class="field-hint">Vale só para ' + esc(monthLabel(viewMonth)) + ': caiu antes ou atrasou (feriado, fim de semana).</p>' +
+        '</fieldset>' : '';
       return '<form class="fixed-row" data-person="' + person + '" data-entryid="' + entry.id + '" data-action="edit-income-form">' +
         '<div class="fixed-row-top">' +
           '<input class="cat-name-input" name="label" value="' + esc(dLabel) + '">' +
@@ -7238,14 +7478,19 @@ function renderIncomePerson(person, personName, list){
           '<input class="amount-input" name="amount" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" value="' + esc(dAmount) + '" style="flex:1">' +
           '<button type="submit" class="btn primary" style="flex:none;padding:8px 14px">Salvar</button>' +
         '</div>' +
+        '<div class="field inc-day-field" style="margin:10px 0 0"><label>Dia em que cai <span class="opt">(opcional)</span></label><input name="day" type="number" inputmode="numeric" placeholder="Ex.: 5" value="' + esc(dDay) + '" style="width:100px">' +
+          '<p class="field-hint">Até esse dia ela conta como "a receber". Sem dia, conta como já recebida.</p></div>' +
+        fellUi +
         '<div class="field" style="margin:10px 0 0"><label class="check-field"><input type="checkbox" name="replicate"' + (dReplicate ? ' checked' : '') + '><span>Repetir automaticamente nos próximos meses</span></label></div>' +
         '<div class="row-danger">' + delBtn + '</div>' +
       '</form>';
     }
+    var subParts = incomeRowSub(entry, viewMonth);
+    if (entry.replicate) subParts.push('repete todo mês');
     return '<div class="fixed-row bill-row income-row" data-hl="inc:' + person + ':' + esc(entry.id) + '" data-row-action="edit-income" data-person="' + person + '" data-entryid="' + esc(entry.id) + '">' +
       catIconHtml(catIconOf([entry.label], '💼')) +
       '<div class="row-main"><button type="button" class="row-open fixed-name" data-action="edit-income" data-person="' + person + '" data-entryid="' + esc(entry.id) + '">' + esc(entry.label) + '</button>' +
-        (entry.replicate ? '<div class="row-sub">repete todo mês</div>' : '') + '</div>' +
+        (subParts.length ? '<div class="row-sub">' + subParts.map(esc).join(' · ') + '</div>' : '') + '</div>' +
       '<div class="var-amt">' + fmtMoney(entry.amount) + '</div>' +
     '</div>';
   }).join('');
@@ -7255,6 +7500,8 @@ function renderIncomePerson(person, personName, list){
     addUi = '<form data-action="add-income-form" data-person="' + person + '" style="margin-top:10px;padding:12px;border:1px dashed var(--border);border-radius:12px">' +
       '<div class="field" style="margin-bottom:10px"><label>Nome da renda</label><input name="label" placeholder="Ex.: Salário, Freelance…" value="' + esc(fdraft.label || '') + '"></div>' +
       '<div class="field" style="margin-bottom:10px"><label>Valor</label><input name="amount" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" value="' + esc(fdraft.amount || '') + '"></div>' +
+      '<div class="field inc-day-field" style="margin-bottom:10px"><label>Dia em que cai <span class="opt">(opcional)</span></label><input name="day" type="number" inputmode="numeric" placeholder="Ex.: 5" value="' + esc(fdraft.day || '') + '" style="width:100px">' +
+        '<p class="field-hint">Até esse dia ela conta como "a receber". Salário que cai em partes: lance uma renda para cada parte, cada uma com o seu dia.</p></div>' +
       '<div class="field" style="margin-bottom:0"><label class="check-field"><input type="checkbox" name="replicate"' + (fdraft.replicate ? ' checked' : '') + '><span>Repetir automaticamente nos próximos meses</span></label></div>' +
       '<div class="sheet-actions">' +
         '<button type="button" class="btn ghost" data-action="cancel-add-income">Cancelar</button>' +
@@ -7269,6 +7516,16 @@ function renderIncomePerson(person, personName, list){
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><strong>' + esc(personName) + '</strong><span class="person-total">' + fmtMoney(personTotal) + '</span></div>' +
     (rows || '<p class="empty-note">Nenhuma renda lançada ainda.</p>') + addUi +
   '</div>';
+}
+// "cai dia 20 · a receber", "caiu dia 5", "já caiu", "ainda não caiu (era dia 20)", "cai dia 20"
+function incomeRowSub(e, key){
+  var d = incomeDay(e), todayKey = monthKeyToday();
+  if (key !== todayKey) return d ? [(key < todayKey ? 'caiu' : 'cai') + ' dia ' + d] : [];
+  var fo = incomeFellOn(e);
+  if (fo) return ['caiu dia ' + parseInt(fo.slice(8, 10), 10) + (d && fo < dateInMonth(key, d) ? ' (antes do dia ' + d + ')' : '')];
+  if (e.fell === 'no') return ['ainda não caiu' + (d ? ' (' + (dateInMonth(key, d) < todayStr() ? 'era' : 'cai') + ' dia ' + d + ')' : '')];
+  if (!d) return [];
+  return dateInMonth(key, d) <= todayStr() ? ['caiu dia ' + d] : ['cai dia ' + d + ' · a receber'];
 }
 function renderIncome(h, mv){
   var totalIncome = sumIncomeList(mv.income.person1) + sumIncomeList(mv.income.person2);
@@ -9294,6 +9551,14 @@ function renderCashSheet(keepStill){
     '</form>' +
   '</div>';
 }
+// the "Dia em que cai" field: '' → null (no day), 1-31 → the day, anything else → false
+function parseIncomeDayInput(raw){
+  var t = String(raw == null ? '' : raw).trim();
+  if (!t) return null;
+  if (!/^\d{1,2}$/.test(t)) return false;
+  var n = parseInt(t, 10);
+  return n >= 1 && n <= 31 ? n : false;
+}
 function readCashForm(form){
   var d = cashSheet.draft;
   if (form.elements['end']) d.end = form.elements['end'].value;
@@ -9318,7 +9583,7 @@ function cashPreviewHtml(){
   var c = t.cash;
   var isCur = cashSheet.month === monthKeyToday();
   return '<div class="lg-line lg-total"><span>⚡ Gasto do dia a dia' + (isCur ? ' até hoje' : '') + '</span> <span class="lg-amt">' + fmtMoney(Math.max(0, c.spent)) + '</span></div>' +
-    '<p class="lg-hint">' + fmtMoney(c.start) + ' no começo + renda ' + fmtMoney(c.income) +
+    '<p class="lg-hint">' + fmtMoney(c.start) + ' no começo + renda ' + (c.incomeLater > 0 ? 'que já caiu ' : '') + fmtMoney(c.income) +
       (c.redeemed > 0 ? ' + resgates ' + fmtMoney(c.redeemed) : '') + ' − contas pagas ' + fmtMoney(c.paid) +
       (c.applied > 0 ? ' − investido ' + fmtMoney(c.applied) : '') + ' − na conta ' + fmtMoney(c.end) + '</p>' +
     (c.spent < 0 ? '<p class="lg-hint warn">Tem ' + fmtMoney(-c.spent) + ' a mais do que o app esperava. Falta lançar alguma renda?</p>' : '');
@@ -10708,22 +10973,32 @@ function onSubmit(ev){
     var labelAdd = labelRawAdd.trim();
     var amountRawAdd = form.elements['amount'].value;
     var replicateAdd = form.elements['replicate'] ? form.elements['replicate'].checked : false;
+    var dayRawAdd = form.elements['day'] ? form.elements['day'].value : '';
     if (!labelAdd){
       toastMsg = 'Digite um nome pra essa renda.';
-      addingIncomeDraft = {label:labelRawAdd, amount:amountRawAdd, replicate:replicateAdd};
+      addingIncomeDraft = {label:labelRawAdd, amount:amountRawAdd, replicate:replicateAdd, day:dayRawAdd};
       render();
       return;
     }
     var amountAdd = parseMoneyInput(amountRawAdd);
     if (!isFinite(amountAdd) || amountAdd < 0){
       toastMsg = String(amountRawAdd).trim() === '' ? 'Digite o valor dessa renda.' : 'Não entendi o valor. Digite só números, ex.: 5.000,00';
-      addingIncomeDraft = {label:labelRawAdd, amount:amountRawAdd, replicate:replicateAdd};
+      addingIncomeDraft = {label:labelRawAdd, amount:amountRawAdd, replicate:replicateAdd, day:dayRawAdd};
+      render();
+      return;
+    }
+    var dayAdd = parseIncomeDayInput(dayRawAdd);
+    if (dayAdd === false){
+      toastMsg = 'O dia em que cai vai de 1 a 31 (ou deixe em branco).';
+      addingIncomeDraft = {label:labelRawAdd, amount:amountRawAdd, replicate:replicateAdd, day:dayRawAdd};
       render();
       return;
     }
     addingIncomeFor = null;
     addingIncomeDraft = null;
-    doOp({type:'addIncomeEntry', month:viewMonth, person:incPersonAdd, entry:{id:uid(), label:labelAdd, amount:amountAdd, replicate:replicateAdd, updatedAt:new Date().toISOString()}});
+    var newIncome = {id:uid(), label:labelAdd, amount:amountAdd, replicate:replicateAdd, updatedAt:new Date().toISOString()};
+    if (dayAdd) newIncome.day = dayAdd;
+    doOp({type:'addIncomeEntry', month:viewMonth, person:incPersonAdd, entry:newIncome});
   } else if (action === 'edit-income-form'){
     ev.preventDefault();
     var incPersonEdit = form.getAttribute('data-person');
@@ -10732,22 +11007,41 @@ function onSubmit(ev){
     var labelEdit = labelRawEdit.trim();
     var amountRawEdit = form.elements['amount'].value;
     var replicateEdit = form.elements['replicate'] ? form.elements['replicate'].checked : false;
+    var dayRawEdit = form.elements['day'] ? form.elements['day'].value : '';
+    var fellPick = form.querySelector('input[name="fell"]:checked');
+    var fellEdit = fellPick ? fellPick.value : null;
+    var draftEdit = {label:labelRawEdit, amount:amountRawEdit, replicate:replicateEdit, day:dayRawEdit};
+    if (fellEdit) draftEdit.fell = fellEdit;
     if (!labelEdit){
       toastMsg = 'Digite um nome pra essa renda.';
-      editingIncomeDraft = {label:labelRawEdit, amount:amountRawEdit, replicate:replicateEdit};
+      editingIncomeDraft = draftEdit;
       render();
       return;
     }
     var amountEdit = parseMoneyInput(amountRawEdit);
     if (!isFinite(amountEdit) || amountEdit < 0){
       toastMsg = String(amountRawEdit).trim() === '' ? 'Digite o valor dessa renda.' : 'Não entendi o valor. Digite só números, ex.: 5.000,00';
-      editingIncomeDraft = {label:labelRawEdit, amount:amountRawEdit, replicate:replicateEdit};
+      editingIncomeDraft = draftEdit;
+      render();
+      return;
+    }
+    var dayEdit = parseIncomeDayInput(dayRawEdit);
+    if (dayEdit === false){
+      toastMsg = 'O dia em que cai vai de 1 a 31 (ou deixe em branco).';
+      editingIncomeDraft = draftEdit;
       render();
       return;
     }
     editingIncomeId = null;
     editingIncomeDraft = null;
-    doOp({type:'updateIncomeEntry', month:viewMonth, person:incPersonEdit, entryId:incEntryIdEdit, label:labelEdit, amount:amountEdit, replicate:replicateEdit});
+    var incOp = {type:'updateIncomeEntry', month:viewMonth, person:incPersonEdit, entryId:incEntryIdEdit, label:labelEdit, amount:amountEdit, replicate:replicateEdit, day:dayEdit || null};
+    // "Já caiu" / "Ainda não caiu" only in the current month (the choice is shown only there);
+    // "Já caiu" keeps the day it was first marked
+    if (fellEdit){
+      var incNow = (getMonthView(STATE, viewMonth).income[incPersonEdit] || []).filter(function(x){ return x.id === incEntryIdEdit; })[0];
+      incOp.fell = fellEdit === 'yes' ? ((incNow && incomeFellOn(incNow)) || todayStr()) : (fellEdit === 'no' ? 'no' : null);
+    }
+    doOp(incOp);
   } else if (action === 'history-filter-form'){
     ev.preventDefault();
     var fromRaw = form.elements['from'].value;
