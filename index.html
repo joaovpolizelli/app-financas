@@ -594,6 +594,9 @@ body.privacy-cover::after{content:'🔒';position:fixed;inset:0;display:flex;ali
 .dl-newcat{margin:10px 0 0}
 .dl-newcat[hidden]{display:none}
 .dl-amount{font-size:1.25rem;font-weight:700}
+.sign-row{display:flex;gap:8px;align-items:stretch}
+.sign-row input{flex:1;min-width:0}
+.sign-btn{flex:0 0 auto;min-width:56px;padding:0 12px;font-size:1.0625rem;font-weight:700}
 label .opt{font-weight:400;color:var(--ink-soft)}
 /* "Saldo da conta": the block in the Resumo, its sheet and the investments' values */
 .cash-prompt{margin-top:12px;display:flex;align-items:center;gap:10px 12px;flex-wrap:wrap;background:var(--surface-2);border-radius:12px;padding:10px 12px}
@@ -1477,6 +1480,8 @@ function cleanCashRecord(c, monthKey){
   else if (out.end != null) out.on = lastDayIso(monthKey);
   if (typeof c.by === 'string') out.by = c.by;
   if (typeof c.updatedAt === 'string') out.updatedAt = c.updatedAt;
+  // round 21: when Meu Pluggy read this balance at the bank (the balance came from the bank)
+  if (typeof c.bankAt === 'string' && c.bankAt.length <= 40 && !isNaN(new Date(c.bankAt).getTime())) out.bankAt = new Date(c.bankAt).toISOString();
   return out;
 }
 // A value of an investment told by hand (e.g. CDB: 150 -> 100). The difference to what the app
@@ -2243,12 +2248,13 @@ function computeMonthTotals(h, mv, key){
       else { paidOut += b.total; paidCount++; }
     });
     // investments: up to the balance's date / after it
-    var invInOn = 0, invOutOn = 0, invInAfter = 0, invOutAfter = 0;
+    var invInOn = 0, invOutOn = 0, invInAfter = 0, invOutAfter = 0, invOutLater = 0, todayIso = todayStr();
     (mv.invMoves || []).forEach(function(ev){
       var inA = ev.kind === 'in' ? ev.amount : (ev.kind === 'val' ? (ev.cashIn || 0) : 0);
       var outA = ev.kind === 'out' ? ev.amount : (ev.kind === 'val' ? (ev.cashOut || 0) : 0);
       if (on && ev.date > on){ invInAfter += inA; invOutAfter += outA; }
       else { invInOn += inA; invOutOn += outA; }
+      if (ev.date > todayIso) invOutLater += outA;
     });
     // only the income already in on the balance's date (the rest comes later: it isn't
     // day-to-day spending)
@@ -2266,7 +2272,7 @@ function computeMonthTotals(h, mv, key){
       applied: round2(invInOn), expected: round2(expected), end: mv.cash.end, on: on, spent: spent,
       partial: !!(on && on < lastDayIso(key)),
       manual: round2(t.daily), paidAfter: round2(paidAfter), paidAfterCount: paidAfterCount,
-      invInAfter: round2(invInAfter), invOutAfter: round2(invOutAfter)};
+      invInAfter: round2(invInAfter), invOutAfter: round2(invOutAfter), invOutLater: round2(invOutLater)};
     daily = spent;          // below zero: money came in that was not entered
   }
   var saldo = totalIncome - t.fixed - totalVariable - daily - totalInvestments;
@@ -4763,7 +4769,7 @@ var snapIndex = [];
 var snapLoaded = false;
 var SNAP_REASON = {daily:'cópia do dia', 'import':'antes de importar um backup', restore:'antes de recuperar uma cópia', manual:'feita por você', update:'antes desta atualização do app'};
 // the first time a new version of the app opens the data, it keeps a copy of it exactly as it was
-var APP_VERSION = '20';
+var APP_VERSION = '21';
 var APP_VERSION_KEY = 'gflowFinancasAppVersion';
 function keepCopyBeforeUpdate(){
   var seen = null;
@@ -7389,7 +7395,11 @@ function cashForecast(key, mv, totals){
     fell: fell, fellLabel: 'Caiu depois de ' + fmtDate(c.on) + laterDaysText(fellP),
     still: still, recvLabel: 'Ainda vai cair' + laterDaysText(stillP),
     paidAfter: c.paidAfter || 0, paidAfterCount: c.paidAfterCount || 0, invAfter: invAfter,
-    afterLabel: afterLabel, after: after, unpaid: b.unpaid, left: left, notes: notes};
+    afterLabel: afterLabel, after: after, unpaid: b.unpaid, left: left, notes: notes,
+    key: key, startLabel: cashStartLabel(c), start: c.start, spent: c.spent,
+    incomeAll: round2(c.income + c.incomeLater), incomeIn: round2(c.income + fell), incomeStillParts: stillP,
+    redeemedAll: round2(c.redeemed + (c.invOutAfter || 0)), redeemedLater: c.invOutLater || 0,
+    paidAll: round2(c.paid + (c.paidAfter || 0)), appliedAll: round2(c.applied + (c.invInAfter || 0))};
 }
 // an income part (not in the balance) that has fallen since: its day came (or "Já caiu")
 function fellSinceBalance(p, today){ return p.e.fell !== 'no' && !!p.date && p.date <= today; }
@@ -7444,14 +7454,44 @@ function forecastLines(f){
   else out.push({label: '= ' + f.afterLabel, amount: f.after, kind: 'total', neg: f.after < 0});
   return out;
 }
+// "Planejamento de novembro" (the current month): closed, only what will be left (or missing) at
+// the end of the month; open, the month's totals -- the same result as forecastLines, as
+// start + income + resgates − bills − applied − day-to-day spending = left
+var PLAN_VIEW_KEY = 'gflowFinancasPlanOpen';
+var planOpen = loadPref(PLAN_VIEW_KEY, false, function(v){ return typeof v === 'boolean'; });
+function planLines(f){
+  var out = [{label: f.startLabel, amount: f.start}];
+  var stillAmt = round2(f.incomeAll - f.incomeIn);
+  out.push({label: '+ Renda do mês', amount: f.incomeAll,
+    note: stillAmt > 0 ? (f.incomeIn > 0 ? 'Já caiu ' + fmtMoney(f.incomeIn) + ' · falta ' : 'Falta cair ') + fmtMoney(stillAmt) + laterDaysText(f.incomeStillParts) : ''});
+  if (f.redeemedAll > 0) out.push({label: '+ Resgates do mês', amount: f.redeemedAll,
+    note: f.redeemedLater > 0 ? 'Ainda vai cair ' + fmtMoney(f.redeemedLater) + '.' : ''});
+  var billsAll = round2(f.paidAll + f.unpaid);
+  out.push({label: '− Contas do mês', amount: billsAll,
+    note: f.unpaid > 0 && f.paidAll > 0 ? 'Pagas ' + fmtMoney(f.paidAll) + ' · a pagar ' + fmtMoney(f.unpaid) : (f.unpaid > 0 ? 'Nenhuma paga ainda.' : '')});
+  if (f.appliedAll > 0) out.push({label: '− Aplicado nos investimentos', amount: f.appliedAll});
+  var upTo = ' <span class="lg-count">(até ' + esc(fmtDate(f.on)) + ')</span>';
+  if (f.spent > 0) out.push({label: '− Gasto no dia a dia' + upTo, amount: f.spent, html: true});
+  else if (f.spent < 0) out.push({label: '+ A mais na conta' + upTo, amount: -f.spent, html: true});
+  out.push({label: f.left >= 0 ? '= Vai sobrar' : '= Vai faltar', amount: Math.abs(f.left), kind: 'total', neg: f.left < 0});
+  return out;
+}
 function forecastBlock(f){
   if (!f) return '';
-  var head = '<div class="cl-head"><span class="cl-title">📅 Até o fim do mês</span></div>';
+  var name = monthLabel(f.key).split(' de ')[0].toLowerCase();
+  var head = '<div class="cl-head"><span class="cl-title">📅 Planejamento de ' + esc(name) + '</span></div>';
+  var toggle = '<button type="button" class="link-btn lg-toggle" data-action="toggle-plan" aria-expanded="' + (planOpen ? 'true' : 'false') + '">' + (planOpen ? 'Esconder o planejamento' : 'Ver o planejamento ›') + '</button>';
+  var warn = f.notes.map(function(n){ return '<p class="lg-hint">' + esc(n) + '</p>'; }).join('');
+  function row(l){
+    return '<div class="lg-line' + (l.kind === 'total' ? ' lg-total' : '') + '"><span>' + (l.html ? l.label : esc(l.label)) + '</span> <span class="lg-amt' + (l.kind === 'total' ? (l.neg ? ' neg' : ' pos') : '') + '">' + fmtMoney(l.amount) + '</span></div>' +
+      (l.note ? '<p class="lg-note">' + esc(l.note) + '</p>' : '');
+  }
+  var lines = planLines(f);
+  if (!planOpen){
+    return '<div class="ledger cash-ledger cash-forecast closed" id="cash-forecast">' + head + row(lines[lines.length - 1]).replace('= ', '') + warn + toggle + '</div>';
+  }
   return '<div class="ledger cash-ledger cash-forecast" id="cash-forecast">' + head +
-    forecastLines(f).map(function(l){
-      return '<div class="lg-line' + (l.kind === 'sub' ? ' lg-sub' : (l.kind === 'total' ? ' lg-total' : '')) + '"><span>' + esc(l.label) + '</span> <span class="lg-amt' + (l.kind === 'total' ? (l.neg ? ' neg' : ' pos') : '') + '">' + fmtMoney(l.amount) + '</span></div>';
-    }).join('') +
-    f.notes.concat([f.spendNote]).map(function(n){ return '<p class="lg-hint">' + esc(n) + '</p>'; }).join('') +
+    lines.map(row).join('') + warn + '<p class="lg-hint">' + esc(f.spendNote) + '</p>' + toggle +
   '</div>';
 }
 // a month with anything in it whose account balance was not told yet
@@ -7477,6 +7517,13 @@ function endOfMonthPrompt(target, partial){
     '<button type="button" class="btn-mini primary" data-action="open-cash" data-month="' + target + '">Informar saldo</button>' +
   '</div>';
 }
+// what the month started from: "Sobrou em outubro", "Último saldo de outubro (28/10)", "Tinha no
+// começo do mês" (html: with the date in a smaller font)
+function cashStartLabel(c, html){
+  var mon = c.startFrom ? monthLabel(c.startFrom).split(' de ')[0].toLowerCase() : '';
+  if (c.startFrom) return c.startPartial ? 'Último saldo de ' + mon + (html ? ' <span class="lg-count">(' + esc(fmtDate(c.startOn)) + ')</span>' : ' (' + fmtDate(c.startOn) + ')') : 'Sobrou em ' + mon;
+  return 'Tinha no começo do mês' + (c.startKnown ? '' : (html ? ' <span class="lg-count">(não informado)</span>' : ' (não informado)'));
+}
 // The joint account: what it had, what came in and went out, what it has -- and what is missing,
 // the day-to-day spending. Without a balance, the saldo at the top asks for it ("Informar saldo
 // da conta"); here, only the month that just ended, when it still lacks one (or has only a
@@ -7494,8 +7541,7 @@ function cashBlock(totals, key){
   function line(label, amount, cls){
     return '<div class="lg-line' + (cls ? ' ' + cls : '') + '"><span>' + label + '</span> <span class="lg-amt">' + fmtMoney(amount) + '</span></div>';
   }
-  var startLabel = c.startFrom ? (c.startPartial ? 'Último saldo de ' + esc(monthLabel(c.startFrom)) + ' <span class="lg-count">(' + esc(fmtDate(c.startOn)) + ')</span>' : 'Sobrou em ' + esc(monthLabel(c.startFrom))) :
-    'Tinha no começo do mês' + (c.startKnown ? '' : ' <span class="lg-count">(não informado)</span>');
+  var startLabel = cashStartLabel(c, true);
   var hints = [];        // warnings: shown even with the account closed
   // a month that already ended, told before its last day
   if (key < todayKey && c.partial){
@@ -7509,30 +7555,37 @@ function cashBlock(totals, key){
   }
   var about = '<p class="lg-hint">É o que saiu da conta sem ser conta paga nem investimento: PIX, débito, dinheiro…' +
     (c.manual > 0 ? ' Inclui ' + fmtMoney(c.manual) + ' lançados à mão.' : '') +
-    (key === todayKey ? ' O mês ainda não acabou: no fim dele, atualize o saldo.' : '') + '</p>';
-  // what happened after the balance's date: not in this calculation (it is in "Até o fim do mês")
+    '</p>';
+  // what happened after the balance's date: not in this calculation (this month: it is in the
+  // "Planejamento"; a month that ended: told apart)
   var afterNotes = [];
   if (c.paidAfterCount) afterNotes.push('Pagas depois de ' + fmtDate(c.on) + ': ' + plural(c.paidAfterCount, '1 conta', c.paidAfterCount + ' contas') + ' (' + fmtMoney(c.paidAfter) + ').');
   if (c.invInAfter > 0) afterNotes.push('Aplicado depois de ' + fmtDate(c.on) + ': ' + fmtMoney(c.invInAfter) + '.');
   if (c.invOutAfter > 0) afterNotes.push('Resgatado depois de ' + fmtDate(c.on) + ': ' + fmtMoney(c.invOutAfter) + '.');
-  var upTo = c.on && (c.incomeLater > 0 || afterNotes.length) ? ' até ' + esc(fmtDate(c.on)) : '';
-  var total = '<div class="lg-line lg-total"><span>⚡ Gasto do dia a dia' + ((key === todayKey || c.partial) && c.on ? ' <span class="lg-count">(até ' + esc(fmtDate(c.on)) + ')</span>' : '') + '</span> <span class="lg-amt">' + fmtMoney(Math.max(0, c.spent)) + '</span></div>';
-  var toggle = '<button type="button" class="link-btn lg-toggle" data-action="toggle-ledger" aria-expanded="' + (ledgerOpen ? 'true' : 'false') + '">' + (ledgerOpen ? 'Esconder a conta' : 'Ver a conta ›') + '</button>';
-  var head = '<div class="cl-head"><span class="cl-title">🏦 Conta conjunta</span> <button type="button" class="link-btn" data-action="open-cash" data-month="' + key + '">Atualizar saldo</button></div>';
+  var after = c.on && (c.incomeLater > 0 || afterNotes.length);
+  var told = cashOf(STATE, key);
+  var bankAtTxt = told && told.bankAt && told.by === 'Banco do Brasil' && told.on === c.on ? ' às ' + auditTime(told.bankAt) : '';
+  var onTxt = c.on ? ' <span class="lg-count">(' + esc(fmtDate(c.on) + bankAtTxt) + ')</span>' : '';
+  var upToTxt = (key === todayKey || c.partial) && c.on ? ' <span class="lg-count">(até ' + esc(fmtDate(c.on)) + ')</span>' : '';
+  var spentRow = function(prefix){ return '<div class="lg-line lg-total"><span>' + prefix + 'Gasto no dia a dia' + upToTxt + '</span> <span class="lg-amt">' + fmtMoney(Math.max(0, c.spent)) + '</span></div>'; };
+  var toggle = '<button type="button" class="link-btn lg-toggle" data-action="toggle-ledger" aria-expanded="' + (ledgerOpen ? 'true' : 'false') + '">' + (ledgerOpen ? 'Esconder' : 'Ver de onde vem ›') + '</button>';
+  var head = '<div class="cl-head"><span class="cl-title">🏦 Conta do BB</span> <button type="button" class="link-btn" data-action="open-cash" data-month="' + key + '">Atualizar saldo</button></div>';
   if (!ledgerOpen){
-    return prompt + '<div class="ledger cash-ledger closed" id="cash-ledger">' + head + total + hints.join('') + toggle + '</div>';
+    return prompt + '<div class="ledger cash-ledger closed" id="cash-ledger">' + head +
+      line('Na conta' + onTxt, c.end) + spentRow('⚡ ') + hints.join('') + toggle + '</div>';
   }
+  var dateHint = after ? (key === todayKey ?
+      '<p class="lg-hint">Conta feita até ' + esc(fmtDate(c.on)) + ', o dia do saldo. O que veio depois está no planejamento do mês.</p>' :
+      '<p class="lg-note">Conta feita até ' + esc(fmtDate(c.on)) + ', o dia do saldo.' + (afterNotes.length ? ' ' + esc(afterNotes.join(' ')) : '') + '</p>') : '';
   return prompt + '<div class="ledger cash-ledger" id="cash-ledger">' + head +
     line(startLabel, c.start) +
-    line(upTo ? '+ Renda que já caiu' + upTo : '+ Renda', c.income) +
-    (c.incomeLater > 0 ? '<p class="lg-note">' + esc(laterNoteText(c)) + '</p>' : '') +
-    (c.redeemed > 0 ? line('+ Resgates de investimentos', c.redeemed) : '') +
-    line('− Contas pagas' + upTo + ' <span class="lg-count">(' + c.paidCount + ')</span>', c.paid) +
-    (c.applied > 0 ? line('− Aplicado nos investimentos', c.applied) : '') +
-    (afterNotes.length ? '<p class="lg-note">' + esc(afterNotes.join(' ')) + '</p>' : '') +
+    line('+ Renda que caiu', c.income) +
+    (c.redeemed > 0 ? line('+ Resgates', c.redeemed) : '') +
+    line('− Contas pagas <span class="lg-count">(' + c.paidCount + ')</span>', c.paid) +
+    (c.applied > 0 ? line('− Aplicado', c.applied) : '') +
     line('= Deveria ter', c.expected, 'lg-sub') +
-    line('Tem na conta' + (c.on ? ' <span class="lg-count">(' + esc(fmtDate(c.on)) + ')</span>' : ''), c.end) +
-    total + hints.join('') + about + toggle +
+    line('− Tem na conta' + onTxt, c.end) +
+    spentRow('= ') + hints.join('') + dateHint + about + toggle +
   '</div>';
 }
 // "Novembro de 2026", "Novembro de 2026 e Dezembro de 2026", "a, b e c"
@@ -9743,7 +9796,7 @@ function renderCashSheet(keepStill){
         '<button type="button" class="link-btn" data-action="open-cash" data-month="' + prevKey + '">Informar quanto sobrou em ' + esc(fmtDate(lastDayIso(prevKey))) + '</button></p>' :
       '<p class="cs-start">Começou o mês com <strong>' + fmtMoney(cs.prevEnd) + '</strong>, o que sobrou em ' + esc(monthLabel(prevKey)) + '.</p>') :
     '<div class="field"><label for="cs-start">Quanto tinha na conta no começo do mês? <span class="opt">(só desta vez)</span></label>' +
-      '<input id="cs-start" name="start" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" value="' + esc(d.start) + '">' +
+      '<div class="sign-row"><input id="cs-start" name="start" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" value="' + esc(d.start) + '">' + '<button type="button" class="btn ghost sign-btn" data-action="cash-sign" data-for="cs-start" aria-label="Trocar o sinal: negativo ou positivo">+/−</button>' + '</div>' +
       '<p class="field-hint">Nos próximos meses o app usa o que sobrou no mês anterior.</p></div>';
   return '<div class="sheet-backdrop" data-action="close-cash">' +
     '<form class="sheet cash-sheet' + (keepStill ? ' still' : '') + '" data-action="cash-form" role="dialog" aria-modal="true" aria-labelledby="cs-title" novalidate>' +
@@ -9752,10 +9805,10 @@ function renderCashSheet(keepStill){
         'Quanto sobrou na conta conjunta no fim de ' + esc(monthLabel(cs.month)) + '?') +
         ' Com isso o app calcula sozinho o gasto do dia a dia.</p>' +
       '<div class="field"><label for="cs-end">' + (isCur ? 'Tem na conta hoje' : 'Sobrou na conta') + '</label>' +
-        '<input id="cs-end" class="dl-amount" name="end" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" value="' + esc(d.end) + '">' +
+        '<div class="sign-row"><input id="cs-end" class="dl-amount" name="end" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" value="' + esc(d.end) + '">' + '<button type="button" class="btn ghost sign-btn" data-action="cash-sign" data-for="cs-end" aria-label="Trocar o sinal: negativo ou positivo">+/−</button>' + '</div>' +
         (cs.last ? '<p class="field-hint cs-last">Último saldo informado: <strong>' + fmtMoney(cs.last.end) + '</strong> em ' + esc(fmtDate(cs.last.on)) +
           (isCur ? ' (há ' + esc(pluralDias(daysFromTo(cs.last.on, todayStr()))) + ')' : '') + '.</p>' : '') +
-        '<p class="field-hint">Se estiver no negativo (cheque especial), use o sinal de menos: -200.</p></div>' +
+        '<p class="field-hint">Se estiver no negativo (cheque especial), toque em <strong>+/−</strong>: fica -200.</p></div>' +
       startHtml +
       '<p class="field-hint cs-inv-note">Aplicou ou resgatou dinheiro de um investimento? Lance no card <strong>Investimentos</strong>: a conta já desconta a aplicação e soma o resgate.</p>' +
       '<div class="cash-preview" aria-live="polite">' + cashPreviewHtml() + '</div>' +
@@ -10097,6 +10150,7 @@ function cloudRun(tries){
   cloudState = 'syncing'; refreshCloudStatus();
   cloudToken(function(tok, why){
     if (!tok){ cloudDone(why === 'out' ? 'idle' : 'offline'); return; }
+    cloudBankStep(tok, function(){
     cloudHttp('GET', '/rest/v1/nf_estado?id=eq.1&select=versao', null, tok, null, function(st, rows){
       if (st !== 200 || !Array.isArray(rows)){ cloudFail(st); return; }
       if (!rows.length){
@@ -10121,7 +10175,40 @@ function cloudRun(tries){
         else { cloudSync.versao = row.versao; cloudSync.hash = stateHash(STATE); cloudDone('idle'); }
       });
     });
+    });
   });
+}
+// The Banco do Brasil balance (read by the server through Meu Pluggy, twice a day) becomes the
+// account balance of the current month, unless one was told by hand after it was read. Its time
+// is when Meu Pluggy read it at the bank (atualizado_banco: once a day, e.g. 01:24), not when the
+// server fetched it from Meu Pluggy: what left the account after that time is not in it.
+var cloudBankAt = 0;
+function cloudBankStep(tok, next){
+  if (Date.now() - cloudBankAt < 600000){ next(); return; }
+  cloudHttp('GET', '/rest/v1/nf_saldo_banco?id=eq.1&select=saldo,buscado_em,atualizado_banco', null, tok, null, function(st, rows){
+    if (st === 200) cloudBankAt = Date.now();
+    var r = st === 200 && Array.isArray(rows) ? rows[0] : null;
+    if (r && typeof r.saldo === 'number' && isFinite(r.saldo) && typeof r.buscado_em === 'string' && !isNaN(new Date(r.buscado_em).getTime())) applyBankBalance(r);
+    next();
+  });
+}
+function applyBankBalance(r){
+  var bankT = typeof r.atualizado_banco === 'string' ? new Date(r.atualizado_banco).getTime() : NaN;
+  var fetchedT = new Date(r.buscado_em).getTime();
+  var when = new Date(isNaN(bankT) || bankT > fetchedT ? fetchedT : bankT).toISOString(), day = localDay(when), key = day.slice(0, 7);
+  if (key !== monthKeyToday()) return;
+  var cur = cashOf(STATE, key);
+  // newer than this reading: a balance told by hand after it, or a reading of the bank made later
+  var curT = cur && cur.by === 'Banco do Brasil' && cur.bankAt ? cur.bankAt : (cur && cur.updatedAt);
+  if (cur && ((cur.on && cur.on > day) || (curT && curT >= when))) return;
+  var op = {type: 'saveCash', month: key, cash: {end: round2(r.saldo), on: day, bankAt: when}, at: new Date().toISOString(), by: 'Banco do Brasil'};
+  var m0 = STATE.months[key];
+  if (m0 && m0.cash && typeof m0.cash.start === 'number') op.cash.start = m0.cash.start;
+  var prev = STATE, next = applyOp(STATE, op);
+  STATE = next;
+  saveFailed = !saveState(next);
+  logChange(prev, next, 'sync', 'Saldo do Banco do Brasil em ' + fmtDate(day) + ' às ' + auditTime(when) + ': ' + fmtMoney(op.cash.end), {by: 'Banco do Brasil'});
+  render();
 }
 // what came from the other phone goes into this one (and into the history, as from the other phone)
 function cloudApply(merged, byName){
@@ -10169,7 +10256,8 @@ if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.__nf = {
   state: function(){ return STATE; }, op: function(o){ doOp(o); },
   put: function(fn){ var n = clone(STATE); fn(n); STATE = n; saveState(n); },
   data: function(){ return dataOnly(STATE); }, audit: function(){ return auditLog; },
-  session: function(){ return cloudSession; }, expire: function(){ cloudSession.expires_at = 0; }
+  session: function(){ return cloudSession; }, expire: function(){ cloudSession.expires_at = 0; },
+  bankAgain: function(){ cloudBankAt = 0; }
 };
 function renderLoginScreen(){
   var f = loginFlow, body, title, text = '';
@@ -10660,6 +10748,11 @@ function onClick(ev){
     case 'cloud-logout':
       cloudLogout();
       break;
+    case 'toggle-plan':
+      planOpen = !planOpen;
+      savePref(PLAN_VIEW_KEY, planOpen);
+      render();
+      break;
     case 'toggle-ledger':
       ledgerOpen = !ledgerOpen;
       savePref(LEDGER_VIEW_KEY, ledgerOpen);
@@ -10831,6 +10924,17 @@ function onClick(ev){
       break;
     case 'close-cash':
       closeCashSheet();
+      break;
+    case 'cash-sign':
+      // the iPhone's number keyboard has no minus sign: this button puts it in (or takes it out)
+      var sIn = document.getElementById(el.getAttribute('data-for') || '');
+      if (sIn){
+        var sv = String(sIn.value || '').replace(/^\s+/, '');
+        sIn.value = /^[-−–]/.test(sv) ? sv.replace(/^[-−–]\s*/, '') : '-' + sv;
+        var sEv; try { sEv = new Event('input', {bubbles: true}); } catch (e2) { sEv = document.createEvent('Event'); sEv.initEvent('input', true, true); }
+        sIn.dispatchEvent(sEv);
+        try { sIn.focus(); } catch (e3) {}
+      }
       break;
     case 'clear-cash':
       clearCashBalance();
