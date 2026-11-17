@@ -475,6 +475,10 @@ button.pill[data-action="open-status"]::after{content:'';width:8px;height:5px;fl
 .pin-links{margin-top:18px;display:flex;justify-content:center}
 .pin-links .link-btn{font-size:0.9375rem}
 .pin-actions{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+.login-screen .field{margin:12px 0 0}
+.login-screen .field input{width:100%;box-sizing:border-box}
+.lg-qr{display:block;margin:6px auto 4px;background:#fff;padding:8px;border-radius:12px;width:180px;height:180px}
+.lg-secret{font-family:ui-monospace,Menlo,monospace;font-size:0.8125rem;word-break:break-all;color:var(--ink-soft);margin:6px 0 4px}
 .pin-box .field{text-align:left}
 .btn.danger{background:var(--expense);color:var(--on-primary)}
 body.privacy-cover #app{visibility:hidden}
@@ -3276,6 +3280,7 @@ function saveState(state){
   var json = null, ok = false;
   try { json = JSON.stringify(state); localStorage.setItem(STORAGE_KEY, json); ok = true; } catch(e) {}
   try { idbPutState(json || JSON.stringify(state)); } catch(e2) {}
+  try { if (typeof cloudSession !== 'undefined' && cloudSession) cloudMarkDirty(); } catch(e3) {}
   return ok;
 }
 function whoCurrentName(){
@@ -4758,7 +4763,7 @@ var snapIndex = [];
 var snapLoaded = false;
 var SNAP_REASON = {daily:'cópia do dia', 'import':'antes de importar um backup', restore:'antes de recuperar uma cópia', manual:'feita por você', update:'antes desta atualização do app'};
 // the first time a new version of the app opens the data, it keeps a copy of it exactly as it was
-var APP_VERSION = '19';
+var APP_VERSION = '20';
 var APP_VERSION_KEY = 'gflowFinancasAppVersion';
 function keepCopyBeforeUpdate(){
   var seen = null;
@@ -4996,6 +5001,7 @@ function init(){
   reconcileIdbMirror();
   requestPersistentStorage();
   setupOfflineSupport();
+  cloudKick(1200);
 }
 
 /* ---------- per-phone view settings (filters, "próximos vencimentos") ---------- */
@@ -6343,7 +6349,7 @@ var auditShown = 30;
 var auditOpenIds = {};
 var auditConfirm = null;   // {id, part}: the second tap restores something that changed again since
 var AUDIT_VERB_ICON = {add:'＋', del:'🗑', edit:'✎'};
-var AUDIT_KIND_ICON = {'import':'⬇', undo:'↩', restore:'⟲', mirror:'🛟'};
+var AUDIT_KIND_ICON = {'import':'⬇', sync:'☁', undo:'↩', restore:'⟲', mirror:'🛟'};
 var MONEY_TEXT_RE = /-?R\$\s?-?[\d.]+,\d{2}/g;
 // with the values hidden, the amounts in the history are hidden too
 function maskMoneyText(t){ return valuesHidden() ? String(t == null ? '' : t).replace(MONEY_TEXT_RE, HIDDEN_MONEY) : String(t == null ? '' : t); }
@@ -6357,7 +6363,8 @@ function auditDayLabel(iso){
   return d.slice(8, 10) + '/' + d.slice(5, 7) + '/' + d.slice(0, 4);
 }
 function auditTime(iso){ var d = new Date(iso); return pad2(d.getHours()) + ':' + pad2(d.getMinutes()); }
-function revertLabel(verb, kind){ return verb === 'del' ? 'Restaurar' : (verb === 'add' ? (kind === 'import' ? 'Excluir' : 'Desfazer a inclusão') : 'Voltar ao que era'); }
+function fromElsewhere(kind){ return kind === 'import' || kind === 'sync'; }
+function revertLabel(verb, kind){ return verb === 'del' ? 'Restaurar' : (verb === 'add' ? (fromElsewhere(kind) ? 'Excluir' : 'Desfazer a inclusão') : 'Voltar ao que era'); }
 function auditButton(e, part, verb){
   var conf = auditConfirm && auditConfirm.id === e.id && auditConfirm.part === part;
   var label = part != null ? revertLabel(verb, e.kind) : (e.kind === 'restore' && e.count > 1 ? 'Desfazer tudo' : 'Desfazer');
@@ -6374,8 +6381,9 @@ function auditEntryHtml(e){
   var icon = AUDIT_KIND_ICON[e.kind] || AUDIT_VERB_ICON[verb] || '✎';
   var cls = (AUDIT_KIND_ICON[e.kind] ? 'k-' + e.kind : 'v-' + verb) + (e.undone ? ' is-undone' : '');
   var many = e.count > 1 || e.kind === 'import';
+  if (e.kind === 'sync') many = e.count > 1;
   // only what came from elsewhere (a backup, a copy) is undone one thing at a time
-  var byPart = e.kind === 'import' || e.kind === 'restore';
+  var byPart = fromElsewhere(e.kind) || e.kind === 'restore';
   var open = !!auditOpenIds[e.id];
   var html = '<div class="au-entry ' + cls + '" data-au="' + esc(e.id) + '">' +
     '<div class="au-icon" aria-hidden="true">' + icon + '</div>' +
@@ -6398,7 +6406,7 @@ function auditEntryHtml(e){
     }
   }
   if (e.undone) html += '<p class="au-done-note">Desfeito ' + esc(undoneWhen(e.undone)) + '</p>';
-  else if (e.kind === 'import'){
+  else if (fromElsewhere(e.kind) && many){
     if (!open && e.changes) html += '<p class="lg-hint au-import-hint">Abra para desfazer uma coisa de cada vez.</p>';
   }
   else if (e.changes && e.kind !== 'mirror' && e.kind !== 'undo') html += '<div class="au-actions">' + auditButton(e, null, verb) + '</div>';
@@ -6468,8 +6476,8 @@ function auditRevert(id, part){
   }
   auditConfirm = null;
   var line = part != null ? e.lines[part] : null;
-  var fromBackup = e.kind === 'import' && line && line.verb === 'add';
-  var title = line ? (fromBackup ? 'Excluiu o que veio no backup: ' + line.text : undoTitleOf(line, line.text)) :
+  var fromBackup = fromElsewhere(e.kind) && line && line.verb === 'add';
+  var title = line ? (fromBackup ? (e.kind === 'sync' ? 'Excluiu o que veio do outro celular: ' : 'Excluiu o que veio no backup: ') + line.text : undoTitleOf(line, line.text)) :
     (e.undoTitle || undoTitleOf(entryLine(e), e.title));
   var target = undoTarget(e, part);
   var logged = revertEntry(e, part, 'undo', title);
@@ -7026,7 +7034,7 @@ function updatePinDots(){
 // restored from that copy (the next start finishes the erasing instead).
 function wipeThisPhone(){
   try {
-    [STORAGE_KEY, STORAGE_KEY + 'Danificado', PIN_KEY, PIN_PROMPTED_KEY, PIN_WAIT_KEY, LAST_BACKUP_KEY].forEach(function(k){ localStorage.removeItem(k); });
+    [STORAGE_KEY, STORAGE_KEY + 'Danificado', PIN_KEY, PIN_PROMPTED_KEY, PIN_WAIT_KEY, LAST_BACKUP_KEY, CLOUD_SESSION_KEY, CLOUD_SYNC_KEY].forEach(function(k){ localStorage.removeItem(k); });
     localStorage.setItem(WIPE_KEY, '1');
   } catch(e) {}
   STATE = defaultState();
@@ -7057,7 +7065,8 @@ function renderPinScreen(){
   } else if (f.mode === 'forgot'){
     keypad = false;
     title = 'Esqueceu a senha?';
-    text = 'Por segurança, a senha não pode ser recuperada. O único jeito é apagar os dados deste aparelho e depois importar o último backup (Ajustes → Importar backup). Lançamentos feitos aqui depois desse backup serão perdidos.';
+    text = cloudOn() ? 'Por segurança, a senha não pode ser recuperada. O jeito é apagar os dados deste celular e entrar de novo com o e-mail, a senha e o código: os dados voltam da nuvem. Só se perde o que ainda não tinha sido enviado.' :
+      'Por segurança, a senha não pode ser recuperada. O único jeito é apagar os dados deste aparelho e depois importar o último backup (Ajustes → Importar backup). Lançamentos feitos aqui depois desse backup serão perdidos.';
     extra = '<form data-action="pin-wipe-form">' +
       '<div class="field" style="margin:14px 0 0"><label for="wipe-confirm">Para confirmar, digite APAGAR</label><input id="wipe-confirm" name="wipeConfirm" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" placeholder="APAGAR"></div>' +
       '<div class="pin-actions">' +
@@ -7237,7 +7246,7 @@ function renderAlerts(mv, totals){
     '</div>';
   }
   var backupInfo = backupStatusInfo();
-  if (backupInfo.level === 'warn' && hasAnyData(STATE)){
+  if (backupInfo.level === 'warn' && hasAnyData(STATE) && !(cloudOn() && cloudSession)){
     html += '<div class="alert-banner warn">' +
       '<span class="alert-icon" aria-hidden="true">💾</span>' +
       '<div class="alert-body">' +
@@ -7256,7 +7265,9 @@ function footerNote(){
   return 'Última alteração' + (STATE.meta.updatedBy ? ' de ' + STATE.meta.updatedBy : '') + ' em ' + ds + ' · dados salvos neste aparelho.';
 }
 function footerHtml(){
-  return '<p class="footer-note">' + esc(footerNote()) + ' <button type="button" class="link-btn" data-action="open-audit">Ver alterações</button></p>';
+  var note = footerNote();
+  if (cloudOn() && cloudSession) note = note.replace(/dados salvos neste aparelho\.?$/, 'na nuvem e neste celular.');
+  return '<p class="footer-note">' + esc(note) + ' <button type="button" class="link-btn" data-action="open-audit">Ver alterações</button></p>';
 }
 function renderHeader(h, isCurrent){
   return '<header class="header">' +
@@ -8770,8 +8781,9 @@ function renderBackup(){
   }
   return '<section class="card">' +
     '<div class="card-head"><div class="card-head-main"><span class="card-icon" aria-hidden="true">💾</span><h2 class="card-title">Backup</h2></div></div>' +
+    (cloudOn() && cloudSession ? '<p class="empty-note" style="padding-bottom:10px">Os dados já ficam na nuvem e neste celular. O backup em arquivo é opcional: uma cópia a mais, guardada por você.</p>' :
     '<p class="empty-note" style="padding-bottom:6px">Os dados ficam só neste aparelho. Para juntar com o outro celular, exporte aqui e importe lá.</p>' +
-    '<p class="backup-status ' + info.level + '" style="padding-bottom:10px">' + esc(info.text) + '</p>' +
+    '<p class="backup-status ' + info.level + '" style="padding-bottom:10px">' + esc(info.text) + '</p>') +
     '<div class="sheet-actions" style="margin-top:0">' +
       '<button type="button" class="btn ghost" data-action="export-backup">Exportar backup</button>' +
       '<button type="button" class="btn ghost" data-action="import-backup">Importar backup</button>' +
@@ -9902,6 +9914,311 @@ function restoreFocus(container, info){
 }
 
 /* ---------- main render ---------- */
+/* ---------- nuvem (Supabase): login com código de 6 dígitos e sincronização ---------- */
+// The two phones share one copy of the data in Supabase. Only the two e-mails of the couple, after
+// e-mail + password + the 6-digit code (aal2), can read or write it (the rules are in the database).
+// The data stays on the phone too: the app works without internet and sends what changed later.
+var CLOUD = {url: 'https://dsexphlgodenzmnqgepv.supabase.co', key: 'sb_publishable_HhXg0OI6nspY3e_ml-3bEA_rypzZ3Zt'};
+var CLOUD_SESSION_KEY = 'gflowFinancasNuvem';
+var CLOUD_SYNC_KEY = 'gflowFinancasNuvemSync';
+function cloudOn(){ return !!(CLOUD && CLOUD.url); }
+var cloudSession = loadPref(CLOUD_SESSION_KEY, null, function(v){ return !!v && typeof v.refresh_token === 'string' && typeof v.access_token === 'string'; });
+var cloudSync = loadPref(CLOUD_SYNC_KEY, {versao: 0, hash: '', at: null}, function(v){ return !!v && typeof v.versao === 'number'; });
+// what was last sent/received, as a fingerprint: anything different on this phone is still to send
+var cloudHashCache = {obj: null, hash: ''};
+function stateHash(s){
+  if (cloudHashCache.obj !== s){ cloudHashCache = {obj: s, hash: sha256Hex(dataOnly(s))}; }
+  return cloudHashCache.hash;
+}
+function cloudDirty(){ return hasAnyData(STATE) && stateHash(STATE) !== cloudSync.hash; }
+var cloudState = 'idle';   // idle | syncing | offline | error
+var cloudBusy = false, cloudTimer = null, cloudApplying = false, cloudRefreshing = null;
+var loginFlow = null;      // {step:'login'|'mfa'|'enroll', email, error, busy, factorId, totp}
+function saveCloudSync(){ savePref(CLOUD_SYNC_KEY, cloudSync); }
+function cloudHttp(method, path, body, token, headers, cb){
+  var x;
+  try { x = new XMLHttpRequest(); x.open(method, CLOUD.url + path, true); } catch(e){ cb(0, null); return; }
+  x.timeout = 20000;
+  x.setRequestHeader('apikey', CLOUD.key);
+  x.setRequestHeader('Authorization', 'Bearer ' + (token || CLOUD.key));
+  if (body != null) x.setRequestHeader('Content-Type', 'application/json');
+  Object.keys(headers || {}).forEach(function(h){ x.setRequestHeader(h, headers[h]); });
+  var done = false;
+  function fin(){
+    if (done) return; done = true;
+    var json = null;
+    try { json = x.responseText ? JSON.parse(x.responseText) : null; } catch(e2){ json = null; }
+    cb(x.status || 0, json);
+  }
+  x.onload = fin; x.onerror = fin; x.ontimeout = fin; x.onabort = fin;
+  try { x.send(body != null ? JSON.stringify(body) : null); } catch(e3){ fin(); }
+}
+function sessionFrom(j, email){
+  if (!j || typeof j.access_token !== 'string' || typeof j.refresh_token !== 'string') return null;
+  var exp = typeof j.expires_at === 'number' ? j.expires_at : Math.floor(Date.now() / 1000) + (j.expires_in || 3600);
+  return {access_token: j.access_token, refresh_token: j.refresh_token, expires_at: exp,
+    email: String((j.user && j.user.email) || email || '').slice(0, 120)};
+}
+function setCloudSession(s){
+  cloudSession = s;
+  if (s) savePref(CLOUD_SESSION_KEY, s); else { try { localStorage.removeItem(CLOUD_SESSION_KEY); } catch(e) {} }
+}
+// a valid access token (refreshed when about to expire); null when offline or the session ended
+function cloudToken(cb){
+  if (!cloudSession){ cb(null, 'out'); return; }
+  if (cloudSession.expires_at - 60 > Date.now() / 1000){ cb(cloudSession.access_token); return; }
+  if (cloudRefreshing){ cloudRefreshing.push(cb); return; }
+  cloudRefreshing = [cb];
+  cloudHttp('POST', '/auth/v1/token?grant_type=refresh_token', {refresh_token: cloudSession.refresh_token}, null, null, function(st, j){
+    var waiting = cloudRefreshing; cloudRefreshing = null;
+    var s = st === 200 ? sessionFrom(j, cloudSession && cloudSession.email) : null;
+    var why = null;
+    if (s) setCloudSession(s);
+    else if (st >= 400 && st < 500){ cloudSignedOut('Sua sessão terminou. Entre de novo.'); why = 'out'; }
+    else why = 'offline';
+    waiting.forEach(function(f){ f(s ? s.access_token : null, why); });
+  });
+}
+function cloudSignedOut(msg){
+  setCloudSession(null);
+  loginFlow = {step: 'login', error: msg || ''};
+  render();
+}
+/* -- login -- */
+function loginError(st, j, fallback){
+  if (!st) return 'Sem internet. Conecte-se e tente de novo.';
+  if (st === 429) return 'Muitas tentativas. Aguarde alguns minutos e tente de novo.';
+  return fallback;
+}
+function loginSubmit(form){
+  var email = String(form.email.value || '').trim(), pass = String(form.password.value || '');
+  if (!email || !pass){ loginFlow = {step: 'login', email: email, error: 'Digite o e-mail e a senha.'}; render(); return; }
+  loginFlow = {step: 'login', email: email, busy: true}; render();
+  cloudHttp('POST', '/auth/v1/token?grant_type=password', {email: email, password: pass}, null, null, function(st, j){
+    var s = st === 200 ? sessionFrom(j, email) : null;
+    if (!s){ loginFlow = {step: 'login', email: email, error: loginError(st, j, 'E-mail ou senha incorretos.')}; render(); return; }
+    var factors = (j.user && j.user.factors) || [];
+    var ok = factors.filter(function(f){ return f && f.factor_type === 'totp' && f.status === 'verified'; })[0];
+    if (ok){ loginFlow = {step: 'mfa', email: email, tmp: s, factorId: ok.id}; render(); return; }
+    // first time on this account: register the code (unfinished tries are removed first)
+    var stale = factors.filter(function(f){ return f && f.factor_type === 'totp' && f.status !== 'verified'; });
+    (function next(){
+      var f = stale.shift();
+      if (f){ cloudHttp('DELETE', '/auth/v1/factors/' + encodeURIComponent(f.id), null, s.access_token, null, function(){ next(); }); return; }
+      cloudHttp('POST', '/auth/v1/factors', {factor_type: 'totp', issuer: 'Nossas Finanças', friendly_name: 'Nossas Finanças ' + Date.now()}, s.access_token, null, function(st2, j2){
+        var t = st2 === 200 && j2 && j2.totp ? j2.totp : null;
+        if (!t){ loginFlow = {step: 'login', email: email, error: loginError(st2, j2, 'Não consegui preparar o código de 6 dígitos. Tente de novo.')}; render(); return; }
+        loginFlow = {step: 'enroll', email: email, tmp: s, factorId: j2.id,
+          totp: {qr: /^data:image\/svg\+xml/.test(t.qr_code || '') ? t.qr_code : '', secret: String(t.secret || ''), uri: /^otpauth:\/\//.test(t.uri || '') ? t.uri : ''}};
+        render();
+      });
+    })();
+  });
+}
+function codeSubmit(form){
+  var f = loginFlow;
+  if (!f || !f.tmp) return;
+  var code = String(form.code.value || '').replace(/\D/g, '');
+  if (code.length !== 6){ f.error = 'Digite os 6 números do código.'; render(); return; }
+  f.busy = true; f.error = ''; render();
+  var tok = f.tmp.access_token, fid = encodeURIComponent(f.factorId);
+  cloudHttp('POST', '/auth/v1/factors/' + fid + '/challenge', {}, tok, null, function(st, j){
+    if (st !== 200 || !j || !j.id){ f.busy = false; f.error = loginError(st, j, 'Não consegui conferir o código. Tente de novo.'); render(); return; }
+    cloudHttp('POST', '/auth/v1/factors/' + fid + '/verify', {challenge_id: j.id, code: code}, tok, null, function(st2, j2){
+      var s = st2 === 200 ? sessionFrom(j2, f.email) : null;
+      if (!s){ f.busy = false; f.error = loginError(st2, j2, 'Código incorreto ou vencido. Confira o código no app e tente de novo.'); render(); return; }
+      setCloudSession(s);
+      loginFlow = null;
+      // another account on this phone before: start over the version it knew
+      cloudSync = {versao: 0, hash: '', at: null};
+      saveCloudSync();
+      toastMsg = 'Pronto, conectado. Os dados vão ficar iguais nos dois celulares.';
+      render();
+      cloudKick(0);
+    });
+  });
+}
+function cloudLogout(){
+  var s = cloudSession;
+  if (s) cloudHttp('POST', '/auth/v1/logout?scope=local', {}, s.access_token, null, function(){});
+  cloudSignedOut('');
+}
+/* -- sync -- */
+function canonJSON(v){
+  if (v === null || typeof v !== 'object') return JSON.stringify(v === undefined ? null : v);
+  if (Array.isArray(v)) return '[' + v.map(canonJSON).join(',') + ']';
+  return '{' + Object.keys(v).sort().filter(function(k){ return v[k] !== undefined; }).map(function(k){ return JSON.stringify(k) + ':' + canonJSON(v[k]); }).join(',') + '}';
+}
+function dataOnly(s){ var c = clone(s); delete c.meta; return canonJSON(c); }
+// something is being typed or a window is open: the screen is not redrawn under it
+function uiBusy(){
+  if (pinFlow || loginFlow || sheetOpen || addingFixed || editingPerson || editingFixedId || editingVariable || launchingRecurring ||
+    addingIncomeFor || editingIncomeId || invSheet || statusSheet || dailySheet || amortSheet || cashSheet || fixedDel) return true;
+  var a = document.activeElement;
+  return !!(a && appEl && appEl.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName));
+}
+function cloudKick(delay){
+  if (!cloudOn() || !cloudSession) return;
+  clearTimeout(cloudTimer);
+  cloudTimer = setTimeout(function(){ cloudTimer = null; cloudRun(); }, delay == null ? 1500 : delay);
+}
+function cloudMarkDirty(){
+  if (!cloudOn() || cloudApplying) return;
+  cloudKick(1500);
+}
+function cloudDone(state){
+  cloudBusy = false;
+  var was = cloudState;
+  cloudState = state;
+  if (state === 'idle'){ cloudSync.at = new Date().toISOString(); saveCloudSync(); }
+  if (was !== state || state === 'idle') refreshCloudStatus();
+}
+// only the status lines are touched (nothing being typed is redrawn)
+function refreshCloudStatus(){
+  if (!appEl) return;
+  var els = appEl.querySelectorAll('.cloud-status');
+  for (var i = 0; i < els.length; i++) els[i].textContent = cloudStatusText();
+}
+function cloudStatusText(){
+  if (cloudState === 'syncing') return 'Sincronizando…';
+  if (cloudState === 'offline') return 'Sem internet: salvo neste celular. Envio quando a internet voltar.';
+  if (cloudState === 'error') return 'Não consegui sincronizar agora. Tento de novo em instantes.';
+  if (cloudDirty()) return 'Alterações deste celular ainda não enviadas.';
+  if (!cloudSync.at) return 'Ainda não sincronizado.';
+  var d = new Date(cloudSync.at);
+  return 'Sincronizado ' + (localDay(cloudSync.at) === todayStr() ? 'hoje' : 'em ' + pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1)) + ' às ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + '.';
+}
+function cloudRun(tries){
+  tries = tries || 0;
+  if (!cloudOn() || !cloudSession || cloudBusy) return;
+  if (document.hidden) return;
+  if (uiBusy()){ cloudKick(3000); return; }
+  cloudBusy = true;
+  cloudState = 'syncing'; refreshCloudStatus();
+  cloudToken(function(tok, why){
+    if (!tok){ cloudDone(why === 'out' ? 'idle' : 'offline'); return; }
+    cloudHttp('GET', '/rest/v1/nf_estado?id=eq.1&select=versao', null, tok, null, function(st, rows){
+      if (st !== 200 || !Array.isArray(rows)){ cloudFail(st); return; }
+      if (!rows.length){
+        if (!hasAnyData(STATE)){ cloudSync.versao = 0; cloudDone('idle'); return; }
+        cloudWrite(tok, 'POST', STATE, 0, tries);
+        return;
+      }
+      var v = rows[0].versao;
+      if (v === cloudSync.versao){
+        if (!cloudDirty()){ cloudDone('idle'); return; }
+        cloudWrite(tok, 'PATCH', STATE, v, tries);
+        return;
+      }
+      cloudHttp('GET', '/rest/v1/nf_estado?id=eq.1&select=dados,versao,atualizado_nome', null, tok, null, function(st2, rows2){
+        if (st2 !== 200 || !Array.isArray(rows2) || !rows2.length){ cloudFail(st2); return; }
+        var row = rows2[0];
+        if (uiBusy()){ cloudBusy = false; cloudState = 'idle'; cloudKick(3000); return; }
+        var remote, merged;
+        try { remote = normalizeState(row.dados); merged = mergeState(remote, STATE); } catch(eM){ cloudDone('error'); return; }
+        if (dataOnly(merged) !== dataOnly(STATE)) cloudApply(merged, row.atualizado_nome);
+        if (dataOnly(merged) !== dataOnly(remote)) cloudWrite(tok, 'PATCH', merged, row.versao, tries);
+        else { cloudSync.versao = row.versao; cloudSync.hash = stateHash(STATE); cloudDone('idle'); }
+      });
+    });
+  });
+}
+// what came from the other phone goes into this one (and into the history, as from the other phone)
+function cloudApply(merged, byName){
+  var prev = STATE;
+  merged.meta = {updatedAt: new Date().toISOString(), updatedBy: typeof byName === 'string' ? byName.slice(0, 40) : null};
+  cloudApplying = true;
+  STATE = merged;
+  saveFailed = !saveState(merged);
+  cloudApplying = false;
+  var other = typeof byName === 'string' && byName ? byName.slice(0, 40) : 'Outro celular';
+  logChange(prev, merged, 'sync', null, {by: other});
+  render();
+}
+function cloudWrite(tok, method, state, versao, tries){
+  var body = {dados: state, versao: versao + 1, atualizado_nome: whoCurrentName()};
+  var sentHash = stateHash(state);
+  var path = '/rest/v1/nf_estado';
+  if (method === 'POST') body.id = 1; else path += '?id=eq.1&versao=eq.' + versao;
+  cloudHttp(method, path, body, tok, {'Prefer': 'return=representation'}, function(st, rows){
+    var ok = (st === 200 || st === 201) && Array.isArray(rows) && rows.length;
+    if (ok){
+      cloudSync.versao = rows[0].versao; cloudSync.hash = sentHash; cloudDone('idle');
+      if (cloudDirty()) cloudKick(1500);   // changed again while it was being sent
+      return;
+    }
+    // someone wrote first (or the version moved): read again and join
+    if ((st === 409 || (st >= 200 && st < 300) || (rows && rows.code === '40001')) && tries < 3){
+      cloudBusy = false; cloudSync.versao = -1; cloudRun(tries + 1); return;
+    }
+    cloudFail(st);
+  });
+}
+function cloudFail(st){
+  if (st === 401){ cloudBusy = false; cloudSession.expires_at = 0; cloudKick(2000); return; }
+  cloudDone(st ? 'error' : 'offline');
+  cloudKick(st ? 30000 : 15000);
+}
+setInterval(function(){ if (!document.hidden) cloudKick(0); }, 45000);
+try { window.addEventListener('online', function(){ cloudKick(0); }); } catch(eOn) {}
+try { document.addEventListener('visibilitychange', function(){ if (!document.hidden) cloudKick(300); }); } catch(eVis2) {}
+if (cloudOn() && !cloudSession) loginFlow = {step: 'login'};
+// tests only (the page opened from this computer): a handle on the inside
+if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.__nf = {
+  kick: function(){ cloudKick(0); }, idle: function(){ return !cloudBusy && cloudState !== 'syncing' && !cloudTimer; },
+  state: function(){ return STATE; }, op: function(o){ doOp(o); },
+  put: function(fn){ var n = clone(STATE); fn(n); STATE = n; saveState(n); },
+  data: function(){ return dataOnly(STATE); }, audit: function(){ return auditLog; },
+  session: function(){ return cloudSession; }, expire: function(){ cloudSession.expires_at = 0; }
+};
+function renderLoginScreen(){
+  var f = loginFlow, body, title, text = '';
+  var err = f.error ? '<p class="pin-error" role="alert">' + esc(f.error) + '</p>' : '';
+  var dis = f.busy ? ' disabled' : '';
+  var codeField = '<div class="field" style="text-align:left"><label for="lg-code">Código de 6 dígitos</label>' +
+    '<input id="lg-code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" placeholder="000000"></div>';
+  if (f.step === 'login'){
+    title = 'Entrar';
+    text = 'Use o e-mail e a senha criados para vocês.';
+    body = '<form data-action="login-form" novalidate>' +
+      '<div class="field" style="text-align:left"><label for="lg-email">E-mail</label><input id="lg-email" name="email" type="email" autocomplete="username" autocapitalize="off" value="' + esc(f.email || '') + '"></div>' +
+      '<div class="field" style="text-align:left"><label for="lg-pass">Senha</label><input id="lg-pass" name="password" type="password" autocomplete="current-password"></div>' +
+      err + '<div class="pin-actions"><button type="submit" class="btn primary"' + dis + '>' + (f.busy ? 'Entrando…' : 'Entrar') + '</button></div></form>';
+  } else if (f.step === 'mfa'){
+    title = 'Código de 6 dígitos';
+    text = 'Abra o app onde você guardou o código (Senhas do iPhone, Google Authenticator…) e digite o código de Nossas Finanças.';
+    body = '<form data-action="code-form" novalidate>' + codeField + err +
+      '<div class="pin-actions"><button type="submit" class="btn primary"' + dis + '>' + (f.busy ? 'Conferindo…' : 'Confirmar') + '</button>' +
+      '<button type="button" class="btn ghost" data-action="login-restart">Entrar com outro e-mail</button></div></form>';
+  } else {
+    var t = f.totp || {};
+    title = 'Ative o código de 6 dígitos';
+    text = 'Só desta vez: guarde o código num app de códigos. Depois, ele pede o código só ao entrar num celular novo.';
+    body = (t.uri ? '<a class="btn primary" style="display:block;text-decoration:none" href="' + esc(t.uri) + '">Adicionar ao app Senhas</a>' : '') +
+      '<p class="pin-text" style="margin-top:14px">Ou, em outro app (Google Authenticator, Microsoft…), leia o QR code ou copie a chave:</p>' +
+      (t.qr ? '<img class="lg-qr" src="' + esc(t.qr) + '" alt="QR code do código de 6 dígitos" width="180" height="180">' : '') +
+      '<p class="lg-secret">' + esc(t.secret || '') + ' <button type="button" class="link-btn" data-action="copy-secret">Copiar</button></p>' +
+      '<form data-action="code-form" novalidate>' + codeField + err +
+      '<div class="pin-actions"><button type="submit" class="btn primary"' + dis + '>' + (f.busy ? 'Conferindo…' : 'Confirmar') + '</button>' +
+      '<button type="button" class="btn ghost" data-action="login-restart">Voltar</button></div></form>';
+  }
+  return '<div class="pin-screen login-screen" role="dialog" aria-modal="true" aria-label="' + esc(title) + '"><div class="pin-box">' +
+    '<div class="pin-lock" aria-hidden="true">☁️</div><h1 class="pin-app">Nossas Finanças</h1>' +
+    '<h2 class="pin-title">' + esc(title) + '</h2>' + (text ? '<p class="pin-text">' + esc(text) + '</p>' : '') + body +
+  '</div></div>';
+}
+function renderCloudCard(){
+  if (!cloudOn() || !cloudSession) return '';
+  return '<section class="card" id="sec-nuvem">' +
+    '<div class="card-head"><div class="card-head-main"><span class="card-icon" aria-hidden="true">☁️</span><h2 class="card-title">Nuvem</h2></div></div>' +
+    '<p class="empty-note" style="padding-bottom:6px">Conectado como <strong>' + esc(cloudSession.email || '') + '</strong>. Os dados ficam iguais nos dois celulares.</p>' +
+    '<p class="backup-status ok cloud-status" style="padding-bottom:10px">' + esc(cloudStatusText()) + '</p>' +
+    '<div class="sheet-actions" style="margin-top:0">' +
+      '<button type="button" class="btn ghost" data-action="cloud-sync">Sincronizar agora</button>' +
+      '<button type="button" class="btn ghost" data-action="cloud-logout">Sair deste celular</button>' +
+    '</div></section>';
+}
+
 var isRendering = false;
 var renderQueued = false;
 function render(){
@@ -9951,6 +10268,16 @@ function renderNow(){
     // Locked (or creating the password): nothing of the app is drawn behind this screen.
     appEl.innerHTML = renderPinScreen();
     if (!eventsBound){ bindEvents(appEl); eventsBound = true; }
+    return;
+  }
+  // online version: nothing of the app shows before e-mail + password + the 6-digit code
+  if (cloudOn() && !cloudSession && !loginFlow) loginFlow = {step: 'login'};
+  if (loginFlow){
+    var focusedId = document.activeElement && document.activeElement.id;
+    appEl.innerHTML = renderLoginScreen();
+    if (!eventsBound){ bindEvents(appEl); eventsBound = true; }
+    var fEl = (focusedId && document.getElementById(focusedId)) || appEl.querySelector(loginFlow.step === 'login' ? (loginFlow.email ? '#lg-pass' : '#lg-email') : '#lg-code');
+    if (fEl && !loginFlow.busy) try { fEl.focus(); } catch(eF) {}
     return;
   }
   var prevFocus = captureFocus(appEl);
@@ -10050,6 +10377,7 @@ function renderMainScreen(sheetWasOpen){
   html += renderInvestments(h, mv);
   html += '<p class="section-divider">Ajustes</p>';
   html += '<div id="sec-ajustes">' +
+    renderCloudCard() +
     renderNamesCard() +
     renderAppearance() +
     renderPinSettings() +
@@ -10318,6 +10646,19 @@ function onClick(ev){
       break;
     case 'chart-pick':
       pickChartMonth(el, !!(ev && ev.fromKeyboard));
+      break;
+    case 'login-restart':
+      loginFlow = {step: 'login', email: loginFlow && loginFlow.email};
+      render();
+      break;
+    case 'copy-secret':
+      try { navigator.clipboard.writeText(loginFlow && loginFlow.totp ? loginFlow.totp.secret : ''); toastMsg = 'Chave copiada.'; } catch(eCp) {}
+      break;
+    case 'cloud-sync':
+      cloudKick(0);
+      break;
+    case 'cloud-logout':
+      cloudLogout();
       break;
     case 'toggle-ledger':
       ledgerOpen = !ledgerOpen;
@@ -10982,6 +11323,8 @@ function onSubmit(ev){
     saveWheelForm(form);
     return;
   }
+  if (action === 'login-form'){ ev.preventDefault(); if (!(loginFlow && loginFlow.busy)) loginSubmit(form); return; }
+  if (action === 'code-form'){ ev.preventDefault(); if (!(loginFlow && loginFlow.busy)) codeSubmit(form); return; }
   if (action === 'pin-wipe-form'){
     ev.preventDefault();
     var wipeBtn = form.querySelector('[data-action="pin-wipe"]');
