@@ -154,8 +154,8 @@ button{cursor:pointer}
 .alert-banner .alert-title{font-weight:700;margin-bottom:2px}
 .alert-banner.danger{background:var(--expense-soft);color:var(--expense)}
 .alert-banner.warn{background:var(--warning-soft);color:var(--warning-ink)}
-.alert-banner .link-btn{color:inherit;opacity:.88}
-.alert-banner .link-btn:hover{opacity:1;color:inherit}
+.alert-banner .link-btn{color:inherit}
+.alert-banner .link-btn:hover{color:inherit}
 
 .section-divider{display:flex;align-items:center;gap:10px;margin:28px 0 14px;color:var(--ink-soft);font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
 .section-divider::after{content:'';flex:1;height:1px;background:var(--border)}
@@ -567,6 +567,7 @@ body.privacy-cover::after{content:'🔒';position:fixed;inset:0;display:flex;ali
 .qn-pill.qn-charts:hover,.qn-pill.qn-charts:focus-visible{border-color:var(--primary)}
 /* the joint account's balance: quick access (its block and its sheet are below) */
 .qn-pill.qn-cash{background:var(--surface);border-color:var(--primary);color:var(--primary);font-family:inherit;cursor:pointer}
+.qn-pill.qn-share{background:var(--surface);border-color:var(--primary);color:var(--primary)}
 /* day-to-day spending entered by hand (older entries): their block in "Contas variáveis" */
 .daily-block{margin-top:12px;border:1px solid var(--border);border-radius:12px;overflow:hidden}
 .daily-head{width:100%;display:flex;align-items:center;gap:10px;padding:11px 12px;border:none;background:var(--surface-2);color:var(--ink);font-family:inherit;text-align:left}
@@ -595,11 +596,15 @@ label .opt{font-weight:400;color:var(--ink-soft)}
 .cp-text{flex:1 1 220px;margin:0;font-size:0.8125rem;line-height:1.45;color:var(--ink-soft)}
 .cp-text strong{color:var(--ink)}
 .cash-ledger .cl-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:4px}
+.cash-ledger .lg-toggle{display:inline-block;margin-top:8px}
 .cl-title{font-size:0.875rem;font-weight:700}
 .lg-line.lg-sub{border-top:1px dashed var(--border);margin-top:2px;padding-top:5px}
 .lg-hint.warn{color:var(--expense)}
 .cash-forecast .lg-total .lg-amt{font-size:0.9375rem}
 .inc-fell{border:none;margin:10px 0 0;padding:0}
+.inc-day-row{display:flex;gap:8px;align-items:center}
+.inc-day-row select{flex:1;min-width:0}
+.lg-note{margin:-2px 0 6px;font-size:0.8125rem;color:var(--ink-soft);line-height:1.4}
 .inc-fell legend{font-size:0.8125rem;font-weight:700;color:var(--ink-soft);margin-bottom:4px;padding:0}
 .inc-fell .check-field{display:flex;align-items:center;gap:10px;margin:0;padding:6px 0;font-size:0.9375rem;font-weight:600;color:var(--ink);cursor:pointer}
 .inc-fell .check-field input{width:18px;height:18px;accent-color:var(--primary);flex:none;margin:0}
@@ -755,6 +760,8 @@ label .opt{font-weight:400;color:var(--ink-soft)}
 .chart-sub{font-size:0.8125rem;color:var(--ink-soft);margin:-6px 0 10px;line-height:1.5}
 .chart-sub strong{color:var(--ink)}
 .chart-caption{font-size:0.75rem;color:var(--ink-soft);margin:-4px 0 10px;line-height:1.45}
+.link-btn.chart-how{display:block;font-size:0.75rem;margin:-4px 0 10px;text-align:left}
+.chart-how + .chart-caption{margin-top:-4px}
 .chart-hero{font-variant-numeric:tabular-nums;font-size:1.75rem;font-weight:700;line-height:1.15;margin:-4px 0 4px;word-break:break-word}
 .chart-hero.zero{color:var(--income)}
 .chart-hero + .chart-sub{margin-top:0}
@@ -1604,6 +1611,9 @@ function normalizeState(s){
           // the day it falls (1-31) and, for that month only, "Já caiu" / "Ainda não caiu"
           if (typeof e.day === 'string' && /^\d{1,2}$/.test(e.day)) e.day = parseInt(e.day, 10);
           if ('day' in e && !incomeDay(e)) delete e.day;
+          if (typeof e.bday === 'string' && /^\d{1,2}$/.test(e.bday)) e.bday = parseInt(e.bday, 10);
+          if ('bday' in e && !incomeBday(e)) delete e.bday;
+          if (incomeBday(e)) delete e.day;
           if ('fell' in e && e.fell !== 'no' && !ISO_DATE_RE.test(e.fell || '')) delete e.fell;
         });
       }
@@ -2217,25 +2227,42 @@ function computeMonthTotals(h, mv, key){
     var ownStart = (typeof mv.cash.start === 'number' && isFinite(mv.cash.start)) ? mv.cash.start : null;
     var start = prevEnd != null ? prevEnd : (ownStart != null ? ownStart : 0);
     var paidOut = 0, paidCount = 0, paidAfter = 0, paidAfterCount = 0, on = mv.cash.on || null;
+    // The balance is what the account had on its date: the day-to-day spending is worked out up
+    // to that day. What happened after it (a bill paid, income that fell, an investment) is not
+    // in the balance yet: it is kept apart, for "Até o fim do mês".
     // what left the account this month: the bills paid in it, whatever month they belong to
     var paidHere = (mv.payHere || []).filter(function(b){
       return b.paid && !b.daily && b.eff === key && !(b.paidOn && b.paidOn.slice(0, 7) < key);
     }).concat(mv.paidAhead || []);
     paidHere.forEach(function(b){
-      paidOut += b.total; paidCount++;
       if (on && b.paidOn && b.paidOn > on){ paidAfter += b.total; paidAfterCount++; }
+      else { paidOut += b.total; paidCount++; }
+    });
+    // investments: up to the balance's date / after it
+    var invInOn = 0, invOutOn = 0, invInAfter = 0, invOutAfter = 0;
+    (mv.invMoves || []).forEach(function(ev){
+      var inA = ev.kind === 'in' ? ev.amount : (ev.kind === 'val' ? (ev.cashIn || 0) : 0);
+      var outA = ev.kind === 'out' ? ev.amount : (ev.kind === 'val' ? (ev.cashOut || 0) : 0);
+      if (on && ev.date > on){ invInAfter += inA; invOutAfter += outA; }
+      else { invInOn += inA; invOutOn += outA; }
     });
     // only the income already in on the balance's date (the rest comes later: it isn't
     // day-to-day spending)
     var split = incomeSplit(mv.income, key, on || lastDayIso(key));
-    var expected = start + split.inn + invRedeemed - paidOut - invApplied;
+    var expected = start + split.inn + invOutOn - paidOut - invInOn;
     var spent = round2(expected - mv.cash.end);
+    // the month before was last told before its last day: the start is that balance, not
+    // what was left at the end of that month
+    var startOn = (prevEnd != null && mv.cashPrev.on) ? mv.cashPrev.on : null;
     cash = {start: round2(start), startKnown: prevEnd != null || ownStart != null,
       startFrom: prevEnd != null ? shiftMonth(key, -1) : null,
+      startOn: startOn, startPartial: !!(startOn && startOn < lastDayIso(shiftMonth(key, -1))),
       income: split.inn, incomeLater: split.later, laterParts: split.laterParts,
-      redeemed: invRedeemed, paid: round2(paidOut), paidCount: paidCount,
-      applied: invApplied, expected: round2(expected), end: mv.cash.end, on: on, spent: spent,
-      manual: round2(t.daily), paidAfter: round2(paidAfter), paidAfterCount: paidAfterCount};
+      redeemed: round2(invOutOn), paid: round2(paidOut), paidCount: paidCount,
+      applied: round2(invInOn), expected: round2(expected), end: mv.cash.end, on: on, spent: spent,
+      partial: !!(on && on < lastDayIso(key)),
+      manual: round2(t.daily), paidAfter: round2(paidAfter), paidAfterCount: paidAfterCount,
+      invInAfter: round2(invInAfter), invOutAfter: round2(invOutAfter)};
     daily = spent;          // below zero: money came in that was not entered
   }
   var saldo = totalIncome - t.fixed - totalVariable - daily - totalInvestments;
@@ -2506,16 +2533,63 @@ function incomeDay(e){
   var d = e ? e.day : null;
   return (typeof d === 'number' && isFinite(d) && Math.floor(d) === d && d >= 1 && d <= 31) ? d : null;
 }
+// The Nth business day of the month an income falls on ("5º dia útil"), or null
+function incomeBday(e){
+  var d = e ? e.bday : null;
+  return (typeof d === 'number' && isFinite(d) && Math.floor(d) === d && d >= 1 && d <= 23) ? d : null;
+}
 // a copy of an income for another month keeps its day (not "Já caiu" / "Ainda não caiu")
 function withIncomeDay(copy, e){
-  var d = incomeDay(e);
-  if (d) copy.day = d;
+  var d = incomeDay(e), bd = incomeBday(e);
+  if (bd) copy.bday = bd; else if (d) copy.day = d;
   return copy;
 }
-// The date an income falls in the month `key` (the day kept inside the month: 31 → 30/11)
+// The date an income falls in the month `key` (the day kept inside the month: 31 → 30/11; the Nth
+// business day counted from Monday to Friday, without the national holidays)
 function incomeDate(e, key){
+  var bd = incomeBday(e);
+  if (bd) return nthBusinessDay(key, bd);
   var d = incomeDay(e);
   return d ? dateInMonth(key, d) : null;
+}
+// "dia 20", "5º dia útil"
+function incomeWhen(e){
+  var bd = incomeBday(e);
+  if (bd) return bd + 'º dia útil';
+  var d = incomeDay(e);
+  return d ? 'dia ' + d : '';
+}
+// Days without banks in Brazil: national holidays, Carnaval (Monday and Tuesday), Good Friday and
+// Corpus Christi
+var holidayCache = {};
+function holidaysOf(year){
+  if (holidayCache[year]) return holidayCache[year];
+  // Easter (Gregorian computus)
+  var a = year % 19, b = Math.floor(year / 100), c = year % 100, d = Math.floor(b / 4), e = b % 4;
+  var f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30;
+  var i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451);
+  var month = Math.floor((h + l - 7 * m + 114) / 31), day = ((h + l - 7 * m + 114) % 31) + 1;
+  var easter = new Date(year, month - 1, day, 12);
+  function shift(n){ var t = new Date(easter.getTime()); t.setDate(t.getDate() + n); return t.getFullYear() + '-' + pad2(t.getMonth() + 1) + '-' + pad2(t.getDate()); }
+  var set = {};
+  ['01-01', '04-21', '05-01', '09-07', '10-12', '11-02', '11-15', '11-20', '12-25'].forEach(function(md){ set[year + '-' + md] = true; });
+  [-48, -47, -2, 60].forEach(function(n){ set[shift(n)] = true; });
+  holidayCache[year] = set;
+  return set;
+}
+// the Nth business day of the month `key` (after the last one, the month's last business day)
+function nthBusinessDay(key, n){
+  var y = parseInt(key.slice(0, 4), 10), mo = parseInt(key.slice(5, 7), 10);
+  var hol = holidaysOf(y), last = null, count = 0;
+  var dim = new Date(y, mo, 0).getDate();
+  for (var dd = 1; dd <= dim; dd++){
+    var wd = new Date(y, mo - 1, dd, 12).getDay();
+    var iso = key + '-' + pad2(dd);
+    if (wd === 0 || wd === 6 || hol[iso]) continue;
+    last = iso;
+    if (++count === n) return iso;
+  }
+  return last;
 }
 // "Já caiu" marked in the month: the date it was marked (from then on the money is in the account)
 function incomeFellOn(e){ return ISO_DATE_RE.test((e && e.fell) || '') ? e.fell : null; }
@@ -2550,7 +2624,7 @@ function incomeTag(e, key){
   var dt = incomeDate(e, key), fo = incomeFellOn(e);
   if (!dt && !e.fell) return null;
   var inn = incomeInOn(e, key, todayStr());
-  if (inn) return {inn: true, text: 'recebida' + ((fo || dt) ? ' ' + fmtDate(fo || dt) : '')};
+  if (inn) return {inn: true, text: 'caiu' + ((fo || dt) ? ' ' + fmtDate(fo || dt) : '')};
   return {inn: false, text: 'a receber' + (dt && e.fell !== 'no' ? ' ' + fmtDate(dt) : '')};
 }
 function ensureIncomeArray(state, m, monthKey, person){
@@ -2616,6 +2690,7 @@ function applyOp(state, op){
         if (op.replicate != null) incEntry.replicate = !!op.replicate;
         // the day it falls (null: none) and, for this month, "Já caiu" / "Ainda não caiu" (null: by the day)
         if ('day' in op){ if (op.day) incEntry.day = op.day; else delete incEntry.day; }
+        if ('bday' in op){ if (op.bday) { incEntry.bday = op.bday; delete incEntry.day; } else delete incEntry.bday; }
         if ('fell' in op){ if (op.fell === 'no' || ISO_DATE_RE.test(op.fell || '')) incEntry.fell = op.fell; else delete incEntry.fell; }
         incEntry.updatedAt = at;
       }
@@ -3469,7 +3544,7 @@ function buildSummaryText(){
   var lines = [];
   lines.push('📊 *Nossas Finanças — ' + monthLabel(viewMonth) + '*');
   lines.push('');
-  lines.push('*Receitas*');
+  lines.push('*Renda*');
   [[h.person1Name, mv.income.person1], [h.person2Name, mv.income.person2]].forEach(function(p){
     lines.push(p[0] + ': ' + fmtMoney(sumIncomeList(p[1])));
     incomeParts(p[1]).forEach(function(e){ lines.push('   • ' + e.name + ': ' + fmtMoney(e.amount) + (e.tag ? ' (' + e.tag + ')' : '')); });
@@ -3510,7 +3585,8 @@ function buildSummaryText(){
   if (hasDaily){
     lines.push('');
     if (totals.dailyCalc){
-      lines.push('*Gastos do dia a dia* (calculado pelo saldo da conta: PIX, débito, dinheiro…)');
+      lines.push('*Gastos do dia a dia*');
+      lines.push('_' + DAILY_NOTE + '_');
       if (d.daily.count) lines.push('Inclui ' + fmtMoney(d.daily.total) + ' lançados: ' + d.daily.cats.map(function(c){ return c.name + ' ' + fmtMoney(c.amount); }).join(' · '));
     } else {
       lines.push('*Gastos do dia a dia* (' + d.daily.count + ' ' + plural(d.daily.count, 'lançamento', 'lançamentos') + ')');
@@ -3528,13 +3604,14 @@ function buildSummaryText(){
       (totals.invRedeemed > 0 ? ' (' + (totals.invApplied > 0 ? 'aplicou ' + fmtMoney(totals.invApplied) + ', ' : '') + 'resgatou ' + fmtMoney(totals.invRedeemed) + ')' : ''));
   }
   lines.push('');
-  lines.push('*SALDO FINAL: ' + fmtMoney(totals.saldo) + '*');
-  lines.push('Receitas ' + fmtMoney(totals.totalIncome) + ' − Contas ' + fmtMoney(d.totalBills) +
+  var ciT = carryIn(totals);
+  lines.push('*SALDO FINAL: ' + fmtMoney(saldoFinal(totals)) + '*');
+  lines.push((ciT ? ciT.label + ' ' + fmtMoney(ciT.amount) + ' + ' : '') + 'Renda ' + fmtMoney(totals.totalIncome) + ' − Contas ' + fmtMoney(d.totalBills) +
     (hasDaily ? ' − Dia a dia ' + fmtMoney(totals.totalDaily) : '') +
     (hasInv ? (totals.totalInvestments >= 0 ? ' − Investimentos ' + fmtMoney(totals.totalInvestments) : ' + Resgates ' + fmtMoney(-totals.totalInvestments)) : '') +
-    (totals.unexplainedIn > 0 ? ' + Entrou sem lançar ' + fmtMoney(totals.unexplainedIn) : '') + ' = ' + fmtMoney(totals.saldo));
+    (totals.unexplainedIn > 0 ? ' + Entrou sem lançar ' + fmtMoney(totals.unexplainedIn) : '') + ' = ' + fmtMoney(saldoFinal(totals)));
   if (d.noCash) lines.push('_' + cashNoteText(viewMonth) + '._');
-  if (d.forecast && !d.forecast.stale){
+  if (d.forecast){
     lines.push('');
     forecastLines(d.forecast).forEach(function(l, i){
       var txt = l.label + ': ' + fmtMoney(l.amount);
@@ -3558,6 +3635,31 @@ function paletteSwatch(){
   }
   return PALETTES[0].swatch;
 }
+// What the account had at the start of the month (what was left of the month before), when the
+// account balance is told: the saldo final starts from it, so it is what stays in the bank at
+// the end of the month (the same as "Vai sobrar")
+function carryIn(totals){
+  var c = totals.cash;
+  if (!c || !c.startKnown || Math.abs(c.start) < 0.005) return null;
+  var prevName = c.startFrom ? monthLabel(c.startFrom).split(' de ')[0] : '';
+  // what the hero says under the saldo ("Com R$ 1.000,00 que sobraram de Outubro")
+  var label, note;
+  if (c.startFrom && c.startPartial){
+    // the month before was last told before its last day: "Saldo de 13/11"
+    label = 'Saldo de ' + fmtDate(c.startOn);
+    note = 'Com ' + fmtMoney(c.start) + ' do saldo de ' + fmtDate(c.startOn);
+  } else if (c.startFrom){
+    label = (c.start >= 0 ? 'Sobrou de ' : 'Saldo de ') + prevName;
+    note = 'Com ' + fmtMoney(c.start) + ' ' + (c.start >= 0 ? 'que sobraram de ' : 'de ') + prevName;
+  } else {
+    label = 'Tinha no começo do mês';
+    note = 'Com ' + fmtMoney(c.start) + ' do começo do mês';
+  }
+  return {label: label, note: note, amount: c.start, final: round2(c.start + totals.saldo)};
+}
+function saldoFinal(totals){ var ci = carryIn(totals); return ci ? ci.final : totals.saldo; }
+// the day-to-day spending, explained to whoever reads the summary without the app
+var DAILY_NOTE = 'Compras no PIX, débito e dinheiro que não são contas lançadas. Calculado pelo saldo do banco.';
 function buildSummaryCanvas(){
   var d = summaryData();
   var h = d.h, mv = d.mv, totals = d.totals;
@@ -3595,10 +3697,10 @@ function buildSummaryCanvas(){
     incomeParts(list).forEach(function(e){ blocks.push({k:'part', label:e.name, amount:e.amount, tag:e.tag}); });
   }
 
-  sec('Receitas');
+  sec('Renda');
   incomeLines(h.person1Name, mv.income.person1);
   incomeLines(h.person2Name, mv.income.person2);
-  line('Total salário', totals.totalIncome, {bold:true});
+  line('Total da renda', totals.totalIncome, {bold:true});
   gap();
   if (d.lateRows.length){
     sec('Atrasadas (' + d.lateRows.length + ')');
@@ -3628,7 +3730,8 @@ function buildSummaryCanvas(){
   line('Total variáveis', d.varTotal, {bold:true});
   if (totals.dailyCalc && totals.totalDaily > 0){
     gap();
-    sec('Gastos do dia a dia (calculado pela conta)');
+    sec('Gastos do dia a dia');
+    blocks.push({k:'note', lines: wrapCanvasText(DAILY_NOTE, 640 - 2 * 28, '400 13px ' + SANS)});
     d.daily.cats.forEach(function(c){ line(c.name, c.amount); });
     if (d.daily.count) line('Sem detalhe (PIX, débito, dinheiro…)', round2(totals.totalDaily - d.daily.total));
     line('Total dia a dia', totals.totalDaily, {bold:true});
@@ -3640,7 +3743,7 @@ function buildSummaryCanvas(){
   }
   gap();
   blocks.push({k:'band', label:'Total de contas (fixas + variáveis)', amount:d.totalBills});
-  if (totals.incomingCount) line('Inclui de ' + (totals.incomingMonths.length === 1 ? monthLabel(totals.incomingMonths[0]) : 'meses anteriores') + ' (' + totals.incomingCount + ')', totals.incomingTotal, {noRule:true});
+  if (totals.incomingCount) line('Inclui ' + totals.incomingCount + ' ' + plural(totals.incomingCount, 'conta', 'contas') + ' de ' + (totals.incomingMonths.length === 1 ? monthLabel(totals.incomingMonths[0]) : 'meses anteriores'), totals.incomingTotal, {noRule:true});
   if (totals.totalInterest > 0) line('Juros e multas (já somados nas contas)', totals.totalInterest, {noRule:true});
   if (hasInv){
     gap();
@@ -3650,12 +3753,13 @@ function buildSummaryCanvas(){
     }
     line('Investimentos' + (totals.invRedeemed > 0 ? ' (aplicado − resgatado)' : ''), totals.totalInvestments, {bold:true, noRule:true});
   }
-  if (totals.cash && !(d.forecast && !d.forecast.stale)){
+  if (totals.cash && !d.forecast){
     gap();
     line('Na conta conjunta' + (totals.cash.on ? ' em ' + fmtDate(totals.cash.on) : ''), totals.cash.end, {bold:true, noRule:true});
   }
 
-  var statement = [['', 'Receitas', totals.totalIncome], ['−', 'Contas (fixas + variáveis)', d.totalBills]];
+  var ciI = carryIn(totals);
+  var statement = (ciI ? [['', ciI.label, ciI.amount], ['+', 'Renda', totals.totalIncome]] : [['', 'Renda', totals.totalIncome]]).concat([['−', 'Contas (fixas + variáveis)', d.totalBills]]);
   if (totals.totalDaily > 0) statement.push(['−', 'Gastos do dia a dia', totals.totalDaily]);
   if (hasInv) statement.push(totals.totalInvestments >= 0 ? ['−', 'Investimentos', totals.totalInvestments] : ['+', 'Resgates de investimentos', -totals.totalInvestments]);
   if (totals.unexplainedIn > 0) statement.push(['+', 'Entrou sem lançar', totals.unexplainedIn]);
@@ -3666,21 +3770,23 @@ function buildSummaryCanvas(){
   var STMT_H = 24, NOTE_H = 24;
   var FOOTER_H = 34 + (statement.length - 1) * STMT_H + 14 + 38 + 24 + (d.noCash ? NOTE_H : 0);
   // the forecast, below the footer (as in the text, after the saldo final)
-  var fc = d.forecast && !d.forecast.stale ? d.forecast : null;
+  var fc = d.forecast || null;
   var fcLines = fc ? forecastLines(fc) : [];
   var FC_ROW = 27, FC_NOTE = 17;
   ctx0Font = '400 12.5px ' + SANS;
   var fcNoteLines = fc ? wrapCanvasText(fc.notes.join(' '), W - 2 * PAD, ctx0Font) : [];
-  var FC_H = fc ? 30 + SEC_H + fcLines.length * FC_ROW + 8 + fcNoteLines.length * FC_NOTE + 22 : 0;
+  var FC_H = fc ? 30 + SEC_H + fcLines.length * FC_ROW + (fcNoteLines.length ? 8 + fcNoteLines.length * FC_NOTE : 0) + 22 : 0;
   var CHIP_W = 74, CHIP_H = 20;
   var heights = {sec:SEC_H, sub:SUB_H, row:ROW_H, part:PART_H, empty:ROW_H, gap:GAP_H, band:BAND_H};
+  var NOTE_LINE = 18;
   var H = HEADER_H + TOP_PAD + BEFORE_FOOTER + FOOTER_H + FC_H;
-  blocks.forEach(function(b){ H += heights[b.k]; });
+  blocks.forEach(function(b){ H += b.k === 'note' ? b.lines.length * NOTE_LINE + 8 : heights[b.k]; });
 
   var canvas = document.createElement('canvas');
-  var scale = 2;
-  canvas.width = W * scale;
-  canvas.height = H * scale;
+  // sharper (3×), within what the iPhone can draw (a canvas of at most ~16 million pixels)
+  var scale = Math.max(1, Math.min(3, Math.floor(Math.sqrt(16000000 / (W * H)) * 100) / 100));
+  canvas.width = Math.round(W * scale);
+  canvas.height = Math.round(H * scale);
   var ctx = canvas.getContext('2d');
   ctx.scale(scale, scale);
   ctx.textBaseline = 'alphabetic';
@@ -3745,6 +3851,13 @@ function buildSummaryCanvas(){
       y += ROW_H;
     } else if (b.k === 'gap'){
       y += GAP_H;
+    } else if (b.k === 'note'){
+      // a short explanation under a section's title
+      ctx.fillStyle = INK_SOFT;
+      ctx.font = '400 13px ' + SANS;
+      ctx.textAlign = 'left';
+      b.lines.forEach(function(t){ ctx.fillText(t, PAD, y - 4); y += NOTE_LINE; });
+      y += 8;
     } else if (b.k === 'part'){
       // what makes up a person's income: smaller, indented
       ctx.fillStyle = INK_SOFT;
@@ -3827,7 +3940,7 @@ function buildSummaryCanvas(){
 
   // footer: how the month closes, with the actual totals
   var footerY = H - FC_H - FOOTER_H;
-  ctx.fillStyle = totals.saldo >= 0 ? accent : NEGATIVE;
+  ctx.fillStyle = saldoFinal(totals) >= 0 ? accent : NEGATIVE;
   ctx.fillRect(0, footerY, W, FOOTER_H);
   ctx.fillStyle = ON_ACCENT;
   var fy = footerY + 34;
@@ -3859,7 +3972,7 @@ function buildSummaryCanvas(){
   ctx.fillText('SALDO FINAL', PAD + 18, sy);
   ctx.textAlign = 'right';
   ctx.font = '700 26px ' + MONO;
-  ctx.fillText(fmtMoney(totals.saldo), AMT_RIGHT, sy);
+  ctx.fillText(fmtMoney(saldoFinal(totals)), AMT_RIGHT, sy);
   if (d.noCash){
     // smaller than the lines above, so in full white (easier to read on the lighter colors)
     ctx.textAlign = 'left';
@@ -3871,7 +3984,7 @@ function buildSummaryCanvas(){
     ctx.fillStyle = INK_SOFT;
     ctx.textAlign = 'left';
     ctx.font = '700 13px ' + SANS;
-    ctx.fillText('PREVISÃO NA CONTA', PAD, fy0);
+    ctx.fillText('ATÉ O FIM DO MÊS', PAD, fy0);
     var ly = fy0 + SEC_H;
     fcLines.forEach(function(l){
       if (l.kind === 'sub' || l.kind === 'total'){
@@ -4206,7 +4319,7 @@ var FIELD_LABEL = {desc:'Descrição', name:'Nome', label:'Nome', amount:'Valor'
   withInterest:'Valor com juros', paid:'Situação', categoryId:'Categoria', dueDay:'Vencimento', installmentAmount:'Valor da parcela',
   installments:'Parcelas', startMonth:'Primeira parcela', endMonth:'Repete até', autoReplicate:'Valor fixo', suggestPrevious:'Sugerir valor anterior',
   estimated:'Valor estimado', replicate:'Repetir nos próximos meses', end:'Saldo', start:'Começo do mês', skip:'Pulada', kind:'Tipo', amountLog:'Valor fixo dos próximos meses', items:'Opções',
-  day:'Dia em que cai', fell:'Neste mês'};
+  day:'Dia em que cai', fell:'Neste mês', bday:'Dia útil em que cai'};
 var MONEY_FIELDS = {amount:1, value:1, withInterest:1, installmentAmount:1, end:1, start:1};
 var DATE_FIELDS = {date:1, paidOn:1, planOn:1};
 var SKIP_FIELDS = {updatedAt:1, createdAt:1, by:1, sv:1, id:1, logV:1, defaultAmount:1, recurringId:1, amortOf:1, amortIdx:1, amortFull:1, on:1, daily:1, via:1, dueOffset:1};
@@ -4214,6 +4327,7 @@ function fieldText(state, f, v, ch){
   if (f === 'fell') return ISO_DATE_RE.test(v || '') ? 'já caiu (' + fmtDate(v) + ')' : (v === 'no' ? 'ainda não caiu' : 'pelo dia');
   if (v == null || v === '') return '—';
   if (f === 'day') return 'dia ' + v;
+  if (f === 'bday') return v + 'º dia útil';
   if (MONEY_FIELDS[f]) return fmtMoney(numOr0(v));
   if (DATE_FIELDS[f]) return ISO_DATE_RE.test(v) ? fmtDate(v) + '/' + v.slice(2, 4) : String(v);
   if (f === 'paid') return v ? 'Pago' : 'Pendente';
@@ -4365,7 +4479,7 @@ function describeChange(ch, prev, next){
       al.forEach(function(e){ Am[e.id] = e; });
       var added = [], removed = [], edited = [];
       al.forEach(function(e){
-        if (!Bm[e.id]){ added.push(e); details.push('Incluiu ' + q(e.label) + ' — ' + fmtMoney(numOr0(e.amount)) + (incomeDay(e) ? ', cai dia ' + incomeDay(e) : '') + (e.replicate ? ', repete nos próximos meses' : '')); }
+        if (!Bm[e.id]){ added.push(e); details.push('Incluiu ' + q(e.label) + ' — ' + fmtMoney(numOr0(e.amount)) + (incomeWhen(e) ? ', cai ' + (incomeBday(e) ? 'no ' : '') + incomeWhen(e) : '') + (e.replicate ? ', repete nos próximos meses' : '')); }
         else if (stableStr(Bm[e.id]) !== stableStr(e)){
           var fd = fieldDiffs(next, Bm[e.id], e, ch);
           if (fd.length){ edited.push(e); details.push(q(e.label) + ': ' + fd.join('; ')); }
@@ -4376,7 +4490,7 @@ function describeChange(ch, prev, next){
       if (added.length + removed.length + edited.length === 1){
         var one = added[0] || removed[0] || edited[0];
         noun = 'a renda ' + q(one.label) + ' de ' + who;
-        if (added.length) return {verb:'add', text:'Incluiu ' + noun + ' — ' + fmtMoney(numOr0(one.amount)) + mo, details: (incomeDay(one) ? ['Cai dia ' + incomeDay(one)] : []).concat(one.replicate ? ['Repete nos próximos meses'] : []), noun:noun, mo:mo};
+        if (added.length) return {verb:'add', text:'Incluiu ' + noun + ' — ' + fmtMoney(numOr0(one.amount)) + mo, details: (incomeWhen(one) ? ['Cai ' + (incomeBday(one) ? 'no ' : '') + incomeWhen(one)] : []).concat(one.replicate ? ['Repete nos próximos meses'] : []), noun:noun, mo:mo};
         // only "Já caiu" / "Ainda não caiu" changed
         if (!removed.length && fieldDiffs(next, Bm[one.id], one, ch).length === 1 && (Bm[one.id].fell || null) !== (one.fell || null)){
           return {verb:'edit', text:(incomeFellOn(one) ? 'Marcou que ' + noun + ' já caiu' : (one.fell === 'no' ? 'Marcou que ' + noun + ' ainda não caiu' : 'Voltou ' + noun + ' para o dia em que cai')) + mo, details:[], noun:noun, mo:mo};
@@ -4644,7 +4758,7 @@ var snapIndex = [];
 var snapLoaded = false;
 var SNAP_REASON = {daily:'cópia do dia', 'import':'antes de importar um backup', restore:'antes de recuperar uma cópia', manual:'feita por você', update:'antes desta atualização do app'};
 // the first time a new version of the app opens the data, it keeps a copy of it exactly as it was
-var APP_VERSION = '17';
+var APP_VERSION = '19';
 var APP_VERSION_KEY = 'gflowFinancasAppVersion';
 function keepCopyBeforeUpdate(){
   var seen = null;
@@ -4907,6 +5021,9 @@ var listView = loadPref(LIST_VIEW_KEY, {status:'all', sort:'default'}, function(
 var dueView = loadPref(DUE_VIEW_KEY, {days:7, showOverdue:true}, function(v){
   return !!v && DUE_DAY_OPTIONS.indexOf(v.days) >= 0 && typeof v.showOverdue === 'boolean';
 });
+// "Conta conjunta": only the day-to-day spending shows until "Ver a conta" (remembered per phone)
+var LEDGER_VIEW_KEY = 'gflowFinancasLedgerOpen';
+var ledgerOpen = loadPref(LEDGER_VIEW_KEY, false, function(v){ return typeof v === 'boolean'; });
 
 /* ---------- filters and sorting for "Contas fixas" and "Contas variáveis" ---------- */
 var LIST_STATUS_LABEL = {all:'Todas', unpaid:'Não pagas', paid:'Pagas'};
@@ -5134,7 +5251,7 @@ function buildPeriodCanvas(from, to){
     {key:'income', title:'Renda', right:PAD + 312},
     {key:'expenses', title:'Despesas', right:PAD + 470},
     {key:'investments', title:'Investimentos', right:PAD + 628},
-    {key:'saldo', title:'Saldo', right:W - PAD}
+    {key:'saldo', title:'Resultado', right:W - PAD}
   ];
   var canvas = document.createElement('canvas');
   var scale = 2;
@@ -5205,7 +5322,7 @@ function buildPeriodCanvas(from, to){
   ctx.font = '400 11.5px ' + SANS;
   ctx.fillStyle = INK_SOFT;
   ctx.fillText('Despesas = contas fixas + variáveis (com as parcelas e as atrasadas pagas no mês) + dia a dia.', PAD, y + 26);
-  ctx.fillText('Saldo = renda − despesas − investimentos.', PAD, y + 44);
+  ctx.fillText('Resultado = renda − despesas − investimentos (sem o que sobrou do mês anterior).', PAD, y + 44);
   if (sum.dup > 0) ctx.fillText('No total, cada conta atrasada entra uma vez só (ela aparece no mês dela e no mês em que é paga).', PAD, y + 62);
   return canvas;
 }
@@ -5250,6 +5367,7 @@ var chartsToken = null;        // identifies the history entry pushed when the s
 var chartsReturnScroll = 0;    // where the main screen was, to go back to the same place
 var chartPick = {};            // chart id -> month picked by a tap
 var chartTableOpen = {};       // chart id -> "ver em tabela" open
+var chartHowOpen = {};         // chart id -> "Como é calculado" open
 var unpaidListOpen = false;
 var lastChartWidth = 0;
 var chartsKeyboard = false;    // opened/closed with the keyboard: the focus follows
@@ -5445,6 +5563,12 @@ function capLabelSvg(text, cx, y, box, below, marks){
 }
 function chartSvgOpen(box, label){
   return '<svg class="chart-svg" viewBox="0 0 ' + box.w + ' ' + box.h + '" width="' + box.w + '" height="' + box.h + '" role="group" aria-label="' + esc(label) + '">';
+}
+// how a chart is worked out: closed under "ⓘ Como é calculado" (html: the explanation)
+function chartHow(chartId, html){
+  var open = !!chartHowOpen[chartId];
+  return '<button type="button" class="link-btn chart-how" data-action="toggle-chart-how" data-chart="' + chartId + '" aria-expanded="' + (open ? 'true' : 'false') + '">ⓘ Como é calculado</button>' +
+    (open ? '<p class="chart-caption">' + html + '</p>' : '');
 }
 function chartTableToggle(chartId){
   return '<div class="chart-actions"><button type="button" class="link-btn" data-action="toggle-chart-table" data-chart="' + chartId + '" aria-expanded="' + (chartTableOpen[chartId] ? 'true' : 'false') + '">' +
@@ -5669,7 +5793,7 @@ function renderSpendingChart(endKey){
   if (!keys.length) return chartCard('graf-gastos', '📊', title, '<p class="empty-note">Ainda não há meses com lançamentos até ' + esc(monthLabel(endKey)) + '.</p>');
   var todayKey = monthKeyToday();
   var rows = keys.map(monthSeriesRow);
-  var caption = '<p class="chart-caption">Contas fixas + variáveis de cada mês (com as parcelas), cada conta só no mês dela — a atrasada não conta de novo no mês em que é paga —, mais o gasto do dia a dia calculado pelo saldo da conta. Investimentos não entram.</p>';
+  var caption = chartHow('gastos', 'Contas fixas + variáveis de cada mês (com as parcelas), cada conta só no mês dela — a atrasada não conta de novo no mês em que é paga —, mais o gasto do dia a dia calculado pelo saldo da conta. Investimentos não entram.');
   if (!rows.some(function(r){ return r.expenses > 0; })){
     return chartCard('graf-gastos', '📊', title, caption + '<p class="empty-note">Nenhum gasto lançado ' + esc(periodPhrase(keys)) + '.</p>');
   }
@@ -5745,12 +5869,12 @@ function renderSpendingChart(endKey){
 
 /* -- 4. Final balance month by month (positive / negative) and what was invested -- */
 function renderBalanceChart(endKey){
-  var title = 'Saldo final e investimentos';
+  var title = 'Resultado do mês e investimentos';
   var keys = chartMonthsBack(endKey, chartsView.range);
   if (!keys.length) return chartCard('graf-saldo', '⚖️', title, '<p class="empty-note">Ainda não há meses com lançamentos até ' + esc(monthLabel(endKey)) + '.</p>');
   var todayKey = monthKeyToday();
   var rows = keys.map(monthSeriesRow);
-  var caption = '<p class="chart-caption">Saldo = renda − contas (com as atrasadas de meses anteriores pagas ou a pagar no mês) − dia a dia − investimentos (aplicado − resgatado), como no resumo de cada mês.</p>';
+  var caption = chartHow('saldo', 'Resultado = renda − contas (com as atrasadas de meses anteriores pagas ou a pagar no mês) − dia a dia − investimentos (aplicado − resgatado). Não conta o que sobrou do mês anterior.');
   if (!rows.some(function(r){ return r.hasData; })){
     return chartCard('graf-saldo', '⚖️', title, caption + '<p class="empty-note">Nenhum lançamento ' + esc(periodPhrase(keys)) + '.</p>');
   }
@@ -5791,7 +5915,7 @@ function renderBalanceChart(endKey){
   }
   svg += xAxisSvg(keys, box, sel) + hitAreasSvg('saldo', keys, box, sel, function(k){
     var r = rows[keys.indexOf(k)];
-    return monthLabel(k) + ': saldo de ' + fmtMoney(r.saldo) + (r.investments > 0 ? ', investido ' + fmtMoney(r.investments) : (r.investments < 0 ? ', resgatado ' + fmtMoney(-r.investments) : ''));
+    return monthLabel(k) + ': resultado de ' + fmtMoney(r.saldo) + (r.investments > 0 ? ', investido ' + fmtMoney(r.investments) : (r.investments < 0 ? ', resgatado ' + fmtMoney(-r.investments) : ''));
   }) + '</svg>';
   // what already happened: months with anything, up to the current one
   var past = rows.filter(function(r){ return r.hasData && r.key <= todayKey; });
@@ -5805,7 +5929,7 @@ function renderBalanceChart(endKey){
   var sub;
   if (past.length){
     sub = '<strong>' + pos + ' de ' + past.length + '</strong> ' + (past.length === 1 ? 'mês' : 'meses') + ' no positivo' +
-      (past.length > 1 ? ' · saldo médio <strong class="money">' + fmtMoney(round2(saldoSum / past.length)) + '</strong>' : '') + ' · ' +
+      (past.length > 1 ? ' · resultado médio <strong class="money">' + fmtMoney(round2(saldoSum / past.length)) + '</strong>' : '') + ' · ' +
       (invSum > 0 ? 'investido: <strong class="money">' + fmtMoney(round2(invSum)) + '</strong> em ' + invMonths + ' ' + (invMonths === 1 ? 'mês' : 'meses') :
         (invSum < 0 ? 'resgatado (líquido): <strong class="money">' + fmtMoney(round2(-invSum)) + '</strong>' : 'nada investido no período')) +
       (hasFuture ? ' (sem os meses futuros)' : '') + '.';
@@ -5813,18 +5937,18 @@ function renderBalanceChart(endKey){
     sub = 'Nenhum lançamento nesse período até agora.';
   }
   var anyRedeemed = rows.some(function(r){ return r.investments < 0; });
-  var legend = legendInline([['col-pos-bg', 'Saldo positivo'], ['col-neg-bg', 'Saldo negativo'], anyInv && ['col-invest-bg', anyRedeemed ? 'Investido (abaixo de zero: resgatado)' : 'Investido'], hasFuture && ['col-pos-bg future', 'Mês futuro (previsão)']]);
+  var legend = legendInline([['col-pos-bg', 'Resultado positivo'], ['col-neg-bg', 'Resultado negativo'], anyInv && ['col-invest-bg', anyRedeemed ? 'Investido (abaixo de zero: resgatado)' : 'Investido'], hasFuture && ['col-pos-bg future', 'Mês futuro (previsão)']]);
   var detail = '<strong>' + esc(monthLabel(sel)) + '</strong>' + (sel > todayKey ? ' (previsão)' : '') + ': ';
   if (selRow.hasData){
     detail += 'renda ' + fmtMoney(selRow.income) + (selRow.daily > 0 ? ' − gastos ' : ' − contas ') + fmtMoney(selRow.counted) +
       (selRow.carried > 0 ? ' (com ' + fmtMoney(selRow.carried) + ' de meses anteriores)' : '') +
       (selRow.investments > 0 ? ' − investido ' + fmtMoney(selRow.investments) : (selRow.investments < 0 ? ' + resgatado ' + fmtMoney(-selRow.investments) : '')) +
       (selRow.unexplainedIn > 0 ? ' + entrou sem lançar ' + fmtMoney(selRow.unexplainedIn) : '') +
-      ' = saldo <span class="money ' + (selRow.saldo >= 0 ? 'pos' : 'neg') + '">' + fmtMoney(selRow.saldo) + '</span>' + (selRow.investments !== 0 ? '' : ' · nada investido');
+      ' = resultado <span class="money ' + (selRow.saldo >= 0 ? 'pos' : 'neg') + '">' + fmtMoney(selRow.saldo) + '</span>' + (selRow.investments !== 0 ? '' : ' · nada investido');
   } else {
     detail += 'sem lançamentos.';
   }
-  var table = chartTable('saldo', ['Mês', 'Renda', 'Contas', 'Invest.', 'Saldo'], rows.map(function(r){
+  var table = chartTable('saldo', ['Mês', 'Renda', 'Contas', 'Invest.', 'Resultado'], rows.map(function(r){
     return {cls: r.key === sel ? 'sel' : '', cells:[shortMonthLabel(r.key) + (r.key > todayKey ? '*' : ''), fmtNum(r.income), fmtNum(r.counted), fmtNum(r.investments), fmtNum(r.saldo)]};
   }));
   return chartCard('graf-saldo', '⚖️', title,
@@ -5849,7 +5973,7 @@ var INTEREST_MAX_ROWS = 6;
 function renderInterestChart(endKey){
   var title = 'Juros e multas';
   var keys = chartMonthsBack(endKey, chartsView.range);
-  var caption = '<p class="chart-caption">Quanto as contas marcadas com "Teve juros ou multa" custaram a mais, no mês de cada conta. Os outros gráficos já mostram essas contas com o valor total.</p>';
+  var caption = chartHow('juros', 'Quanto as contas marcadas com "Teve juros ou multa" custaram a mais, no mês de cada conta. Os outros gráficos já mostram essas contas com o valor total.');
   if (!keys.length) return chartCard('graf-juros', '💸', title, caption + '<p class="empty-note">Ainda não há meses com lançamentos até ' + esc(monthLabel(endKey)) + '.</p>');
   var todayKey = monthKeyToday();
   var rows = keys.map(interestRow);
@@ -5953,7 +6077,7 @@ function renderCommitmentsChart(viewKey){
   var rows = commitmentRows(fromKey, chartsView.range);
   var keys = rows.map(function(r){ return r.key; });
   var toKey = keys[keys.length - 1];
-  var caption = '<p class="chart-caption">O que já está lançado para pagar de ' + esc(shortMonthLabel(fromKey)) + ' a ' + esc(shortMonthLabel(toKey)) + ': parcelas, contas fixas (nos meses seguintes, só as que têm valor fixo) e contas de outros meses para pagar no mês (atrasadas, no mês atual). Gastos variáveis do próprio mês e contas que mudam todo mês, como cartões, não entram.</p>';
+  var caption = chartHow('compromissos', 'O que já está lançado para pagar de ' + esc(shortMonthLabel(fromKey)) + ' a ' + esc(shortMonthLabel(toKey)) + ': parcelas, contas fixas (nos meses seguintes, só as que têm valor fixo) e contas de outros meses para pagar no mês (atrasadas, no mês atual). Gastos variáveis do próprio mês e contas que mudam todo mês, como cartões, não entram.');
   var anything = rows.some(function(r){ return r.total > 0; });
   if (!anything) return chartCard('graf-compromissos', '🗓️', title, caption + '<p class="empty-note">Nenhuma parcela, conta com valor fixo ou conta atrasada nesses meses.</p>');
   var anyIncome = rows.some(function(r){ return r.income > 0; });
@@ -7039,13 +7163,14 @@ function renderQuickNav(isCurrent){
   var items = [['sec-resumo','Resumo']];
   if (isCurrent) items.push(['sec-vencimentos','Vencimentos']);
   items = items.concat([
-    ['sec-renda','Salário'], ['sec-fixas','Fixas'],
+    ['sec-renda','Renda'], ['sec-fixas','Fixas'],
     ['sec-variaveis','Variáveis'], ['sec-investimentos','Investimentos'],
     ['sec-historico','Histórico'], ['sec-ajustes','Ajustes']
   ]);
   return '<nav class="quicknav" aria-label="Navegação rápida entre seções">' +
     '<button type="button" class="qn-pill qn-charts" data-action="open-charts"><span aria-hidden="true">📊</span> Gráficos</button>' +
     (viewMonth <= monthKeyToday() ? '<button type="button" class="qn-pill qn-cash" data-action="open-cash" data-month="' + viewMonth + '"><span aria-hidden="true">🏦</span> Saldo da conta</button>' : '') +
+    '<a class="qn-pill qn-share" href="#sec-compartilhar"><span aria-hidden="true">📤</span> Enviar resumo</a>' +
     '<button type="button" class="qn-pill qn-wheel" data-action="open-wheel"><span aria-hidden="true">🎡</span> Roleta</button>' +
     '<button type="button" class="qn-pill qn-audit" data-action="open-audit"><span aria-hidden="true">🕘</span> Alterações</button>' +
     items.map(function(it){ return '<a class="qn-pill" href="#' + it[0] + '">' + it[1] + '</a>'; }).join('') +
@@ -7077,13 +7202,24 @@ function renderAlerts(mv, totals){
   var todayKey = monthKeyToday();
   var incoming = mv.incoming || [];
   var lateIn = incoming.filter(function(b){ return b.state === 'overdue'; });
-  if (viewMonth === todayKey && lateIn.length){
-    var one = lateIn.length === 1;
+  // this month's own bills past their due date, not paid yet
+  var lateOwn = (mv.bills || []).filter(function(b){ return !b.daily && b.state === 'overdue' && b.eff === todayKey; });
+  var lateAll = lateIn.concat(lateOwn);
+  if (viewMonth === todayKey && lateAll.length){
+    var one = lateAll.length === 1;
+    var why;
+    if (!lateOwn.length){
+      why = lateFromText(lateIn) + ', ' + (lateIn.length === 1 ? 'conta' : 'contam') + ' no saldo deste mês';
+    } else if (!lateIn.length){
+      why = lateOwn.length === 1 ? 'Já venceu e ainda não foi paga' : 'Já venceram e ainda não foram pagas';
+    } else {
+      why = lateOwn.length + ' deste mês e ' + lateIn.length + ' ' + lateFromText(lateIn).replace(/^De /, 'de ') + ', que ' + (lateIn.length === 1 ? 'conta' : 'contam') + ' no saldo deste mês';
+    }
     html += '<div class="alert-banner danger">' +
       '<span class="alert-icon" aria-hidden="true">⏰</span>' +
       '<div class="alert-body">' +
-        '<div class="alert-title">' + lateIn.length + ' conta' + (one ? '' : 's') + ' atrasada' + (one ? '' : 's') + ' · ' + fmtMoney(sumTotals(lateIn)) + '</div>' +
-        lateFromText(lateIn) + ', ' + (one ? 'conta' : 'contam') + ' no saldo deste mês · ' + sectionLinks(lateIn) +
+        '<div class="alert-title">' + lateAll.length + ' conta' + (one ? '' : 's') + ' atrasada' + (one ? '' : 's') + ' · ' + fmtMoney(sumTotals(lateAll)) + '</div>' +
+        esc(why) + ' · ' + sectionLinks(lateAll) +
       '</div>' +
     '</div>';
   }
@@ -7186,11 +7322,13 @@ function renderStats(totals, mv){
     invStat = '<div class="stat"><div class="stat-label">Investimentos</div><div class="stat-value">' + moneyHtml(totals.totalInvestments) + '</div>' +
       '<div class="stat-sub">' + esc(invSub) + '</div></div>';
   }
-  var saldo = totals.saldo;
+  // with the account balance told, the saldo starts from what was left of the month before
+  var ciH = carryIn(totals);
+  var saldo = saldoFinal(totals);
   // the income that hasn't fallen yet (current month)
   var incomeLaterToday = viewMonth === monthKeyToday() ? incomeSplit(mv.income, viewMonth, todayStr()).later : 0;
   // the saldo only counts what went on PIX / débito once the account balance is told
-  var heroNote = '';
+  var heroNote = ciH ? '<div class="stat-sub hero-note">' + esc(ciH.note) + '</div>' : '';
   if (!totals.cash && (totals.totalIncome > 0 || totals.totalSpent > 0)){
     heroNote = '<div class="stat-sub hero-note">Sem os gastos no PIX e no débito' +
       (viewMonth <= monthKeyToday() ? ' · <button type="button" class="link-btn" data-action="open-cash" data-month="' + viewMonth + '">Informar saldo da conta</button>' : '') + '</div>';
@@ -7215,40 +7353,64 @@ function renderStats(totals, mv){
   forecastBlock(cashForecast(viewMonth, mv, totals));
 }
 // Até o fim do mês (the current month, with the account balance told): what is in the account on
-// the balance's date, + the income still to come = in the account after it falls; − the bills
-// still to pay = left after paying everything (or missing, in red). Nothing is taken as paid.
-// When something changed the account after that date (a bill paid, income that fell), the
-// balance must be told again first.
+// the balance's date, + the income after that date (already fallen or still to come), − what
+// left the account after it (bills paid, investments), − the bills still to pay = left after
+// paying everything (or missing, in red). Paying a bill or income falling after the balance's
+// date doesn't change the result: it only moves from one line to another.
 function cashForecast(key, mv, totals){
   if (key !== monthKeyToday() || !totals.cash) return null;
   var c = totals.cash, today = todayStr();
   var parts = c.laterParts || [];
-  var fellSince = parts.filter(function(p){ return p.e.fell !== 'no' && p.date && p.date <= today; });
-  if (c.paidAfterCount || fellSince.length){
-    return {stale: true, on: c.on, paidAfterCount: c.paidAfterCount, paidAfter: c.paidAfter, fellSince: round2(sumOf(fellSince))};
-  }
+  var fellP = parts.filter(function(p){ return fellSinceBalance(p, today); });
+  var stillP = parts.filter(function(p){ return !fellSinceBalance(p, today); });
+  var fell = round2(sumOf(fellP)), still = round2(sumOf(stillP));
+  var invAfter = round2((c.invInAfter || 0) - (c.invOutAfter || 0));
   var b = unpaidBreakdown(key);
-  if (!(c.incomeLater > 0) && !(b.unpaid > 0)) return null;
-  var dated = parts.every(function(p){ return p.e.fell !== 'no' && p.date; });
-  var days = uniq(parts.map(function(p){ return p.date ? parseInt(p.date.slice(8, 10), 10) : null; }).filter(Boolean)).sort(function(x, y){ return x - y; });
-  var recvLabel = 'A receber', afterLabel = 'Na conta depois de receber';
-  if (dated && days.length === 1){ recvLabel = 'A receber dia ' + days[0]; afterLabel = 'Na conta depois do dia ' + days[0]; }
-  else if (dated && days.length > 1){ recvLabel = 'A receber dias ' + listPhrase(days.map(String)); afterLabel = 'Na conta depois do dia ' + days[days.length - 1]; }
+  if (!(c.incomeLater > 0) && !(b.unpaid > 0) && !(c.paidAfter > 0) && !invAfter) return null;
+  var afterLabel = 'Vai ter na conta';
   var after = round2(c.end + c.incomeLater);
-  var left = round2(after - b.unpaid);
+  var left = round2(after - (c.paidAfter || 0) - invAfter - b.unpaid);
   var notes = [];
-  // the saldo final is the month's result; the account also has what it started the month with
-  var finalAmt = b.unpaid > 0 ? left : after;
-  if (c.startKnown && Math.abs(c.start) >= 0.01 && Math.abs(finalAmt - (c.start + totals.saldo)) < 0.01){
-    notes.push(c.start > 0 ? 'Inclui ' + fmtMoney(c.start) + ' que já estavam na conta no começo do mês (por isso é maior que o saldo final).' :
-      'Desconta ' + fmtMoney(-c.start) + ' que faltavam na conta no começo do mês (por isso é menor que o saldo final).');
-  }
   if (b.toLaunch) notes.push('Fora ' + b.toLaunch + ' ' + plural(b.toLaunch, 'conta', 'contas') + ' a lançar (valor ainda não informado).');
-  notes.push(c.on === today ? 'Sem contar os próximos gastos no PIX e no débito.' : 'Sem contar os gastos no PIX e no débito depois de ' + fmtDate(c.on) + '.');
-  return {on: c.on, onToday: c.on === today, end: c.end, later: c.incomeLater, recvLabel: recvLabel, afterLabel: afterLabel,
-    after: after, unpaid: b.unpaid, left: left, notes: notes};
+  // only in the app (the summary sent to others leaves it out: the date is in its first line)
+  var spendNote = c.on === today ? 'Não conta o que sair no PIX e no débito daqui para frente.' : 'Não conta o que saiu no PIX e no débito depois de ' + fmtDate(c.on) + '. Atualize o saldo para refazer a conta.';
+  return {on: c.on, onToday: c.on === today, ago: daysFromTo(c.on, today), end: c.end, spendNote: spendNote, later: c.incomeLater,
+    fell: fell, fellLabel: 'Caiu depois de ' + fmtDate(c.on) + laterDaysText(fellP),
+    still: still, recvLabel: 'Ainda vai cair' + laterDaysText(stillP),
+    paidAfter: c.paidAfter || 0, paidAfterCount: c.paidAfterCount || 0, invAfter: invAfter,
+    afterLabel: afterLabel, after: after, unpaid: b.unpaid, left: left, notes: notes};
 }
+// an income part (not in the balance) that has fallen since: its day came (or "Já caiu")
+function fellSinceBalance(p, today){ return p.e.fell !== 'no' && !!p.date && p.date <= today; }
 function sumOf(parts){ var t = 0; parts.forEach(function(p){ t += p.e.amount; }); return t; }
+// "Ainda não entraram na conta: R$ 4.000,00 (previstos para 20 e 25/11)."; once some of it fell
+// (after the balance's date): "Entraram depois de 13/11: R$ 3.000,00 (20/11)." first
+function laterNoteText(c){
+  var today = todayStr(), parts = c.laterParts || [];
+  var fellP = parts.filter(function(p){ return fellSinceBalance(p, today); });
+  var stillP = parts.filter(function(p){ return !fellSinceBalance(p, today); });
+  var out = [];
+  if (fellP.length){
+    var df = laterDaysText(fellP);
+    out.push('Entraram depois de ' + fmtDate(c.on) + ': ' + fmtMoney(round2(sumOf(fellP))) + (df ? ' (' + df.slice(2, -1) + ')' : '') + '.');
+  }
+  if (stillP.length){
+    var dt = laterDaysText(stillP);
+    out.push('Ainda não entraram na conta: ' + fmtMoney(round2(sumOf(stillP))) + (dt ? ' (previstos para ' + dt.slice(2, -1) + ')' : '') + '.');
+  }
+  return out.join(' ');
+}
+// " (20, 21 e 25/11)", " (20/11)", "" (no date known)
+function laterDaysText(parts){
+  parts = parts || [];
+  if (!parts.length || !parts.every(function(p){ return p.e.fell !== 'no' && p.date; })) return '';
+  var dates = uniq(parts.map(function(p){ return p.date; })).sort();
+  var mm = dates[0].slice(5, 7);
+  if (dates.every(function(d){ return d.slice(5, 7) === mm; })){
+    return ' (' + listPhrase(dates.map(function(d){ return String(parseInt(d.slice(8, 10), 10)); })) + '/' + mm + ')';
+  }
+  return ' (' + listPhrase(dates.map(fmtDate)) + ')';
+}
 // "5", "5 e 20", "5, 15 e 20"
 function listPhrase(items){
   if (items.length <= 1) return items.join('');
@@ -7256,32 +7418,29 @@ function listPhrase(items){
 }
 // the forecast's lines, the same in the app, the text and the image
 function forecastLines(f){
-  var out = [{label: 'Na conta ' + (f.onToday ? 'hoje (' + fmtDate(f.on) + ')' : 'em ' + fmtDate(f.on)), amount: f.end, kind: 'base'}];
-  if (f.later > 0){
-    out.push({label: '+ ' + f.recvLabel, amount: f.later, kind: 'plus'});
-    if (f.unpaid > 0) out.push({label: '= ' + f.afterLabel, amount: f.after, kind: 'sub'});
-  }
-  if (f.unpaid > 0) out.push({label: '− Contas que ainda faltam pagar', amount: f.unpaid, kind: 'minus'});
-  if (f.unpaid > 0) out.push({label: f.left >= 0 ? '= Sobra depois de pagar tudo' : '= Falta para pagar tudo', amount: Math.abs(f.left), kind: 'total', neg: f.left < 0});
+  var out = [{label: 'Saldo informado ' + (f.onToday ? 'hoje (' + fmtDate(f.on) + ')' : 'em ' + fmtDate(f.on) + ' (há ' + pluralDias(f.ago) + ')'), amount: f.end, kind: 'base'}];
+  // nothing changed the account since the balance (the usual case): + what is still to come =
+  // what the account will have, − the bills still to pay
+  var simple = !(f.fell > 0) && !(f.paidAfter > 0) && !f.invAfter;
+  if (f.fell > 0) out.push({label: '+ ' + f.fellLabel, amount: f.fell, kind: 'plus'});
+  if (f.still > 0) out.push({label: '+ ' + f.recvLabel, amount: f.still, kind: 'plus'});
+  if (simple && f.later > 0 && f.unpaid > 0) out.push({label: '= ' + f.afterLabel, amount: f.after, kind: 'sub'});
+  if (f.paidAfter > 0) out.push({label: '− Contas pagas depois de ' + fmtDate(f.on), amount: f.paidAfter, kind: 'minus'});
+  if (f.invAfter > 0) out.push({label: '− Aplicado depois de ' + fmtDate(f.on), amount: f.invAfter, kind: 'minus'});
+  if (f.invAfter < 0) out.push({label: '+ Resgatado depois de ' + fmtDate(f.on), amount: -f.invAfter, kind: 'plus'});
+  if (f.unpaid > 0) out.push({label: '− Contas ainda não pagas', amount: f.unpaid, kind: 'minus'});
+  if (f.unpaid > 0 || !simple) out.push({label: f.left >= 0 ? '= Vai sobrar' : '= Vai faltar', amount: Math.abs(f.left), kind: 'total', neg: f.left < 0});
   else out.push({label: '= ' + f.afterLabel, amount: f.after, kind: 'total', neg: f.after < 0});
   return out;
 }
 function forecastBlock(f){
   if (!f) return '';
-  var head = '<div class="cl-head"><span class="cl-title">📅 Previsão na conta</span></div>';
-  if (f.stale){
-    var why = [];
-    if (f.paidAfterCount) why.push(plural(f.paidAfterCount, 'foi paga 1 conta', 'foram pagas ' + f.paidAfterCount + ' contas') + ' (' + fmtMoney(f.paidAfter) + ')');
-    if (f.fellSince > 0) why.push('caiu renda (' + fmtMoney(f.fellSince) + ')');
-    return '<div class="ledger cash-ledger cash-forecast" id="cash-forecast">' + head +
-      '<p class="lg-hint">Depois de ' + esc(fmtDate(f.on)) + ' ' + why.join(' e ') + '. <button type="button" class="link-btn" data-action="open-cash" data-month="' + monthKeyToday() + '">Atualize o saldo da conta</button> para ver a previsão.</p>' +
-    '</div>';
-  }
+  var head = '<div class="cl-head"><span class="cl-title">📅 Até o fim do mês</span></div>';
   return '<div class="ledger cash-ledger cash-forecast" id="cash-forecast">' + head +
     forecastLines(f).map(function(l){
       return '<div class="lg-line' + (l.kind === 'sub' ? ' lg-sub' : (l.kind === 'total' ? ' lg-total' : '')) + '"><span>' + esc(l.label) + '</span> <span class="lg-amt' + (l.kind === 'total' ? (l.neg ? ' neg' : ' pos') : '') + '">' + fmtMoney(l.amount) + '</span></div>';
     }).join('') +
-    f.notes.map(function(n){ return '<p class="lg-hint">' + esc(n) + '</p>'; }).join('') +
+    f.notes.concat([f.spendNote]).map(function(n){ return '<p class="lg-hint">' + esc(n) + '</p>'; }).join('') +
   '</div>';
 }
 // a month with anything in it whose account balance was not told yet
@@ -7289,57 +7448,80 @@ function monthNeedsCash(k){
   var m = STATE.months[k];
   return monthHasData(m, k) && !cashOf(STATE, k);
 }
+// a month with anything in it whose last balance is from before its last day (not what was left
+// at the end of it): the balance told on that day, or null
+function monthCashPartial(k){
+  var m = STATE.months[k], c = cashOf(STATE, k);
+  return (c && c.on && c.on < lastDayIso(k) && monthHasData(m, k)) ? c : null;
+}
+// "Quanto sobrou na conta em …?": the month that just ended, without its end-of-month balance
+function endOfMonthPrompt(target, partial){
+  var lastD = fmtDate(lastDayIso(target));
+  var text = partial ?
+    '<strong>🏦 Quanto sobrou na conta em ' + esc(lastD) + '?</strong> O último saldo de ' + esc(monthLabel(target).split(' de ')[0]) + ' é de ' + esc(fmtDate(partial.on)) + '. ' +
+      'Com o saldo do fim do mês, o gasto do dia a dia de ' + esc(monthLabel(target).split(' de ')[0]) + ' e de ' + esc(monthLabel(shiftMonth(target, 1)).split(' de ')[0]) + ' fica certo.' :
+    '<strong>🏦 Quanto sobrou na conta em ' + esc(monthLabel(target)) + '?</strong> Com o saldo, o app calcula o gasto do dia a dia.';
+  return '<div class="cash-prompt" id="cash-prompt">' +
+    '<p class="cp-text">' + text + '</p>' +
+    '<button type="button" class="btn-mini primary" data-action="open-cash" data-month="' + target + '">Informar saldo</button>' +
+  '</div>';
+}
 // The joint account: what it had, what came in and went out, what it has -- and what is missing,
 // the day-to-day spending. Without a balance, the saldo at the top asks for it ("Informar saldo
-// da conta"); here, only the month that just ended, when it still lacks one.
+// da conta"); here, only the month that just ended, when it still lacks one (or has only a
+// balance from before its last day).
 function cashBlock(totals, key){
   var todayKey = monthKeyToday();
   if (key > todayKey) return '';
   var c = totals.cash;
-  if (!c){
-    // in the current month, the month that just ended comes first
-    var target = (key === todayKey && monthNeedsCash(shiftMonth(todayKey, -1))) ? shiftMonth(todayKey, -1) : key;
-    if (target === key) return '';
-    var isCur = target === todayKey;
-    return '<div class="cash-prompt" id="cash-prompt">' +
-      '<p class="cp-text"><strong>🏦 ' + (isCur ? 'Quanto tem na conta conjunta?' : 'Quanto sobrou na conta em ' + esc(monthLabel(target)) + '?') + '</strong> ' +
-        'Com o saldo, o app calcula o gasto do dia a dia.</p>' +
-      '<button type="button" class="btn-mini primary" data-action="open-cash" data-month="' + target + '">Informar saldo</button>' +
-    '</div>';
-  }
+  var prevKey = shiftMonth(todayKey, -1);
+  var prevPartial = key === todayKey ? monthCashPartial(prevKey) : null;
+  // (a month before without any balance is asked about only while this one has none either:
+  // a partial balance is asked about always, as this month starts from it)
+  var prompt = (key === todayKey && ((!c && monthNeedsCash(prevKey)) || prevPartial)) ? endOfMonthPrompt(prevKey, prevPartial) : '';
+  if (!c) return prompt;
   function line(label, amount, cls){
     return '<div class="lg-line' + (cls ? ' ' + cls : '') + '"><span>' + label + '</span> <span class="lg-amt">' + fmtMoney(amount) + '</span></div>';
   }
-  var startLabel = c.startFrom ? 'Sobrou em ' + esc(monthLabel(c.startFrom)) :
+  var startLabel = c.startFrom ? (c.startPartial ? 'Último saldo de ' + esc(monthLabel(c.startFrom)) + ' <span class="lg-count">(' + esc(fmtDate(c.startOn)) + ')</span>' : 'Sobrou em ' + esc(monthLabel(c.startFrom))) :
     'Tinha no começo do mês' + (c.startKnown ? '' : ' <span class="lg-count">(não informado)</span>');
-  var hints = [];
+  var hints = [];        // warnings: shown even with the account closed
+  // a month that already ended, told before its last day
+  if (key < todayKey && c.partial){
+    hints.push('<p class="lg-hint warn">Esse é o saldo de ' + esc(fmtDate(c.on)) + ', não o do fim do mês. <button type="button" class="link-btn" data-action="open-cash" data-month="' + key + '">Informe quanto sobrou em ' + esc(fmtDate(lastDayIso(key))) + '</button>.</p>');
+  }
   if (c.spent < 0){
     hints.push('<p class="lg-hint warn">Tem ' + fmtMoney(-c.spent) + ' a mais na conta do que o app esperava. Falta lançar alguma renda? Ou alguma conta marcada como paga ainda não saiu da conta?</p>');
-  }
-  if (c.paidAfterCount){
-    hints.push('<p class="lg-hint warn">Depois de ' + esc(fmtDate(c.on)) + ' ' + plural(c.paidAfterCount, 'foi paga 1 conta', 'foram pagas ' + c.paidAfterCount + ' contas') +
-      ' (' + fmtMoney(c.paidAfter) + '). Atualize o saldo da conta para o cálculo ficar certo.</p>');
   }
   if (!c.startKnown){
     hints.push('<p class="lg-hint">Contei R$ 0,00 no começo do mês. Se tinha dinheiro na conta, <button type="button" class="link-btn" data-action="open-cash" data-month="' + key + '">informe quanto</button>.</p>');
   }
-  if (c.incomeLater > 0){
-    hints.push('<p class="lg-hint">Não conta ' + fmtMoney(c.incomeLater) + ' de renda que cai depois de ' + esc(fmtDate(c.on)) + ' (ainda não estava na conta).</p>');
-  }
-  hints.push('<p class="lg-hint">É o que saiu da conta sem ser conta paga nem investimento: PIX, débito, dinheiro…' +
+  var about = '<p class="lg-hint">É o que saiu da conta sem ser conta paga nem investimento: PIX, débito, dinheiro…' +
     (c.manual > 0 ? ' Inclui ' + fmtMoney(c.manual) + ' lançados à mão.' : '') +
-    (key === todayKey ? ' O mês ainda não acabou: no fim dele, atualize o saldo.' : '') + '</p>');
-  return '<div class="ledger cash-ledger" id="cash-ledger">' +
-    '<div class="cl-head"><span class="cl-title">🏦 Conta conjunta</span> <button type="button" class="link-btn" data-action="open-cash" data-month="' + key + '">Atualizar saldo</button></div>' +
+    (key === todayKey ? ' O mês ainda não acabou: no fim dele, atualize o saldo.' : '') + '</p>';
+  // what happened after the balance's date: not in this calculation (it is in "Até o fim do mês")
+  var afterNotes = [];
+  if (c.paidAfterCount) afterNotes.push('Pagas depois de ' + fmtDate(c.on) + ': ' + plural(c.paidAfterCount, '1 conta', c.paidAfterCount + ' contas') + ' (' + fmtMoney(c.paidAfter) + ').');
+  if (c.invInAfter > 0) afterNotes.push('Aplicado depois de ' + fmtDate(c.on) + ': ' + fmtMoney(c.invInAfter) + '.');
+  if (c.invOutAfter > 0) afterNotes.push('Resgatado depois de ' + fmtDate(c.on) + ': ' + fmtMoney(c.invOutAfter) + '.');
+  var upTo = c.on && (c.incomeLater > 0 || afterNotes.length) ? ' até ' + esc(fmtDate(c.on)) : '';
+  var total = '<div class="lg-line lg-total"><span>⚡ Gasto do dia a dia' + ((key === todayKey || c.partial) && c.on ? ' <span class="lg-count">(até ' + esc(fmtDate(c.on)) + ')</span>' : '') + '</span> <span class="lg-amt">' + fmtMoney(Math.max(0, c.spent)) + '</span></div>';
+  var toggle = '<button type="button" class="link-btn lg-toggle" data-action="toggle-ledger" aria-expanded="' + (ledgerOpen ? 'true' : 'false') + '">' + (ledgerOpen ? 'Esconder a conta' : 'Ver a conta ›') + '</button>';
+  var head = '<div class="cl-head"><span class="cl-title">🏦 Conta conjunta</span> <button type="button" class="link-btn" data-action="open-cash" data-month="' + key + '">Atualizar saldo</button></div>';
+  if (!ledgerOpen){
+    return prompt + '<div class="ledger cash-ledger closed" id="cash-ledger">' + head + total + hints.join('') + toggle + '</div>';
+  }
+  return prompt + '<div class="ledger cash-ledger" id="cash-ledger">' + head +
     line(startLabel, c.start) +
-    line(c.incomeLater > 0 ? '+ Renda que já caiu <span class="lg-count">(até ' + esc(fmtDate(c.on)) + ')</span>' : '+ Renda', c.income) +
+    line(upTo ? '+ Renda que já caiu' + upTo : '+ Renda', c.income) +
+    (c.incomeLater > 0 ? '<p class="lg-note">' + esc(laterNoteText(c)) + '</p>' : '') +
     (c.redeemed > 0 ? line('+ Resgates de investimentos', c.redeemed) : '') +
-    line('− Contas pagas <span class="lg-count">(' + c.paidCount + ')</span>', c.paid) +
+    line('− Contas pagas' + upTo + ' <span class="lg-count">(' + c.paidCount + ')</span>', c.paid) +
     (c.applied > 0 ? line('− Aplicado nos investimentos', c.applied) : '') +
+    (afterNotes.length ? '<p class="lg-note">' + esc(afterNotes.join(' ')) + '</p>' : '') +
     line('= Deveria ter', c.expected, 'lg-sub') +
     line('Tem na conta' + (c.on ? ' <span class="lg-count">(' + esc(fmtDate(c.on)) + ')</span>' : ''), c.end) +
-    '<div class="lg-line lg-total"><span>⚡ Gasto do dia a dia</span> <span class="lg-amt">' + fmtMoney(Math.max(0, c.spent)) + '</span></div>' +
-    hints.join('') +
+    total + hints.join('') + about + toggle +
   '</div>';
 }
 // "Novembro de 2026", "Novembro de 2026 e Dezembro de 2026", "a, b e c"
@@ -7396,9 +7578,11 @@ function renderPayProgress(key){
     '</div>' +
   '</div>';
 }
+// the month's saldo as at the top of it (with what was left of the month before, when the account
+// balance is told)
 function historySaldoOf(k){
   var mv = getMonthView(STATE, k);
-  return computeMonthTotals(STATE.household, mv, k).saldo;
+  return saldoFinal(computeMonthTotals(STATE.household, mv, k));
 }
 function renderHistory(){
   var cur = monthKeyOf(new Date());
@@ -7456,12 +7640,13 @@ function renderIncomePerson(person, personName, list){
       var dLabel = d.label != null ? d.label : entry.label;
       var dAmount = d.amount != null ? d.amount : fmtInputAmount(entry.amount);
       var dReplicate = d.replicate != null ? d.replicate : !!entry.replicate;
-      var dDay = d.day != null ? d.day : (incomeDay(entry) ? String(incomeDay(entry)) : '');
-      var eDay = incomeDay(entry);
+      var dDay = d.day != null ? d.day : (incomeBday(entry) ? String(incomeBday(entry)) : (incomeDay(entry) ? String(incomeDay(entry)) : ''));
+      var dKind = d.daykind != null ? d.daykind : (incomeBday(entry) ? 'bday' : 'day');
+      var eDay = incomeWhen(entry);
       // without a day "Já caiu" is how it is anyway
       var dFell = d.fell != null ? d.fell : (entry.fell === 'no' ? 'no' : (incomeFellOn(entry) && eDay ? 'yes' : 'auto'));
       // in the current month: when it falls by the day, or "Já caiu" / "Ainda não caiu" this month
-      var fellOpts = eDay ? [['auto', 'Pelo dia em que cai (dia ' + eDay + ')'], ['yes', 'Já caiu'], ['no', 'Ainda não caiu']] : [['auto', 'Já caiu'], ['no', 'Ainda não caiu']];
+      var fellOpts = eDay ? [['auto', 'Pelo dia em que cai (' + eDay + (incomeBday(entry) ? ': ' + fmtDate(incomeDate(entry, viewMonth)) : '') + ')'], ['yes', 'Já caiu'], ['no', 'Ainda não caiu']] : [['auto', 'Já caiu'], ['no', 'Ainda não caiu']];
       var fellUi = viewMonth === monthKeyToday() ?
         '<fieldset class="inc-fell"><legend>Neste mês</legend>' +
           fellOpts.map(function(o){
@@ -7478,8 +7663,7 @@ function renderIncomePerson(person, personName, list){
           '<input class="amount-input" name="amount" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" value="' + esc(dAmount) + '" style="flex:1">' +
           '<button type="submit" class="btn primary" style="flex:none;padding:8px 14px">Salvar</button>' +
         '</div>' +
-        '<div class="field inc-day-field" style="margin:10px 0 0"><label>Dia em que cai <span class="opt">(opcional)</span></label><input name="day" type="number" inputmode="numeric" placeholder="Ex.: 5" value="' + esc(dDay) + '" style="width:100px">' +
-          '<p class="field-hint">Até esse dia ela conta como "a receber". Sem dia, conta como já recebida.</p></div>' +
+        incomeDayField(dDay, dKind, 'margin:10px 0 0', 'Até esse dia ela conta como "a receber". Sem dia, conta como já recebida.') +
         fellUi +
         '<div class="field" style="margin:10px 0 0"><label class="check-field"><input type="checkbox" name="replicate"' + (dReplicate ? ' checked' : '') + '><span>Repetir automaticamente nos próximos meses</span></label></div>' +
         '<div class="row-danger">' + delBtn + '</div>' +
@@ -7500,8 +7684,7 @@ function renderIncomePerson(person, personName, list){
     addUi = '<form data-action="add-income-form" data-person="' + person + '" style="margin-top:10px;padding:12px;border:1px dashed var(--border);border-radius:12px">' +
       '<div class="field" style="margin-bottom:10px"><label>Nome da renda</label><input name="label" placeholder="Ex.: Salário, Freelance…" value="' + esc(fdraft.label || '') + '"></div>' +
       '<div class="field" style="margin-bottom:10px"><label>Valor</label><input name="amount" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" value="' + esc(fdraft.amount || '') + '"></div>' +
-      '<div class="field inc-day-field" style="margin-bottom:10px"><label>Dia em que cai <span class="opt">(opcional)</span></label><input name="day" type="number" inputmode="numeric" placeholder="Ex.: 5" value="' + esc(fdraft.day || '') + '" style="width:100px">' +
-        '<p class="field-hint">Até esse dia ela conta como "a receber". Salário que cai em partes: lance uma renda para cada parte, cada uma com o seu dia.</p></div>' +
+      incomeDayField(fdraft.day || '', fdraft.daykind || 'day', 'margin-bottom:10px', 'Até esse dia ela conta como "a receber". Salário que cai em partes: lance uma renda para cada parte, cada uma com o seu dia.') +
       '<div class="field" style="margin-bottom:0"><label class="check-field"><input type="checkbox" name="replicate"' + (fdraft.replicate ? ' checked' : '') + '><span>Repetir automaticamente nos próximos meses</span></label></div>' +
       '<div class="sheet-actions">' +
         '<button type="button" class="btn ghost" data-action="cancel-add-income">Cancelar</button>' +
@@ -7517,15 +7700,24 @@ function renderIncomePerson(person, personName, list){
     (rows || '<p class="empty-note">Nenhuma renda lançada ainda.</p>') + addUi +
   '</div>';
 }
-// "cai dia 20 · a receber", "caiu dia 5", "já caiu", "ainda não caiu (era dia 20)", "cai dia 20"
+// "Dia em que cai": the number and "do mês" / "º dia útil"
+function incomeDayField(day, kind, style, hint){
+  return '<div class="field inc-day-field" style="' + style + '"><label>Dia em que cai <span class="opt">(opcional)</span></label>' +
+    '<div class="inc-day-row"><input name="day" type="number" inputmode="numeric" placeholder="Ex.: 5" value="' + esc(day) + '" aria-label="Dia" style="width:80px">' +
+    '<select name="daykind" aria-label="Tipo de dia"><option value="day"' + (kind !== 'bday' ? ' selected' : '') + '>do mês</option><option value="bday"' + (kind === 'bday' ? ' selected' : '') + '>º dia útil</option></select></div>' +
+    '<p class="field-hint">' + hint + ' Dia útil: de segunda a sexta, sem feriados nacionais; se a empresa pagar em outro dia, use "Já caiu".</p></div>';
+}
+// "cai dia 20 · a receber", "caiu dia 5", "já caiu", "ainda não caiu (era dia 20)", "cai dia 20",
+// "cai no 5º dia útil (07/12)"
 function incomeRowSub(e, key){
-  var d = incomeDay(e), todayKey = monthKeyToday();
-  if (key !== todayKey) return d ? [(key < todayKey ? 'caiu' : 'cai') + ' dia ' + d] : [];
+  var todayKey = monthKeyToday(), dt = incomeDate(e, key), bd = incomeBday(e);
+  var when = bd ? 'no ' + bd + 'º dia útil (' + fmtDate(dt) + ')' : (dt ? 'dia ' + parseInt(dt.slice(8, 10), 10) : '');
+  if (key !== todayKey) return dt ? [(key < todayKey ? 'caiu ' : 'cai ') + when] : [];
   var fo = incomeFellOn(e);
-  if (fo) return ['caiu dia ' + parseInt(fo.slice(8, 10), 10) + (d && fo < dateInMonth(key, d) ? ' (antes do dia ' + d + ')' : '')];
-  if (e.fell === 'no') return ['ainda não caiu' + (d ? ' (' + (dateInMonth(key, d) < todayStr() ? 'era' : 'cai') + ' dia ' + d + ')' : '')];
-  if (!d) return [];
-  return dateInMonth(key, d) <= todayStr() ? ['caiu dia ' + d] : ['cai dia ' + d + ' · a receber'];
+  if (fo) return ['caiu dia ' + parseInt(fo.slice(8, 10), 10) + (dt && fo < dt ? ' (antes do ' + (bd ? bd + 'º dia útil, ' + fmtDate(dt) : 'dia ' + parseInt(dt.slice(8, 10), 10)) + ')' : '')];
+  if (e.fell === 'no') return ['ainda não caiu' + (dt ? ' (' + (dt < todayStr() ? 'era' : 'cai') + ' ' + when + ')' : '')];
+  if (!dt) return [];
+  return dt <= todayStr() ? ['caiu ' + when] : ['cai ' + when + ' · a receber'];
 }
 function renderIncome(h, mv){
   var totalIncome = sumIncomeList(mv.income.person1) + sumIncomeList(mv.income.person2);
@@ -8547,7 +8739,7 @@ function amortOfferHtml(){
     }).join('<span aria-hidden="true"> · </span>') + '</p>';
 }
 function renderShare(){
-  var html = '<section class="card">' +
+  var html = '<section class="card" id="sec-compartilhar">' +
     '<div class="card-head"><div class="card-head-main"><span class="card-icon" aria-hidden="true">💬</span><h2 class="card-title">Compartilhar resumo</h2></div></div>' +
 
     '<div class="sheet-actions" style="margin-top:0">' +
@@ -9431,7 +9623,7 @@ function renderAmortCard(){
         (t.full > 0 && t.saved > 0 ? ' (' + fmtPct(t.saved / t.full * 100) + ' a menos)' : '') + '.' :
       'nenhum adiantamento pago ainda.') +
     (t.planned ? ' ' + t.planned + ' ' + plural(t.planned, 'programado', 'programados') + (t.plannedSaved > 0 ? ', com mais ' + fmtMoney(t.plannedSaved) + ' de economia quando ' + plural(t.planned, 'for pago', 'forem pagos') : '') + '.' : '') + '</p>' +
-    '<p class="chart-caption">A economia é o que as parcelas custariam no mês delas menos o que foi pago para adiantá-las: os juros que deixaram de ser cobrados.</p>';
+    chartHow('adiantamentos', 'A economia é o que as parcelas custariam no mês delas menos o que foi pago para adiantá-las: os juros que deixaram de ser cobrados.');
   // by purchase: the parcelas paid in advance and how much earlier it ends now
   var by = {}, order = [];
   list.forEach(function(a){
@@ -9493,7 +9685,7 @@ function amortHistoryLink(){
 /* ---------- the joint account's balance ("Saldo da conta") ---------- */
 // Told once a month (at its end), together with what the investments are worth: the app works
 // out the day-to-day spending by itself -- nothing to enter by hand.
-var cashSheet = null;        // {month, saveDate, error, keyboard, hadEnd, prevEnd, confirmClear, draft}
+var cashSheet = null;        // {month, saveDate, error, keyboard, hadEnd, last, prevEnd, prevOn, confirmClear, draft}
 // "1.500,00", "-200", "−R$ 50" (a balance can be negative)
 function parseSignedMoney(raw){
   var s = String(raw == null ? '' : raw).replace(/\s+/g, '');
@@ -9510,9 +9702,15 @@ function openCashSheet(month, fromKeyboard){
   var prev = cashOf(STATE, shiftMonth(month, -1));
   closeOtherSheets();
   invSheet = null;
-  cashSheet = {month:month, saveDate:cashSaveDate(month), error:'', keyboard:!!fromKeyboard, hadEnd:!!cur, prevEnd: prev ? prev.end : null,
+  // a balance told on another day is shown apart ("Último saldo informado"), not in the field:
+  // saving it as it is would move it to today
+  var saveDate = cashSaveDate(month);
+  var sameDay = !!cur && (!cur.on || cur.on === saveDate);
+  cashSheet = {month:month, saveDate:saveDate, error:'', keyboard:!!fromKeyboard, hadEnd:!!cur,
+    last: (cur && !sameDay) ? {end: cur.end, on: cur.on} : null,
+    prevEnd: prev ? prev.end : null, prevOn: prev && prev.on ? prev.on : null,
     confirmClear:false,
-    draft:{end: cur ? fmtInputAmount(cur.end) : '', start: (rec && typeof rec.start === 'number') ? fmtInputAmount(rec.start) : ''}};
+    draft:{end: sameDay ? fmtInputAmount(cur.end) : '', start: (rec && typeof rec.start === 'number') ? fmtInputAmount(rec.start) : ''}};
   render();
   focusQuietly(appEl && appEl.querySelector('.cash-sheet input[name="end"]'));
 }
@@ -9525,8 +9723,13 @@ function closeCashSheet(){
 function renderCashSheet(keepStill){
   var cs = cashSheet, d = cs.draft;
   var isCur = cs.month === monthKeyToday();
+  var prevKey = shiftMonth(cs.month, -1);
+  var prevPartial = cs.prevEnd != null && cs.prevOn && cs.prevOn < lastDayIso(prevKey);
   var startHtml = cs.prevEnd != null ?
-    '<p class="cs-start">Começou o mês com <strong>' + fmtMoney(cs.prevEnd) + '</strong>, o que sobrou em ' + esc(monthLabel(shiftMonth(cs.month, -1))) + '.</p>' :
+    (prevPartial ?
+      '<p class="cs-start">Começou o mês com <strong>' + fmtMoney(cs.prevEnd) + '</strong>, o último saldo de ' + esc(monthLabel(prevKey)) + ' (' + esc(fmtDate(cs.prevOn)) + '). ' +
+        '<button type="button" class="link-btn" data-action="open-cash" data-month="' + prevKey + '">Informar quanto sobrou em ' + esc(fmtDate(lastDayIso(prevKey))) + '</button></p>' :
+      '<p class="cs-start">Começou o mês com <strong>' + fmtMoney(cs.prevEnd) + '</strong>, o que sobrou em ' + esc(monthLabel(prevKey)) + '.</p>') :
     '<div class="field"><label for="cs-start">Quanto tinha na conta no começo do mês? <span class="opt">(só desta vez)</span></label>' +
       '<input id="cs-start" name="start" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" value="' + esc(d.start) + '">' +
       '<p class="field-hint">Nos próximos meses o app usa o que sobrou no mês anterior.</p></div>';
@@ -9538,6 +9741,8 @@ function renderCashSheet(keepStill){
         ' Com isso o app calcula sozinho o gasto do dia a dia.</p>' +
       '<div class="field"><label for="cs-end">' + (isCur ? 'Tem na conta hoje' : 'Sobrou na conta') + '</label>' +
         '<input id="cs-end" class="dl-amount" name="end" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" value="' + esc(d.end) + '">' +
+        (cs.last ? '<p class="field-hint cs-last">Último saldo informado: <strong>' + fmtMoney(cs.last.end) + '</strong> em ' + esc(fmtDate(cs.last.on)) +
+          (isCur ? ' (há ' + esc(pluralDias(daysFromTo(cs.last.on, todayStr()))) + ')' : '') + '.</p>' : '') +
         '<p class="field-hint">Se estiver no negativo (cheque especial), use o sinal de menos: -200.</p></div>' +
       startHtml +
       '<p class="field-hint cs-inv-note">Aplicou ou resgatou dinheiro de um investimento? Lance no card <strong>Investimentos</strong>: a conta já desconta a aplicação e soma o resgate.</p>' +
@@ -9552,12 +9757,12 @@ function renderCashSheet(keepStill){
   '</div>';
 }
 // the "Dia em que cai" field: '' → null (no day), 1-31 → the day, anything else → false
-function parseIncomeDayInput(raw){
+function parseIncomeDayInput(raw, kind){
   var t = String(raw == null ? '' : raw).trim();
   if (!t) return null;
   if (!/^\d{1,2}$/.test(t)) return false;
   var n = parseInt(t, 10);
-  return n >= 1 && n <= 31 ? n : false;
+  return n >= 1 && n <= (kind === 'bday' ? 23 : 31) ? n : false;
 }
 function readCashForm(form){
   var d = cashSheet.draft;
@@ -9614,17 +9819,30 @@ function saveCashSheet(form){
   var start = (cs.prevEnd == null && startTxt) ? parseSignedMoney(startTxt) : null;
   if (endTxt && !isFinite(end)) return cashSheetError(form, 'Não entendi o saldo da conta. Digite só números, ex.: 1500 ou -200 (negativo).', 'end');
   if (start != null && !isFinite(start)) return cashSheetError(form, 'Não entendi quanto tinha no começo do mês. Digite só números, ex.: 300.', 'start');
-  if (!endTxt && start != null) return cashSheetError(form, 'Digite também quanto tem na conta.', 'end');
   var cashRec;      // undefined: the balance is not touched
+  var was0 = cashOf(STATE, cs.month);
+  if (!endTxt && start != null){
+    // only the start changed, with a balance told on another day: it stays as it was, with the
+    // new start
+    if (was0){
+      var wasStart0 = typeof was0.start === 'number' ? was0.start : null;
+      if (wasStart0 !== round2(start)){
+        cashRec = {end: was0.end, on: was0.on, start: round2(start)};
+        toastMsg = 'Começo do mês salvo.';
+        cashSheet = null;
+        doOp({type:'saveCash', month: cs.month, cash: cashRec});
+        return;
+      }
+    } else return cashSheetError(form, 'Digite também quanto tem na conta.', 'end');
+  }
   if (endTxt){
     cashRec = {end: round2(end), on: cs.saveDate};
     if (start != null) cashRec.start = round2(start);
     var was = cashOf(STATE, cs.month);
     var wasStart = (was && typeof was.start === 'number') ? was.start : null;
     if (was && was.end === cashRec.end && was.on === cashRec.on && (cs.prevEnd != null || wasStart === (start != null ? cashRec.start : null))) cashRec = undefined;   // the same as before
-  } else if (cs.hadEnd){
-    cashRec = null;   // the number was erased: the balance is removed
   }
+  // an empty field changes nothing (to remove the balance: "Apagar o saldo informado")
   if (cashRec === undefined){
     cashSheet = null;
     toastMsg = 'Nada mudou.';
@@ -10100,6 +10318,16 @@ function onClick(ev){
       break;
     case 'chart-pick':
       pickChartMonth(el, !!(ev && ev.fromKeyboard));
+      break;
+    case 'toggle-ledger':
+      ledgerOpen = !ledgerOpen;
+      savePref(LEDGER_VIEW_KEY, ledgerOpen);
+      render();
+      break;
+    case 'toggle-chart-how':
+      var chId = el.getAttribute('data-chart');
+      if (/^(gastos|saldo|juros|compromissos|adiantamentos)$/.test(chId || '')) chartHowOpen[chId] = !chartHowOpen[chId];
+      render();
       break;
     case 'toggle-chart-table':
       var ctId = el.getAttribute('data-chart');
@@ -10974,30 +11202,31 @@ function onSubmit(ev){
     var amountRawAdd = form.elements['amount'].value;
     var replicateAdd = form.elements['replicate'] ? form.elements['replicate'].checked : false;
     var dayRawAdd = form.elements['day'] ? form.elements['day'].value : '';
+    var dayKindAdd = form.elements['daykind'] ? form.elements['daykind'].value : 'day';
     if (!labelAdd){
       toastMsg = 'Digite um nome pra essa renda.';
-      addingIncomeDraft = {label:labelRawAdd, amount:amountRawAdd, replicate:replicateAdd, day:dayRawAdd};
+      addingIncomeDraft = {label:labelRawAdd, amount:amountRawAdd, replicate:replicateAdd, day:dayRawAdd, daykind:dayKindAdd};
       render();
       return;
     }
     var amountAdd = parseMoneyInput(amountRawAdd);
     if (!isFinite(amountAdd) || amountAdd < 0){
       toastMsg = String(amountRawAdd).trim() === '' ? 'Digite o valor dessa renda.' : 'Não entendi o valor. Digite só números, ex.: 5.000,00';
-      addingIncomeDraft = {label:labelRawAdd, amount:amountRawAdd, replicate:replicateAdd, day:dayRawAdd};
+      addingIncomeDraft = {label:labelRawAdd, amount:amountRawAdd, replicate:replicateAdd, day:dayRawAdd, daykind:dayKindAdd};
       render();
       return;
     }
-    var dayAdd = parseIncomeDayInput(dayRawAdd);
+    var dayAdd = parseIncomeDayInput(dayRawAdd, dayKindAdd);
     if (dayAdd === false){
-      toastMsg = 'O dia em que cai vai de 1 a 31 (ou deixe em branco).';
-      addingIncomeDraft = {label:labelRawAdd, amount:amountRawAdd, replicate:replicateAdd, day:dayRawAdd};
+      toastMsg = dayKindAdd === 'bday' ? 'O dia útil vai de 1 a 23 (ou deixe em branco).' : 'O dia em que cai vai de 1 a 31 (ou deixe em branco).';
+      addingIncomeDraft = {label:labelRawAdd, amount:amountRawAdd, replicate:replicateAdd, day:dayRawAdd, daykind:dayKindAdd};
       render();
       return;
     }
     addingIncomeFor = null;
     addingIncomeDraft = null;
     var newIncome = {id:uid(), label:labelAdd, amount:amountAdd, replicate:replicateAdd, updatedAt:new Date().toISOString()};
-    if (dayAdd) newIncome.day = dayAdd;
+    if (dayAdd) newIncome[dayKindAdd === 'bday' ? 'bday' : 'day'] = dayAdd;
     doOp({type:'addIncomeEntry', month:viewMonth, person:incPersonAdd, entry:newIncome});
   } else if (action === 'edit-income-form'){
     ev.preventDefault();
@@ -11008,9 +11237,10 @@ function onSubmit(ev){
     var amountRawEdit = form.elements['amount'].value;
     var replicateEdit = form.elements['replicate'] ? form.elements['replicate'].checked : false;
     var dayRawEdit = form.elements['day'] ? form.elements['day'].value : '';
+    var dayKindEdit = form.elements['daykind'] ? form.elements['daykind'].value : 'day';
     var fellPick = form.querySelector('input[name="fell"]:checked');
     var fellEdit = fellPick ? fellPick.value : null;
-    var draftEdit = {label:labelRawEdit, amount:amountRawEdit, replicate:replicateEdit, day:dayRawEdit};
+    var draftEdit = {label:labelRawEdit, amount:amountRawEdit, replicate:replicateEdit, day:dayRawEdit, daykind:dayKindEdit};
     if (fellEdit) draftEdit.fell = fellEdit;
     if (!labelEdit){
       toastMsg = 'Digite um nome pra essa renda.';
@@ -11025,21 +11255,23 @@ function onSubmit(ev){
       render();
       return;
     }
-    var dayEdit = parseIncomeDayInput(dayRawEdit);
+    var dayEdit = parseIncomeDayInput(dayRawEdit, dayKindEdit);
     if (dayEdit === false){
-      toastMsg = 'O dia em que cai vai de 1 a 31 (ou deixe em branco).';
+      toastMsg = dayKindEdit === 'bday' ? 'O dia útil vai de 1 a 23 (ou deixe em branco).' : 'O dia em que cai vai de 1 a 31 (ou deixe em branco).';
       editingIncomeDraft = draftEdit;
       render();
       return;
     }
     editingIncomeId = null;
     editingIncomeDraft = null;
-    var incOp = {type:'updateIncomeEntry', month:viewMonth, person:incPersonEdit, entryId:incEntryIdEdit, label:labelEdit, amount:amountEdit, replicate:replicateEdit, day:dayEdit || null};
+    var incOp = {type:'updateIncomeEntry', month:viewMonth, person:incPersonEdit, entryId:incEntryIdEdit, label:labelEdit, amount:amountEdit, replicate:replicateEdit, day: dayKindEdit === 'bday' ? null : (dayEdit || null), bday: dayKindEdit === 'bday' ? (dayEdit || null) : null};
     // "Já caiu" / "Ainda não caiu" only in the current month (the choice is shown only there);
     // "Já caiu" keeps the day it was first marked
     if (fellEdit){
       var incNow = (getMonthView(STATE, viewMonth).income[incPersonEdit] || []).filter(function(x){ return x.id === incEntryIdEdit; })[0];
-      incOp.fell = fellEdit === 'yes' ? ((incNow && incomeFellOn(incNow)) || todayStr()) : (fellEdit === 'no' ? 'no' : null);
+      // "Já caiu": the day it was marked, or its own day when that already passed
+      var incDue = incNow ? incomeDate(incNow, viewMonth) : null;
+      incOp.fell = fellEdit === 'yes' ? ((incNow && incomeFellOn(incNow)) || (incDue && incDue <= todayStr() ? incDue : todayStr())) : (fellEdit === 'no' ? 'no' : null);
     }
     doOp(incOp);
   } else if (action === 'history-filter-form'){
