@@ -81,7 +81,7 @@ button{cursor:pointer}
 :root[data-vivid] .month-bar button{background:rgba(255,255,255,0.16);border-color:rgba(255,255,255,0.3);color:var(--hero-ink)}
 :root[data-vivid] .eye-btn{background:rgba(255,255,255,0.16);border-color:rgba(255,255,255,0.3);color:var(--hero-ink)}
 :root[data-vivid] .eye-btn[aria-pressed="true"]{background:var(--hero-ink);color:var(--hero-bg)}
-:root[data-vivid] .header .names{color:var(--hero-ink);opacity:.88}
+:root[data-vivid] .header .names{color:var(--hero-ink)}
 :root[data-vivid] .header .month-nav button{background:rgba(255,255,255,0.16);border-color:rgba(255,255,255,0.3);color:var(--hero-ink)}
 :root[data-vivid] .header .btn.primary{background:var(--hero-ink);color:var(--hero-bg)}
 :root[data-vivid] .header .name-input{color:var(--ink)}
@@ -139,6 +139,14 @@ button{cursor:pointer}
 .card-icon{font-size:1.125rem;line-height:1;flex:none}
 .card-title{font-size:1.0625rem}
 .card-meta{font-size:0.875rem;color:var(--ink-soft)}
+.fold-btn{flex:none;width:40px;height:40px;margin:-8px -10px -8px 0;border:none;background:transparent;color:var(--ink-soft);border-radius:999px;display:flex;align-items:center;justify-content:center;padding:0}
+.fold-btn svg{width:22px;height:22px;display:block;transition:transform .18s ease}
+.card.is-folded .fold-btn svg{transform:rotate(-90deg)}
+.card.is-folded > :not(.card-head){display:none !important}
+.card.is-folded > .card-head{margin-bottom:0}
+.card-head-main{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.card-head > .card-meta,.card-head > .link-btn{margin-left:auto}
+@media (prefers-reduced-motion: reduce){.fold-btn svg{transition:none}}
 
 #sec-resumo,#sec-vencimentos,#sec-renda,#sec-filtros,#sec-fixas,#sec-variaveis,#sec-investimentos,#sec-historico,#sec-ajustes,#sec-senha,#sec-protecao,#sec-copias,#graf-adiantamentos{scroll-margin-top:calc(var(--header-h, 120px) + 14px)}
 @media (prefers-reduced-motion: no-preference){ html{scroll-behavior:smooth} }
@@ -451,6 +459,8 @@ button.pill[data-action="open-status"]::after{content:'';width:8px;height:5px;fl
 .due-date .dd{font-weight:700;font-size:1rem}
 .due-date .mm{font-size:0.6875rem;text-transform:uppercase;letter-spacing:.04em}
 .due-row.is-overdue .due-date{background:var(--expense-soft);color:var(--expense)}
+.overdue-meta{color:var(--expense);font-weight:700}
+.qn-pill.qn-late{background:var(--expense-soft);border-color:transparent;color:var(--expense)}
 .due-total{display:flex;justify-content:space-between;align-items:center;gap:10px;border-top:1px solid var(--border);margin-top:4px;padding-top:10px;font-size:0.875rem;font-weight:700}
 /* period image */
 .history-image{margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
@@ -567,8 +577,8 @@ body.privacy-cover::after{content:'🔒';position:fixed;inset:0;display:flex;ali
   :root:not([data-theme="light"]){--c-overdue:#E66767;--c-pending:#FAB219;--c-paid:#12A39A;--c-pos:#12A39A;--c-neg:#E66767;--c-invest:#3987E5;--c-muted:#5B6266}
 }
 :root[data-theme="dark"]{--c-overdue:#E66767;--c-pending:#FAB219;--c-paid:#12A39A;--c-pos:#12A39A;--c-neg:#E66767;--c-invest:#3987E5;--c-muted:#5B6266}
-.qn-pill.qn-charts{background:var(--primary-soft);border-color:transparent;color:var(--primary);font-family:inherit;cursor:pointer}
-.qn-pill.qn-charts:hover,.qn-pill.qn-charts:focus-visible{border-color:var(--primary)}
+.qn-pill.qn-charts{background:var(--primary);border-color:transparent;color:var(--on-primary);font-family:inherit;cursor:pointer}
+.qn-pill.qn-charts:hover,.qn-pill.qn-charts:focus-visible{box-shadow:0 0 0 3px var(--primary-soft)}
 /* the joint account's balance: quick access (its block and its sheet are below) */
 .qn-pill.qn-cash{background:var(--surface);border-color:var(--primary);color:var(--primary);font-family:inherit;cursor:pointer}
 .qn-pill.qn-share{background:var(--surface);border-color:var(--primary);color:var(--primary)}
@@ -916,6 +926,29 @@ label .opt{font-weight:400;color:var(--ink-soft)}
 .hl-flash{animation:hlFlash 2.6s ease-out;border-radius:12px}
 @keyframes hlFlash{0%,40%{background:var(--warning-soft);box-shadow:0 0 0 8px var(--warning-soft)}100%{background:transparent;box-shadow:0 0 0 8px transparent}}
 @media (prefers-reduced-motion: reduce){.hl-flash{animation:none;background:var(--warning-soft);box-shadow:0 0 0 8px var(--warning-soft)}}
+/* round 21: the background does not change with the color. Light: white, fixed; dark: black.
+   The chosen color stays in the highlights (top of the app, buttons, links, chips, tags).
+   Three :root raise these above every palette (also "Sua cor", drawn by the app). */
+:root:root:root:not([data-theme="dark"]){
+  --paper:#FFFFFF;--surface:#FFFFFF;--surface-2:#F2F2F4;--border:#E3E3E8;--shadow:rgba(0,0,0,0.06);
+  --ink:#1C1C1E;--ink-soft:#5C5C66;
+}
+@media (prefers-color-scheme: dark){
+  :root:root:root:not([data-theme="light"]){
+    --paper:#000000;--surface:#121214;--surface-2:#1C1C1F;--border:#2A2A2E;--shadow:rgba(0,0,0,0.6);
+    --ink:#F2F2F4;--ink-soft:#A1A1AA;--hero-bg:#000000;--hero-ink:#F2F2F4;--on-primary:#000000;
+  }
+  :root[data-vivid]:not([data-theme="light"]) .header .app-name{color:var(--primary)}
+  :root[data-vivid]:not([data-theme="light"]) .month-bar{border-bottom:1px solid var(--border);box-shadow:none}
+  :root[data-vivid]:not([data-theme="light"]) .charts-header{border-bottom:1px solid var(--border);box-shadow:none}
+}
+:root:root:root[data-theme="dark"]{
+  --paper:#000000;--surface:#121214;--surface-2:#1C1C1F;--border:#2A2A2E;--shadow:rgba(0,0,0,0.6);
+  --ink:#F2F2F4;--ink-soft:#A1A1AA;--hero-bg:#000000;--hero-ink:#F2F2F4;--on-primary:#000000;
+}
+:root[data-vivid][data-theme="dark"] .header .app-name{color:var(--primary)}
+:root[data-vivid][data-theme="dark"] .month-bar{border-bottom:1px solid var(--border);box-shadow:none}
+:root[data-vivid][data-theme="dark"] .charts-header{border-bottom:1px solid var(--border);box-shadow:none}
 </style>
 </head>
 <body>
@@ -1234,7 +1267,9 @@ function applyPaletteAttr(){
     if (themeMode === 'light' || themeMode === 'dark') root.setAttribute('data-theme', themeMode);
     else root.removeAttribute('data-theme');
     var meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', themeColor);
+    var vividTop = root.hasAttribute('data-vivid');
+    var darkNow = themeMode === 'dark' || (themeMode !== 'light' && !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches));
+    if (meta) meta.setAttribute('content', darkNow ? '#000000' : (vividTop ? themeColor : '#FFFFFF'));
   } catch(e) {}
 }
 
@@ -1780,6 +1815,11 @@ try { palette = localStorage.getItem(PALETTE_KEY); } catch(e) {}
 var customColor = loadPref(CUSTOM_COLOR_KEY, null, validCustomColor);
 var themeMode = loadPref(THEME_KEY, 'auto', function(v){ return THEME_MODES.indexOf(v) >= 0; });
 applyPaletteAttr();
+// "Automático": the top bar follows when the phone changes between light and dark
+try {
+  var darkMq = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+  if (darkMq){ if (darkMq.addEventListener) darkMq.addEventListener('change', applyPaletteAttr); else if (darkMq.addListener) darkMq.addListener(applyPaletteAttr); }
+} catch(eMq) {}
 var appEl = null;
 var eventsBound = false;
 
@@ -4769,7 +4809,7 @@ var snapIndex = [];
 var snapLoaded = false;
 var SNAP_REASON = {daily:'cópia do dia', 'import':'antes de importar um backup', restore:'antes de recuperar uma cópia', manual:'feita por você', update:'antes desta atualização do app'};
 // the first time a new version of the app opens the data, it keeps a copy of it exactly as it was
-var APP_VERSION = '21';
+var APP_VERSION = '22';
 var APP_VERSION_KEY = 'gflowFinancasAppVersion';
 function keepCopyBeforeUpdate(){
   var seen = null;
@@ -5035,6 +5075,55 @@ var dueView = loadPref(DUE_VIEW_KEY, {days:7, showOverdue:true}, function(v){
 });
 // "Conta conjunta": only the day-to-day spending shows until "Ver a conta" (remembered per phone)
 var LEDGER_VIEW_KEY = 'gflowFinancasLedgerOpen';
+// round 21: any section can be folded to its title (a ⌄ at the right of its title); each phone
+// remembers which ones are folded, by the section's id: {"sec-fixas": true, ...}
+var CARDS_FOLDED_KEY = 'gflowFinancasCardsFolded';
+var cardsFolded = loadPref(CARDS_FOLDED_KEY, {}, function(v){ return !!v && typeof v === 'object' && !(v instanceof Array); });
+var FOLD_ICON = '<svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function cardHeadOf(card){
+  for (var i = 0; i < card.children.length; i++) if (/(^|\s)card-head(\s|$)/.test(card.children[i].className)) return card.children[i];
+  return null;
+}
+function setCardFolded(card, folded){
+  var head = cardHeadOf(card), btn = head && head.querySelector('.fold-btn');
+  var title = head && head.querySelector('.card-title');
+  if (folded) card.className = (card.className + ' is-folded').replace(/^\s+/, '');
+  else card.className = card.className.replace(/(^|\s)is-folded(?=\s|$)/g, '').replace(/^\s+/, '');
+  if (btn){
+    btn.setAttribute('aria-expanded', folded ? 'false' : 'true');
+    btn.setAttribute('aria-label', (folded ? 'Abrir ' : 'Recolher ') + (title ? title.textContent : 'seção'));
+  }
+}
+// after each drawing: the ⌄ button on every section with a title, folded as this phone left it
+function decorateFoldable(root){
+  if (!root || !root.querySelectorAll) return;
+  var cards = root.querySelectorAll('section.card[id]');
+  for (var i = 0; i < cards.length; i++){
+    var card = cards[i], head = cardHeadOf(card);
+    if (!head || head.querySelector('.fold-btn')) continue;
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'fold-btn';
+    b.setAttribute('data-action', 'toggle-fold');
+    b.setAttribute('data-card', card.id);
+    b.innerHTML = FOLD_ICON;
+    head.appendChild(b);
+    setCardFolded(card, cardsFolded[card.id] === true);
+  }
+}
+function foldCard(id, folded){
+  if (folded) cardsFolded[id] = true; else delete cardsFolded[id];
+  savePref(CARDS_FOLDED_KEY, cardsFolded);
+  var card = document.getElementById(id);
+  if (card) setCardFolded(card, folded);
+}
+// a shortcut to a section (the buttons at the top, "ver em Contas fixas"): it opens folded
+function unfoldTarget(id){
+  var t = id && document.getElementById(id);
+  if (!t) return;
+  var card = /(^|\s)card(\s|$)/.test(t.className) && t.tagName === 'SECTION' ? t : (t.querySelector ? t.querySelector('section.card[id]') : null);
+  if (card && cardsFolded[card.id]) foldCard(card.id, false);
+}
 var ledgerOpen = loadPref(LEDGER_VIEW_KEY, false, function(v){ return typeof v === 'boolean'; });
 
 /* ---------- filters and sorting for "Contas fixas" and "Contas variáveis" ---------- */
@@ -7174,8 +7263,10 @@ function onPinKeydown(ev){
 }
 
 /* ---------- render helpers ---------- */
-function renderQuickNav(isCurrent){
+function renderQuickNav(isCurrent, mv){
   var items = [['sec-resumo','Resumo']];
+  var lateN = lateBillsNow(mv).all.length;
+  if (lateN) items.push(['sec-atrasadas', '⏰ Atrasadas (' + lateN + ')', 'qn-late']);
   if (isCurrent) items.push(['sec-vencimentos','Vencimentos']);
   items = items.concat([
     ['sec-renda','Renda'], ['sec-fixas','Fixas'],
@@ -7188,7 +7279,7 @@ function renderQuickNav(isCurrent){
     '<a class="qn-pill qn-share" href="#sec-compartilhar"><span aria-hidden="true">📤</span> Enviar resumo</a>' +
     '<button type="button" class="qn-pill qn-wheel" data-action="open-wheel"><span aria-hidden="true">🎡</span> Roleta</button>' +
     '<button type="button" class="qn-pill qn-audit" data-action="open-audit"><span aria-hidden="true">🕘</span> Alterações</button>' +
-    items.map(function(it){ return '<a class="qn-pill" href="#' + it[0] + '">' + it[1] + '</a>'; }).join('') +
+    items.map(function(it){ return '<a class="qn-pill' + (it[2] ? ' ' + it[2] : '') + '" href="#' + it[0] + '">' + it[1] + '</a>'; }).join('') +
   '</nav>';
 }
 // "De Outubro de 2026" / "De meses anteriores": where late bills come from
@@ -7203,6 +7294,51 @@ function sectionLinks(bills){
   return links.join(' · ');
 }
 function sumTotals(bills){ var s = 0; bills.forEach(function(b){ s += b.total; }); return s; }
+// the late bills that count in the current month: from earlier months ("incoming") and this
+// month's own ones past their due date; none when looking at another month
+function lateBillsNow(mv){
+  var todayKey = monthKeyToday();
+  if (!mv || viewMonth !== todayKey) return {lateIn: [], lateOwn: [], all: []};
+  var lateIn = (mv.incoming || []).filter(function(b){ return b.state === 'overdue'; });
+  var lateOwn = (mv.bills || []).filter(function(b){ return !b.daily && b.state === 'overdue' && b.eff === todayKey; });
+  return {lateIn: lateIn, lateOwn: lateOwn, all: lateIn.concat(lateOwn)};
+}
+// "Contas atrasadas" (round 21: a section of its own, in place of the red notice at the top)
+function renderOverdue(mv){
+  var late = lateBillsNow(mv);
+  if (!late.all.length) return '';
+  var todayKey = monthKeyToday();
+  var why;
+  if (!late.lateOwn.length) why = lateFromText(late.lateIn) + ' · ' + (late.lateIn.length === 1 ? 'conta' : 'contam') + ' no saldo deste mês';
+  else if (!late.lateIn.length) why = late.lateOwn.length === 1 ? 'Deste mês: já venceu e ainda não foi paga' : 'Deste mês: já venceram e ainda não foram pagas';
+  else why = late.lateOwn.length + ' deste mês e ' + late.lateIn.length + ' ' + lateFromText(late.lateIn).replace(/^De /, 'de ') + ' · ' + (late.lateIn.length === 1 ? 'conta' : 'contam') + ' no saldo deste mês';
+  var items = late.all.slice().sort(function(a, b){
+    var da = a.dueIso || '', db = b.dueIso || '';
+    if (da !== db) return da < db ? -1 : 1;
+    return (b.total || 0) - (a.total || 0);
+  });
+  var rows = items.map(function(b){
+    var due = b.dueIso || '';
+    var dd = due ? due.slice(8, 10) : '—', mm = due ? (MONTH_NAMES[parseInt(due.slice(5, 7), 10) - 1] || '').slice(0, 3) : '';
+    var when = due ? relativeDue(due) : 'vencida';
+    if (b.interest > 0) when += ' · com juros';
+    return '<div class="due-row is-overdue">' +
+      '<div class="due-date" aria-hidden="true"><span class="dd">' + dd + '</span><span class="mm">' + mm + '</span></div>' +
+      '<div class="row-main">' +
+        '<div class="row-title">' + esc(upcomingName(b, todayKey)) + '</div>' +
+        '<div class="row-sub">' + (UPCOMING_KIND[b.kind] || 'Conta') + ' · ' + esc(when) + (riskTagHtml(b) ? ' ' + riskTagHtml(b) : '') + '</div>' +
+      '</div>' +
+      '<div class="var-amt-wrap"><div class="var-amt">' + billAmtHtml(b) + '</div>' + billPill(b) + '</div>' +
+    '</div>';
+  }).join('');
+  var total = sumTotals(late.all);
+  return '<section class="card overdue-card" id="sec-atrasadas"><div class="card-head"><div class="card-head-main"><span class="card-icon" aria-hidden="true">⏰</span><h2 class="card-title">Contas atrasadas</h2></div><div class="card-meta overdue-meta">' + fmtMoney(total) + '</div></div>' +
+    '<p class="card-sub">' + esc(why) + '. Toque em <strong>Atrasada</strong> para marcar como paga.</p>' +
+    '<div class="due-list">' + rows + '</div>' +
+    '<div class="due-total"><span>Total · ' + plural(late.all.length, '1 conta', late.all.length + ' contas') + '</span><span class="var-amt">' + fmtMoney(total) + '</span></div>' +
+    '<p class="lg-hint" style="margin-top:8px">' + sectionLinks(late.all) + '</p>' +
+  '</section>';
+}
 function renderAlerts(mv, totals){
   var html = '';
   if (saveFailed){
@@ -7215,29 +7351,7 @@ function renderAlerts(mv, totals){
     '</div>';
   }
   var todayKey = monthKeyToday();
-  var incoming = mv.incoming || [];
-  var lateIn = incoming.filter(function(b){ return b.state === 'overdue'; });
-  // this month's own bills past their due date, not paid yet
-  var lateOwn = (mv.bills || []).filter(function(b){ return !b.daily && b.state === 'overdue' && b.eff === todayKey; });
-  var lateAll = lateIn.concat(lateOwn);
-  if (viewMonth === todayKey && lateAll.length){
-    var one = lateAll.length === 1;
-    var why;
-    if (!lateOwn.length){
-      why = lateFromText(lateIn) + ', ' + (lateIn.length === 1 ? 'conta' : 'contam') + ' no saldo deste mês';
-    } else if (!lateIn.length){
-      why = lateOwn.length === 1 ? 'Já venceu e ainda não foi paga' : 'Já venceram e ainda não foram pagas';
-    } else {
-      why = lateOwn.length + ' deste mês e ' + lateIn.length + ' ' + lateFromText(lateIn).replace(/^De /, 'de ') + ', que ' + (lateIn.length === 1 ? 'conta' : 'contam') + ' no saldo deste mês';
-    }
-    html += '<div class="alert-banner danger">' +
-      '<span class="alert-icon" aria-hidden="true">⏰</span>' +
-      '<div class="alert-body">' +
-        '<div class="alert-title">' + lateAll.length + ' conta' + (one ? '' : 's') + ' atrasada' + (one ? '' : 's') + ' · ' + fmtMoney(sumTotals(lateAll)) + '</div>' +
-        esc(why) + ' · ' + sectionLinks(lateAll) +
-      '</div>' +
-    '</div>';
-  }
+  // round 21: the late bills have their own section ("Contas atrasadas"), not a notice here
   var launchItems = (viewMonth === todayKey) ? (mv.toLaunch || []).concat(mv.toLaunchBacklog || []) : [];
   if (launchItems.length){
     var oneL = launchItems.length === 1;
@@ -10393,6 +10507,7 @@ function renderNow(){
   } else undoOffer = null;
 
   appEl.innerHTML = html;
+  decorateFoldable(appEl);
   if (prevSheetScroll){
     var newSheetEl = appEl.querySelector('.sheet');
     if (newSheetEl) newSheetEl.scrollTop = prevSheetScroll;
@@ -10449,12 +10564,13 @@ function renderMainScreen(sheetWasOpen){
   var html = '<div class="shell">';
   html += renderHeader(h, isCurrent);
   html += renderAlerts(mv, totals);
-  html += renderQuickNav(isCurrent);
+  html += renderQuickNav(isCurrent, mv);
   html += '<div id="sec-resumo">' +
-    '<section class="card"><div class="card-head"><div class="card-head-main"><span class="card-icon" aria-hidden="true">📊</span><h2 class="card-title">Resumo do mês</h2></div>' +
+    '<section class="card" id="sec-resumo-mes"><div class="card-head"><div class="card-head-main"><span class="card-icon" aria-hidden="true">📊</span><h2 class="card-title">Resumo do mês</h2></div>' +
       '<button type="button" class="link-btn" data-action="open-charts">Ver gráficos ›</button></div>' +
       renderStats(totals, mv) +
     '</section>' +
+    renderOverdue(mv) +
     (isCurrent ? renderUpcoming() : '') +
   '</div>';
   html += renderHistory();
@@ -10697,6 +10813,18 @@ function onClick(ev){
     // the row itself (its icon, its texts, its amount): opens it
     var rowEl = ev.target.closest('[data-row-action]');
     if (rowEl && !ev.target.closest('a,button,input,select,textarea,label,form')){ el = rowEl; action = rowEl.getAttribute('data-row-action'); }
+  }
+  if (!el && ev.target && ev.target.closest){
+    // the title of a section folds/opens it too (a bigger target than the ⌄)
+    var headMain = ev.target.closest('.card-head-main');
+    var headCard = headMain && headMain.parentNode && headMain.parentNode.parentNode;
+    if (headCard && headCard.id && cardHeadOf(headCard) === headMain.parentNode && headMain.parentNode.querySelector('.fold-btn')){
+      foldCard(headCard.id, !cardsFolded[headCard.id]);
+      return;
+    }
+    // a shortcut to a section opens it if it is folded (then the page goes there as usual)
+    var anchorEl = ev.target.closest('a[href^="#sec-"]');
+    if (anchorEl) unfoldTarget(anchorEl.getAttribute('href').slice(1));
   }
   if (!el) return;
   var catId, id, w, name, inputEl, instId;
@@ -11241,7 +11369,12 @@ function onClick(ev){
       periodImagePreview = null;
       render();
       break;
+    case 'toggle-fold':
+      var fId = el.getAttribute('data-card');
+      if (fId) foldCard(fId, !cardsFolded[fId]);
+      break;
     case 'goto-section':
+      unfoldTarget(el.getAttribute('data-target'));
       if (listView.status === 'paid'){
         // the overdue and "a lançar" blocks are hidden by "Pagas": show everything first
         if (ev && ev.preventDefault) ev.preventDefault();
