@@ -60,8 +60,14 @@ button{cursor:pointer}
 .charts-header{position:sticky;top:0;z-index:10;padding:calc(18px + env(safe-area-inset-top)) 0 14px;border-bottom:1px solid var(--border);margin-bottom:20px}
 .hdr-row{display:flex;align-items:center;gap:10px}
 .hdr-titles{flex:1;min-width:0}
-.eye-btn{flex:none;width:40px;height:40px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--ink-soft);display:flex;align-items:center;justify-content:center;padding:0}
-.eye-btn svg{width:20px;height:20px;display:block}
+.hdr-btns{flex:none;display:flex;gap:8px;align-items:center}
+@media (max-width:359px){
+  .header .app-name{font-size:1.125rem}
+  .hdr-btns{gap:6px}
+  .hdr-btns .eye-btn,.hdr-btns .gear-btn{width:36px;height:36px}
+}
+.eye-btn,.gear-btn{flex:none;width:40px;height:40px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--ink-soft);display:flex;align-items:center;justify-content:center;padding:0}
+.eye-btn svg,.gear-btn svg{width:20px;height:20px;display:block}
 .eye-btn[aria-pressed="true"]{background:var(--primary-soft);color:var(--primary);border-color:transparent}
 .month-bar{position:sticky;top:0;top:env(safe-area-inset-top);z-index:10;background:var(--paper);display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);margin-bottom:16px}
 .month-bar::before{content:'';position:absolute;left:0;right:0;bottom:100%;height:env(safe-area-inset-top);background:inherit}
@@ -79,7 +85,7 @@ button{cursor:pointer}
 :root[data-vivid] .charts-header{margin:0 -16px 20px;border-radius:0 0 22px 22px;box-shadow:0 6px 18px var(--shadow)}
 :root[data-vivid] .month-bar{background:var(--hero-bg);color:var(--hero-ink);border-bottom:none;margin:0 -16px 18px;padding-left:16px;padding-right:16px;border-radius:0 0 22px 22px;box-shadow:0 6px 18px var(--shadow)}
 :root[data-vivid] .month-bar button{background:rgba(255,255,255,0.16);border-color:rgba(255,255,255,0.3);color:var(--hero-ink)}
-:root[data-vivid] .eye-btn{background:rgba(255,255,255,0.16);border-color:rgba(255,255,255,0.3);color:var(--hero-ink)}
+:root[data-vivid] .eye-btn,:root[data-vivid] .gear-btn{background:rgba(255,255,255,0.16);border-color:rgba(255,255,255,0.3);color:var(--hero-ink)}
 :root[data-vivid] .eye-btn[aria-pressed="true"]{background:var(--hero-ink);color:var(--hero-bg)}
 :root[data-vivid] .header .names{color:var(--hero-ink)}
 :root[data-vivid] .header .month-nav button{background:rgba(255,255,255,0.16);border-color:rgba(255,255,255,0.3);color:var(--hero-ink)}
@@ -460,6 +466,21 @@ button.pill[data-action="open-status"]::after{content:'';width:8px;height:5px;fl
 .due-date .mm{font-size:0.6875rem;text-transform:uppercase;letter-spacing:.04em}
 .due-row.is-overdue .due-date{background:var(--expense-soft);color:var(--expense)}
 .overdue-meta{color:var(--expense);font-weight:700}
+
+.share-parts{display:flex;flex-direction:column;gap:6px}
+.share-group-title{font-size:0.8125rem;font-weight:700;letter-spacing:0.02em;color:var(--ink-soft);margin:16px 0 8px}
+.share-presets{margin:0}
+.share-part{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:8px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--ink);font:inherit;font-size:0.9375rem;text-align:left;cursor:pointer}
+.share-part.on{border-color:var(--primary)}
+.sp-box{flex:none;width:22px;height:22px;border-radius:6px;border:2px solid var(--ink-soft);display:flex;align-items:center;justify-content:center;font-size:0.8125rem;font-weight:800;color:var(--on-primary)}
+.share-part.on .sp-box{background:var(--primary);border-color:var(--primary)}
+.share-part:not(.on) .sp-box{color:var(--ink-soft)}
+.sp-icon{flex:none}
+.sp-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.sp-label{font-weight:600}
+.sp-desc{font-size:0.8125rem;color:var(--ink-soft);line-height:1.3}
+.share-warn{margin-top:8px}
+.bank-info-why{display:block;margin-top:2px;opacity:.9}
 .qn-pill.qn-late{background:var(--expense-soft);border-color:transparent;color:var(--expense)}
 .due-total{display:flex;justify-content:space-between;align-items:center;gap:10px;border-top:1px solid var(--border);margin-top:4px;padding-top:10px;font-size:0.875rem;font-weight:700}
 /* period image */
@@ -1797,6 +1818,34 @@ var editingFixedDraft = null;
 var editingVariable = null;
 var launchingRecurring = null;   // {tplId, month} while entering a monthly bill's amount
 var recurringOptionsFor = null;  // 'tplId|month' whose skip/stop choices are open
+// "Enviar resumo": what goes in it (each phone remembers). The charts go only in the image.
+var SHARE_PARTS = [
+  ['renda', '💰', 'Renda', 'Salários e outras entradas de cada um'],
+  ['investimentos', '📈', 'Investimentos', 'O que foi aplicado e resgatado, com as datas'],
+  ['fixas', '🏠', 'Contas fixas', 'Cada conta com a situação e o vencimento'],
+  ['variaveis', '🧾', 'Contas variáveis', 'Parcelas e outros gastos do mês'],
+  ['diaadia', '⚡', 'Gastos do dia a dia', 'PIX, débito e dinheiro sem conta lançada'],
+  ['saldo', '⚖️', 'Saldo final do mês', 'Renda menos tudo o que saiu no mês'],
+  ['plano', '📅', 'Até o fim do mês', 'Saldo na conta, o que ainda vai entrar e o que falta pagar'],
+  ['g-categorias', '📊', 'Para onde foi o dinheiro', 'Gastos do mês por categoria'],
+  ['g-meses', '📊', 'Resultado mês a mês', 'Os últimos seis meses'],
+  ['g-invest', '📈', 'Investimentos por aplicação', 'Quanto há em cada investimento']
+];
+var SHARE_TEXT_PARTS = ['renda', 'investimentos', 'fixas', 'variaveis', 'diaadia', 'saldo', 'plano'];
+var SHARE_PRESETS = [
+  ['completo', 'Completo', ['renda', 'investimentos', 'fixas', 'variaveis', 'diaadia', 'saldo', 'plano']],
+  ['tudo', 'Completo com gráficos', ['renda', 'investimentos', 'fixas', 'variaveis', 'diaadia', 'saldo', 'plano', 'g-categorias', 'g-meses', 'g-invest']],
+  ['contas', 'Contas do mês', ['fixas', 'variaveis']],
+  ['renda', 'Renda', ['renda']],
+  ['invest', 'Investimentos', ['investimentos', 'g-invest']],
+  ['graficos', 'Gráficos', ['g-categorias', 'g-meses', 'g-invest']]
+];
+var SHARE_PARTS_KEY = 'gflowFinancasShareParts';
+function shareDefaultParts(){ var o = {}; SHARE_TEXT_PARTS.forEach(function(k){ o[k] = true; }); return o; }
+var shareParts = loadPref(SHARE_PARTS_KEY, shareDefaultParts(), function(v){ return !!v && typeof v === 'object' && !(v instanceof Array); });
+function sharePart(k){ return shareParts[k] === true; }
+function shareAnyText(){ return SHARE_TEXT_PARTS.some(sharePart); }
+function shareAnyPart(){ return SHARE_PARTS.some(function(p){ return sharePart(p[0]); }); }
 var shareTextPreview = null;
 var sharedImagePreview = null;
 var historyFilterOpen = false;
@@ -3476,13 +3525,12 @@ function summaryVariableRows(mv, key){
   own.sort(function(a,b){ return a.sortKey < b.sortKey ? 1 : (a.sortKey > b.sortKey ? -1 : 0); });
   return own.concat(summaryIncomingOf(mv, key, 'variable'));
 }
-// "Inclui 12 contas de Outubro de 2026 (R$ 3.226,82), a pagar neste mês."
+// "Inclui 12 contas de Outubro de 2026, a pagar neste mês." (no amount: it is already in the total)
 function carriedText(totals){
   if (!totals.incomingCount) return '';
   var n = totals.incomingCount, paid = totals.incomingPaid;
   return 'Inclui ' + n + ' ' + plural(n, 'conta', 'contas') + ' de ' +
-    (totals.incomingMonths.length === 1 ? monthLabel(totals.incomingMonths[0]) : 'meses anteriores') +
-    ' (' + fmtMoney(totals.incomingTotal) + '), ' +
+    (totals.incomingMonths.length === 1 ? monthLabel(totals.incomingMonths[0]) : 'meses anteriores') + ', ' +
     (paid === n ? plural(n, 'paga', 'pagas') : (paid ? plural(n, 'paga ou a pagar', 'pagas ou a pagar') : 'a pagar')) + ' neste mês.';
 }
 // day-to-day spending of the month, by category (largest first)
@@ -3543,8 +3591,8 @@ function incomeParts(list){
     return {name: (typeof e.label === 'string' && e.label.trim()) || 'Renda', amount: e.amount, tag: tag ? tag.text : null};
   });
 }
-// The summary's sections: the late bills apart (the longest overdue first, with their own total),
-// then the fixed and the variable ones that are not late. Together they make the month's total.
+// The summary's sections: the fixed and the variable bills, each in its own section -- a late one
+// stays there, marked "Atrasada" with its due date (round 22: no separate "Atrasadas" part).
 function summaryData(){
   var key = viewMonth;
   var mv = getMonthViewFull(STATE, key);
@@ -3554,13 +3602,8 @@ function summaryData(){
   var instAll = summaryRowsOf(mv, key, 'installment');
   var varAll = summaryVariableRows(mv, key);
   function isLate(r){ return r.late; }
-  function notLate(r){ return !r.late; }
-  var lateRows = fixedAll.concat(instAll, varAll).filter(isLate).sort(function(a, b){
-    var da = a.dueIso || '', db = b.dueIso || '';
-    if (da !== db) return da < db ? -1 : 1;
-    return (b.amount || 0) - (a.amount || 0);
-  });
-  var fixedRows = fixedAll.filter(notLate), instRows = instAll.filter(notLate), varRows = varAll.filter(notLate);
+  var lateRows = fixedAll.concat(instAll, varAll).filter(isLate);
+  var fixedRows = fixedAll, instRows = instAll, varRows = varAll;
   var launchRows = summaryToLaunchRows(mv);
   return {
     mv: mv, h: h, totals: totals,
@@ -3579,6 +3622,58 @@ function summaryData(){
     forecast: cashForecast(key, mv, totals)
   };
 }
+// the charts chosen for the image: name + value bars, from the same numbers as the Gráficos screen
+function shareChartParts(mv){
+  var key = viewMonth, out = [];
+  if (sharePart('g-categorias')){
+    var catMv = getMonthView(STATE, key);
+    var items = categoryItems(STATE.household, catMv, computeMonthTotals(STATE.household, catMv, key));
+    var total = 0;
+    items.forEach(function(it){ total += it.amount; });
+    var shown = items;
+    if (items.length > 8){
+      var rest = items.slice(7), restSum = 0;
+      rest.forEach(function(it){ restSum += it.amount; });
+      shown = items.slice(0, 7).concat([{name: 'Demais (' + rest.length + ')', amount: round2(restSum)}]);
+    }
+    out.push({title: 'Para onde foi o dinheiro', note: items.length ? fmtMoney(round2(total)) + ' em ' + monthLabel(key) + ' (contas e investimentos), do maior para o menor.' : '',
+      items: shown.map(function(it){ return {label: it.name, amount: it.amount, text: fmtMoney(it.amount) + (total > 0 ? ' · ' + Math.round(it.amount / total * 100) + '%' : '')}; }),
+      empty: 'Sem gastos lançados em ' + monthLabel(key)});
+  }
+  if (sharePart('g-meses')){
+    var keys = chartMonthsBack(key, 6);
+    var rows = keys.map(monthSeriesRow).filter(function(r){ return r.hasData; });
+    out.push({title: 'Resultado mês a mês', note: rows.length ? 'Renda − contas − dia a dia − investimentos de cada mês' + (rows.length > 1 ? ', de ' + monthYearShort(rows[0].key) + ' a ' + monthYearShort(rows[rows.length - 1].key) : '') + ' (sem o que sobrou do mês anterior).' : '',
+      items: rows.map(function(r){ return {label: monthLabel(r.key), amount: r.saldo}; }),
+      empty: 'Ainda não há meses com lançamentos'});
+  }
+  if (sharePart('g-invest')){
+    var pos = positionsAt(STATE, key).filter(function(p){ return p.value > 0.004; }).sort(function(a, b){ return b.value - a.value; });
+    var held = 0;
+    pos.forEach(function(p){ held += p.value; });
+    var monthTxt = invSumsText(invMonthSums(mv.invMoves));
+    out.push({title: 'Investimentos: quanto tem em cada um', note: pos.length ? 'Total ' + fmtMoney(round2(held)) + (key === monthKeyToday() ? ' hoje' : ' no fim de ' + monthLabel(key)) + (monthTxt ? ' · neste mês: ' + monthTxt : '') + '.' : '',
+      items: pos.map(function(p){ return {label: p.name, amount: p.value, text: fmtMoney(p.value) + (held > 0 ? ' · ' + Math.round(p.value / held * 100) + '%' : '')}; }),
+      empty: 'Nenhum investimento lançado'});
+  }
+  return out;
+}
+// the month's investments for the summary: each application / withdrawal with its date
+function summaryInvData(mv, key){
+  var rows = [];
+  (mv.invMoves || []).forEach(function(ev){
+    var inA = ev.kind === 'in' ? ev.amount : (ev.kind === 'val' ? ev.cashIn || 0 : 0);
+    var outA = ev.kind === 'out' ? ev.amount : (ev.kind === 'val' ? ev.cashOut || 0 : 0);
+    if (inA > 0) rows.push({date: ev.date, kind: 'in', name: ev.name, label: 'Aplicou em ' + ev.name, amount: round2(inA)});
+    if (outA > 0) rows.push({date: ev.date, kind: 'out', name: ev.name, label: 'Resgatou de ' + ev.name, amount: round2(outA)});
+  });
+  rows.sort(function(a, b){ return a.date < b.date ? -1 : (a.date > b.date ? 1 : 0); });
+  var applied = 0, redeemed = 0;
+  rows.forEach(function(r){ if (r.kind === 'in') applied += r.amount; else redeemed += r.amount; });
+  var held = 0, any = false;
+  positionsAt(STATE, key).forEach(function(p){ any = true; held += p.value; });
+  return {rows: rows, applied: round2(applied), redeemed: round2(redeemed), net: round2(applied - redeemed), held: round2(held), any: any};
+}
 function cashNoteText(key){
   return 'Sem os gastos no PIX e no débito' + (key <= monthKeyToday() ? ' (saldo da conta não informado)' : '');
 }
@@ -3594,46 +3689,58 @@ function buildSummaryText(){
   var hasDaily = d.daily.count > 0 || totals.totalDaily > 0;
   var lines = [];
   lines.push('📊 *Nossas Finanças — ' + monthLabel(viewMonth) + '*');
-  lines.push('');
-  lines.push('*Renda*');
-  [[h.person1Name, mv.income.person1], [h.person2Name, mv.income.person2]].forEach(function(p){
-    lines.push(p[0] + ': ' + fmtMoney(sumIncomeList(p[1])));
-    incomeParts(p[1]).forEach(function(e){ lines.push('   • ' + e.name + ': ' + fmtMoney(e.amount) + (e.tag ? ' (' + e.tag + ')' : '')); });
-  });
-  lines.push('*Total: ' + fmtMoney(totals.totalIncome) + '*');
-  function billLine(r){ return statusEmoji(r.status) + r.name + ' — ' + rowAmtText(r) + rowSuffix(r); }
-  if (d.lateRows.length){
+  if (sharePart('renda')){
     lines.push('');
-    lines.push('⏰ *Atrasadas (' + d.lateRows.length + ')*');
-    lines.push('_Contas atrasadas podem ter juros e multa._');
-    d.lateRows.forEach(function(r){ lines.push(billLine(r)); });
-    lines.push('*Total: ' + fmtMoney(d.lateTotal) + '*');
+    lines.push('*Renda*');
+    [[h.person1Name, mv.income.person1], [h.person2Name, mv.income.person2]].forEach(function(p){
+      lines.push(p[0] + ': ' + fmtMoney(sumIncomeList(p[1])));
+      incomeParts(p[1]).forEach(function(e){ lines.push('   • ' + e.name + ': ' + fmtMoney(e.amount) + (e.tag ? ' (' + e.tag + ')' : '')); });
+    });
+    lines.push('*Total: ' + fmtMoney(totals.totalIncome) + '*');
   }
-  lines.push('');
-  lines.push('*Contas fixas*' + paidCountText(d.fixedPaid, d.fixedRows.length));
-  if (d.fixedRows.length){
-    d.fixedRows.forEach(function(fr){ lines.push(billLine(fr)); });
-  } else {
-    lines.push(d.lateFixed ? '(nenhuma além das atrasadas)' : '(nenhuma lançada ainda)');
+  if (sharePart('investimentos')){
+    var inv = summaryInvData(mv, viewMonth);
+    if (inv.rows.length || inv.any){
+      lines.push('');
+      lines.push('📈 *Investimentos*');
+      if (inv.rows.length) inv.rows.forEach(function(r){ lines.push('• ' + fmtDate(r.date) + ' ' + r.label + ': ' + fmtMoney(r.amount)); });
+      else lines.push('Nada aplicado nem resgatado em ' + monthLabel(viewMonth) + '.');
+      if (inv.rows.length){
+        if (inv.applied > 0 && inv.redeemed > 0) lines.push('Aplicado: ' + fmtMoney(inv.applied) + ' · Resgatado: ' + fmtMoney(inv.redeemed));
+        lines.push('*' + (inv.applied > 0 && inv.redeemed > 0 ? 'Aplicado − resgatado' : (inv.applied > 0 ? 'Total aplicado' : 'Total resgatado')) + ': ' +
+          fmtMoney(inv.applied > 0 && inv.redeemed > 0 ? inv.net : (inv.applied > 0 ? inv.applied : inv.redeemed)) + '*');
+      }
+      if (inv.any) lines.push('Quanto tem investido' + (viewMonth === monthKeyToday() ? '' : ' no fim do mês') + ': ' + fmtMoney(inv.held));
+    }
   }
-  lines.push('*Total: ' + fmtMoney(d.fixedTotal) + '*');
-  lines.push('');
-  lines.push('*Contas variáveis*' + paidCountText(d.varPaid, d.varCount));
-  if (d.instRows.length){
-    lines.push('_Parcelas do mês_');
-    d.instRows.forEach(function(ir){ lines.push(billLine(ir)); });
+  function billLine(r){ return statusEmoji(r.status) + r.name + ' — ' + rowAmtText(r) + rowSuffix(r); }
+  if (sharePart('fixas')){
+    lines.push('');
+    lines.push('*Contas fixas*' + paidCountText(d.fixedPaid, d.fixedRows.length));
+    if (d.fixedRows.length) d.fixedRows.forEach(function(fr){ lines.push(billLine(fr)); });
+    else lines.push('(nenhuma lançada ainda)');
+    lines.push('*Total: ' + fmtMoney(d.fixedTotal) + '*');
   }
-  if (d.varRows.length){
-    if (d.instRows.length) lines.push('_Outros gastos_');
-    d.varRows.forEach(function(vr){ lines.push(billLine(vr)); });
+  if (sharePart('variaveis')){
+    lines.push('');
+    lines.push('*Contas variáveis*' + paidCountText(d.varPaid, d.varCount));
+    if (d.instRows.length){
+      lines.push('_Parcelas do mês_');
+      d.instRows.forEach(function(ir){ lines.push(billLine(ir)); });
+    }
+    if (d.varRows.length){
+      if (d.instRows.length) lines.push('_Outros gastos_');
+      d.varRows.forEach(function(vr){ lines.push(billLine(vr)); });
+    }
+    if (d.launchRows.length){
+      lines.push('_A lançar (valor ainda não informado)_');
+      d.launchRows.forEach(function(lr){ lines.push(statusEmoji(lr.status) + lr.name + rowSuffix(lr)); });
+    }
+    if (!d.instRows.length && !d.varRows.length && !d.launchRows.length) lines.push('(nenhuma lançada ainda)');
+    lines.push('*Total: ' + fmtMoney(d.varTotal) + '*');
   }
-  if (d.launchRows.length){
-    lines.push('_A lançar (valor ainda não informado)_');
-    d.launchRows.forEach(function(lr){ lines.push(statusEmoji(lr.status) + lr.name + rowSuffix(lr)); });
-  }
-  if (!d.instRows.length && !d.varRows.length && !d.launchRows.length) lines.push(d.lateVar ? '(nenhuma além das atrasadas)' : '(nenhuma lançada ainda)');
-  lines.push('*Total: ' + fmtMoney(d.varTotal) + '*');
-  if (hasDaily){
+  if (d.lateRows.length && (sharePart('fixas') || sharePart('variaveis'))) lines.push('_🔴 Contas atrasadas podem ter juros e multa._');
+  if (sharePart('diaadia') && hasDaily){
     lines.push('');
     if (totals.dailyCalc){
       lines.push('*Gastos do dia a dia*');
@@ -3645,37 +3752,41 @@ function buildSummaryText(){
     }
     lines.push('*Total: ' + fmtMoney(totals.totalDaily) + '*');
   }
-  lines.push('');
-  lines.push('*Total de contas (fixas + variáveis): ' + fmtMoney(d.totalBills) + '*');
-  if (totals.incomingCount) lines.push('_' + carriedText(totals) + '_');
-  if (totals.totalInterest > 0) lines.push('Juros e multas no mês: ' + fmtMoney(totals.totalInterest) + ' (já somados nas contas)');
-  if (hasDaily) lines.push('*Gastos do dia a dia: ' + fmtMoney(totals.totalDaily) + '*');
-  if (hasInv){
-    lines.push('*Investimentos: ' + fmtMoney(totals.totalInvestments) + '*' +
-      (totals.invRedeemed > 0 ? ' (' + (totals.invApplied > 0 ? 'aplicou ' + fmtMoney(totals.invApplied) + ', ' : '') + 'resgatou ' + fmtMoney(totals.invRedeemed) + ')' : ''));
-  }
-  lines.push('');
-  var ciT = carryIn(totals);
-  lines.push('*SALDO FINAL: ' + fmtMoney(saldoFinal(totals)) + '*');
-  lines.push((ciT ? ciT.label + ' ' + fmtMoney(ciT.amount) + ' + ' : '') + 'Renda ' + fmtMoney(totals.totalIncome) + ' − Contas ' + fmtMoney(d.totalBills) +
-    (hasDaily ? ' − Dia a dia ' + fmtMoney(totals.totalDaily) : '') +
-    (hasInv ? (totals.totalInvestments >= 0 ? ' − Investimentos ' + fmtMoney(totals.totalInvestments) : ' + Resgates ' + fmtMoney(-totals.totalInvestments)) : '') +
-    (totals.unexplainedIn > 0 ? ' + Entrou sem lançar ' + fmtMoney(totals.unexplainedIn) : '') + ' = ' + fmtMoney(saldoFinal(totals)));
-  if (d.noCash) lines.push('_' + cashNoteText(viewMonth) + '._');
-  if (d.forecast){
+  if (sharePart('fixas') || sharePart('variaveis')){
     lines.push('');
-    forecastLines(d.forecast).forEach(function(l, i){
-      var txt = l.label + ': ' + fmtMoney(l.amount);
-      // "🏦 *Na conta hoje (11/11): R$ 1,87*" … "= *Sobra depois de pagar tudo: R$ 2.001,87*"
-      lines.push(i === 0 ? '🏦 *' + txt + '*' : (l.kind === 'total' ? txt.slice(0, 2) + '*' + txt.slice(2) + '*' : txt));
-    });
-    d.forecast.notes.forEach(function(n){ lines.push('_' + n + '_'); });
-  } else if (totals.cash) lines.push('🏦 Na conta conjunta' + (totals.cash.on ? ' em ' + fmtDate(totals.cash.on) : '') + ': *' + fmtMoney(totals.cash.end) + '*');
-  var later = d.movedOut.late;
-  if (later.length){
-    var payMonths = uniq(later.map(function(b){ return b.eff; })).sort();
-    lines.push('_' + later.length + plural(later.length, ' conta deste mês', ' contas deste mês') + ' (' + fmtMoney(sumTotals(later)) + ') ' +
-      plural(later.length, 'ficou', 'ficaram') + ' para pagar em ' + monthsPhrase(payMonths) + ' e ' + plural(later.length, 'continua', 'continuam') + ' neste saldo._');
+    lines.push('*Total de contas (fixas + variáveis): ' + fmtMoney(d.totalBills) + '*');
+    if (totals.incomingCount) lines.push('_' + carriedText(totals) + '_');
+    if (totals.totalInterest > 0) lines.push('Juros e multas no mês: ' + fmtMoney(totals.totalInterest) + ' (já somados nas contas)');
+  }
+  if (sharePart('saldo')){
+    lines.push('');
+    var ciT = carryIn(totals);
+    lines.push('*SALDO FINAL: ' + fmtMoney(saldoFinal(totals)) + '*');
+    lines.push((ciT ? ciT.label + ' ' + fmtMoney(ciT.amount) + ' + ' : '') + 'Renda ' + fmtMoney(totals.totalIncome) + ' − Contas ' + fmtMoney(d.totalBills) +
+      (hasDaily ? ' − Dia a dia ' + fmtMoney(totals.totalDaily) : '') +
+      (hasInv ? (totals.totalInvestments >= 0 ? ' − Investimentos ' + fmtMoney(totals.totalInvestments) : ' + Resgates ' + fmtMoney(-totals.totalInvestments)) : '') +
+      (totals.unexplainedIn > 0 ? ' + Entrou sem lançar ' + fmtMoney(totals.unexplainedIn) : '') + ' = ' + fmtMoney(saldoFinal(totals)));
+    if (d.noCash) lines.push('_' + cashNoteText(viewMonth) + '._');
+  }
+  if (sharePart('plano') && (d.forecast || totals.cash)){
+    if (!sharePart('saldo')) lines.push('');
+    if (d.forecast){
+      lines.push('');
+      forecastLines(d.forecast).forEach(function(l, i){
+        var txt = l.label + ': ' + fmtMoney(l.amount);
+        // "🏦 *Na conta hoje (11/11): R$ 1,87*" … "= *Sobra depois de pagar tudo: R$ 2.001,87*"
+        lines.push(i === 0 ? '🏦 *' + txt + '*' : (l.kind === 'total' ? txt.slice(0, 2) + '*' + txt.slice(2) + '*' : txt));
+      });
+      d.forecast.notes.forEach(function(n){ lines.push('_' + n + '_'); });
+    } else if (totals.cash) lines.push('🏦 Na conta conjunta' + (totals.cash.on ? ' em ' + fmtDate(totals.cash.on) : '') + ': *' + fmtMoney(totals.cash.end) + '*');
+  }
+  if (sharePart('saldo')){
+    var later = d.movedOut.late;
+    if (later.length){
+      var payMonths = uniq(later.map(function(b){ return b.eff; })).sort();
+      lines.push('_' + later.length + plural(later.length, ' conta deste mês', ' contas deste mês') + ' (' + fmtMoney(sumTotals(later)) + ') ' +
+        plural(later.length, 'ficou', 'ficaram') + ' para pagar em ' + monthsPhrase(payMonths) + ' e ' + plural(later.length, 'continua', 'continuam') + ' neste saldo._');
+    }
   }
   return lines.join('\n');
 }
@@ -3748,66 +3859,90 @@ function buildSummaryCanvas(){
     incomeParts(list).forEach(function(e){ blocks.push({k:'part', label:e.name, amount:e.amount, tag:e.tag}); });
   }
 
-  sec('Renda');
-  incomeLines(h.person1Name, mv.income.person1);
-  incomeLines(h.person2Name, mv.income.person2);
-  line('Total da renda', totals.totalIncome, {bold:true});
-  gap();
-  if (d.lateRows.length){
-    sec('Atrasadas (' + d.lateRows.length + ')');
-    d.lateRows.forEach(itemLine);
-    line('Total atrasadas', d.lateTotal, {bold:true});
-    gap();
+  var NOTE_FONT = '400 13px ' + SANS;
+  function note(t){ blocks.push({k:'note', lines: wrapCanvasText(t, 640 - 2 * 28, NOTE_FONT)}); }
+  var started = false;
+  function startSec(t){ if (started) gap(); started = true; sec(t); }
+  if (sharePart('renda')){
+    startSec('Renda');
+    incomeLines(h.person1Name, mv.income.person1);
+    incomeLines(h.person2Name, mv.income.person2);
+    line('Total da renda', totals.totalIncome, {bold:true});
   }
-  sec('Contas fixas' + paidCountText(d.fixedPaid, d.fixedRows.length));
-  if (d.fixedRows.length) d.fixedRows.forEach(itemLine);
-  else empty(d.lateFixed ? 'Nenhuma além das atrasadas' : 'Nenhuma lançada ainda');
-  line('Total fixas', d.fixedTotal, {bold:true});
-  gap();
-  sec('Contas variáveis' + paidCountText(d.varPaid, d.varCount));
-  if (d.instRows.length){
-    sub('Parcelas do mês');
-    d.instRows.forEach(itemLine);
-  }
-  if (d.varRows.length){
-    if (d.instRows.length || d.launchRows.length) sub('Outros gastos');
-    d.varRows.forEach(itemLine);
-  }
-  if (d.launchRows.length){
-    sub('A lançar — valor ainda não informado');
-    d.launchRows.forEach(itemLine);
-  }
-  if (!d.instRows.length && !d.varRows.length && !d.launchRows.length) empty(d.lateVar ? 'Nenhuma além das atrasadas' : 'Nenhuma lançada ainda');
-  line('Total variáveis', d.varTotal, {bold:true});
-  if (totals.dailyCalc && totals.totalDaily > 0){
-    gap();
-    sec('Gastos do dia a dia');
-    blocks.push({k:'note', lines: wrapCanvasText(DAILY_NOTE, 640 - 2 * 28, '400 13px ' + SANS)});
-    d.daily.cats.forEach(function(c){ line(c.name, c.amount); });
-    if (d.daily.count) line('Sem detalhe (PIX, débito, dinheiro…)', round2(totals.totalDaily - d.daily.total));
-    line('Total dia a dia', totals.totalDaily, {bold:true});
-  } else if (d.daily.count){
-    gap();
-    sec('Gastos do dia a dia (' + d.daily.count + ')');
-    d.daily.cats.forEach(function(c){ line(c.name, c.amount); });
-    line('Total dia a dia', totals.totalDaily, {bold:true});
-  }
-  gap();
-  blocks.push({k:'band', label:'Total de contas (fixas + variáveis)', amount:d.totalBills});
-  if (totals.incomingCount) line('Inclui ' + totals.incomingCount + ' ' + plural(totals.incomingCount, 'conta', 'contas') + ' de ' + (totals.incomingMonths.length === 1 ? monthLabel(totals.incomingMonths[0]) : 'meses anteriores'), totals.incomingTotal, {noRule:true});
-  if (totals.totalInterest > 0) line('Juros e multas (já somados nas contas)', totals.totalInterest, {noRule:true});
-  if (hasInv){
-    gap();
-    if (totals.invRedeemed > 0){
-      if (totals.invApplied > 0) line('Aplicado nos investimentos', totals.invApplied);
-      line('Resgatado dos investimentos', totals.invRedeemed);
+  if (sharePart('investimentos')){
+    var inv = summaryInvData(mv, viewMonth);
+    if (inv.rows.length || inv.any){
+      startSec('Investimentos');
+      if (inv.rows.length) inv.rows.forEach(function(r){ line(r.label, r.amount, {due: 'em ' + fmtDate(r.date)}); });
+      else empty('Nada aplicado nem resgatado em ' + monthLabel(viewMonth));
+      if (inv.rows.length){
+        if (inv.applied > 0 && inv.redeemed > 0){
+          line('Total aplicado', inv.applied, {bold:true});
+          line('Total resgatado', inv.redeemed, {noRule:true});
+          line('Aplicado − resgatado', inv.net, {bold:true, noRule:true});
+        } else line(inv.applied > 0 ? 'Total aplicado' : 'Total resgatado', inv.applied > 0 ? inv.applied : inv.redeemed, {bold:true});
+      }
+      if (inv.any) line('Quanto tem investido' + (viewMonth === monthKeyToday() ? '' : ' no fim do mês'), inv.held, {noRule:true, soft:true});
     }
-    line('Investimentos' + (totals.invRedeemed > 0 ? ' (aplicado − resgatado)' : ''), totals.totalInvestments, {bold:true, noRule:true});
   }
-  if (totals.cash && !d.forecast){
-    gap();
+  if (sharePart('fixas')){
+    startSec('Contas fixas' + paidCountText(d.fixedPaid, d.fixedRows.length));
+    if (d.fixedRows.length) d.fixedRows.forEach(itemLine);
+    else empty('Nenhuma lançada ainda');
+    line('Total fixas', d.fixedTotal, {bold:true});
+  }
+  if (sharePart('variaveis')){
+    startSec('Contas variáveis' + paidCountText(d.varPaid, d.varCount));
+    if (d.instRows.length){
+      sub('Parcelas do mês');
+      d.instRows.forEach(itemLine);
+    }
+    if (d.varRows.length){
+      if (d.instRows.length || d.launchRows.length) sub('Outros gastos');
+      d.varRows.forEach(itemLine);
+    }
+    if (d.launchRows.length){
+      sub('A lançar — valor ainda não informado');
+      d.launchRows.forEach(itemLine);
+    }
+    if (!d.instRows.length && !d.varRows.length && !d.launchRows.length) empty('Nenhuma lançada ainda');
+    line('Total variáveis', d.varTotal, {bold:true});
+  }
+  if (sharePart('diaadia')){
+    if (totals.dailyCalc && totals.totalDaily > 0){
+      startSec('Gastos do dia a dia');
+      note(DAILY_NOTE);
+      d.daily.cats.forEach(function(c){ line(c.name, c.amount); });
+      if (d.daily.count) line('Sem detalhe (PIX, débito, dinheiro…)', round2(totals.totalDaily - d.daily.total));
+      line('Total dia a dia', totals.totalDaily, {bold:true});
+    } else if (d.daily.count){
+      startSec('Gastos do dia a dia (' + d.daily.count + ')');
+      d.daily.cats.forEach(function(c){ line(c.name, c.amount); });
+      line('Total dia a dia', totals.totalDaily, {bold:true});
+    }
+  }
+  if (sharePart('fixas') || sharePart('variaveis')){
+    if (started) gap();
+    started = true;
+    blocks.push({k:'band', label:'Total de contas (fixas + variáveis)', amount:d.totalBills});
+    if (totals.incomingCount || d.lateRows.length) blocks.push({k:'gap'});
+    // how many came from earlier months: told without an amount (it is already in the total)
+    if (totals.incomingCount) note(carriedText(totals));
+    if (totals.totalInterest > 0) line('Juros e multas (já somados nas contas)', totals.totalInterest, {noRule:true});
+    if (d.lateRows.length) note('Contas atrasadas podem ter juros e multa.');
+  }
+  if (sharePart('plano') && totals.cash && !d.forecast){
+    if (started) gap();
+    started = true;
     line('Na conta conjunta' + (totals.cash.on ? ' em ' + fmtDate(totals.cash.on) : ''), totals.cash.end, {bold:true, noRule:true});
   }
+  // the charts, drawn as bars (only in the image)
+  shareChartParts(mv).forEach(function(c){
+    startSec(c.title);
+    if (c.note) note(c.note);
+    if (c.items.length) blocks.push({k:'bars', items: c.items});
+    else empty(c.empty);
+  });
 
   var ciI = carryIn(totals);
   var statement = (ciI ? [['', ciI.label, ciI.amount], ['+', 'Renda', totals.totalIncome]] : [['', 'Renda', totals.totalIncome]]).concat([['−', 'Contas (fixas + variáveis)', d.totalBills]]);
@@ -3819,9 +3954,10 @@ function buildSummaryCanvas(){
   var W = 640, PAD = 28;
   var HEADER_H = 96, TOP_PAD = 30, SEC_H = 26, SUB_H = 22, ROW_H = 27, PART_H = 22, GAP_H = 18, BAND_H = 44, BEFORE_FOOTER = 26;
   var STMT_H = 24, NOTE_H = 24;
-  var FOOTER_H = 34 + (statement.length - 1) * STMT_H + 14 + 38 + 24 + (d.noCash ? NOTE_H : 0);
+  var withSaldo = sharePart('saldo');
+  var FOOTER_H = withSaldo ? 34 + (statement.length - 1) * STMT_H + 14 + 38 + 24 + (d.noCash ? NOTE_H : 0) : 0;
   // the forecast, below the footer (as in the text, after the saldo final)
-  var fc = d.forecast || null;
+  var fc = sharePart('plano') ? (d.forecast || null) : null;
   var fcLines = fc ? forecastLines(fc) : [];
   var FC_ROW = 27, FC_NOTE = 17;
   ctx0Font = '400 12.5px ' + SANS;
@@ -3829,9 +3965,9 @@ function buildSummaryCanvas(){
   var FC_H = fc ? 30 + SEC_H + fcLines.length * FC_ROW + (fcNoteLines.length ? 8 + fcNoteLines.length * FC_NOTE : 0) + 22 : 0;
   var CHIP_W = 74, CHIP_H = 20;
   var heights = {sec:SEC_H, sub:SUB_H, row:ROW_H, part:PART_H, empty:ROW_H, gap:GAP_H, band:BAND_H};
-  var NOTE_LINE = 18;
+  var NOTE_LINE = 18, BAR_ROW = 40;
   var H = HEADER_H + TOP_PAD + BEFORE_FOOTER + FOOTER_H + FC_H;
-  blocks.forEach(function(b){ H += b.k === 'note' ? b.lines.length * NOTE_LINE + 8 : heights[b.k]; });
+  blocks.forEach(function(b){ H += b.k === 'note' ? b.lines.length * NOTE_LINE + 8 : (b.k === 'bars' ? b.items.length * BAR_ROW + 4 : heights[b.k]); });
 
   var canvas = document.createElement('canvas');
   // sharper (3×), within what the iPhone can draw (a canvas of at most ~16 million pixels)
@@ -3863,6 +3999,7 @@ function buildSummaryCanvas(){
   var amtW = 90;
   blocks.forEach(function(b){
     if ((b.k === 'row' || b.k === 'band') && b.amount != null) amtW = Math.max(amtW, ctx.measureText((b.o && b.o.approx ? '≈ ' : '') + fmtMoney(b.amount)).width);
+    if (b.k === 'bars') b.items.forEach(function(it){ amtW = Math.max(amtW, ctx.measureText(it.text || fmtMoney(it.amount)).width); });
   });
   var AMT_RIGHT = W - PAD;
   var CHIP_LEFT = AMT_RIGHT - amtW - 14 - CHIP_W;
@@ -3902,6 +4039,32 @@ function buildSummaryCanvas(){
       y += ROW_H;
     } else if (b.k === 'gap'){
       y += GAP_H;
+    } else if (b.k === 'bars'){
+      // name and value on one line, the bar under them (all bars with the same room to compare)
+      var bmax = 0;
+      b.items.forEach(function(it){ bmax = Math.max(bmax, Math.abs(it.amount)); });
+      b.items.forEach(function(it){
+        ctx.fillStyle = INK;
+        ctx.textAlign = 'left';
+        ctx.font = '400 14px ' + SANS;
+        ctx.fillText(fitText(it.label, AMT_RIGHT - amtW - 20 - PAD), PAD, y);
+        ctx.textAlign = 'right';
+        ctx.font = '700 14px ' + MONO;
+        ctx.fillStyle = it.amount < 0 ? NEGATIVE : INK;
+        ctx.fillText(it.text || fmtMoney(it.amount), AMT_RIGHT, y);
+        var trackW = W - 2 * PAD;
+        roundRect(PAD, y + 7, trackW, 9, 4.5);
+        ctx.fillStyle = BAND;
+        ctx.fill();
+        var fw = bmax > 0 ? Math.max(3, Math.abs(it.amount) / bmax * trackW) : 0;
+        if (fw > 0){
+          roundRect(PAD, y + 7, fw, 9, 4.5);
+          ctx.fillStyle = it.amount < 0 ? NEGATIVE : accent;
+          ctx.fill();
+        }
+        y += BAR_ROW;
+      });
+      y += 4;
     } else if (b.k === 'note'){
       // a short explanation under a section's title
       ctx.fillStyle = INK_SOFT;
@@ -3954,7 +4117,7 @@ function buildSummaryCanvas(){
       var labelRight = o.status ? CHIP_LEFT - 12 : AMT_RIGHT - amtW - 14;
       ctx.font = '400 11.5px ' + SANS;
       var dueW = o.due ? ctx.measureText(o.due).width + 8 : 0;
-      ctx.fillStyle = INK;
+      ctx.fillStyle = o.soft ? INK_SOFT : INK;
       ctx.textAlign = 'left';
       ctx.font = (o.bold ? '700 ' : '400 ') + '15px ' + SANS;
       var lbl = fitText(b.label, labelRight - PAD - dueW);
@@ -3989,8 +4152,10 @@ function buildSummaryCanvas(){
     }
   });
 
-  // footer: how the month closes, with the actual totals
+  // footer: how the month closes, with the actual totals (only when "Saldo final" is chosen)
+  if (!withSaldo && !fc) return canvas;
   var footerY = H - FC_H - FOOTER_H;
+  if (withSaldo){
   ctx.fillStyle = saldoFinal(totals) >= 0 ? accent : NEGATIVE;
   ctx.fillRect(0, footerY, W, FOOTER_H);
   ctx.fillStyle = ON_ACCENT;
@@ -4029,6 +4194,7 @@ function buildSummaryCanvas(){
     ctx.textAlign = 'left';
     ctx.font = '400 12.5px ' + SANS;
     ctx.fillText(fitText(cashNoteText(viewMonth), W - 2 * PAD), PAD, sy + NOTE_H);
+  }
   }
   if (fc){
     var fy0 = H - FC_H + 30;
@@ -4809,7 +4975,7 @@ var snapIndex = [];
 var snapLoaded = false;
 var SNAP_REASON = {daily:'cópia do dia', 'import':'antes de importar um backup', restore:'antes de recuperar uma cópia', manual:'feita por você', update:'antes desta atualização do app'};
 // the first time a new version of the app opens the data, it keeps a copy of it exactly as it was
-var APP_VERSION = '22';
+var APP_VERSION = '24';
 var APP_VERSION_KEY = 'gflowFinancasAppVersion';
 function keepCopyBeforeUpdate(){
   var seen = null;
@@ -6387,12 +6553,12 @@ function pickChartMonth(el, fromKeyboard){
 }
 
 /* ---------- screens of their own besides "Gráficos": the history of changes and the wheels ---------- */
-var subScreen = null;        // 'audit' | 'wheel'
+var subScreen = null;        // 'audit' | 'wheel' | 'settings' | 'share'
 var subToken = null;
 var subReturnScroll = 0;
 var subOpener = null;
 var subKeyboard = false;
-function openSubScreen(name, opener, fromKeyboard){
+function openSubScreen(name, opener, fromKeyboard, targetId){
   if (chartsOpen || subScreen) return;
   subReturnScroll = window.pageYOffset || (document.documentElement && document.documentElement.scrollTop) || 0;
   subScreen = name;
@@ -6404,6 +6570,15 @@ function openSubScreen(name, opener, fromKeyboard){
   render();
   if (fromKeyboard) focusQuietly(appEl && appEl.querySelector('.charts-header .app-name'));
   scrollToY(0);
+  if (targetId){
+    unfoldTarget(targetId);
+    var tEl = document.getElementById(targetId);
+    if (tEl){
+      var hdr = appEl && appEl.querySelector('.charts-header');
+      var top = tEl.getBoundingClientRect().top + (window.pageYOffset || 0) - (hdr ? hdr.offsetHeight : 0) - 12;
+      scrollToY(Math.max(0, top));
+    }
+  }
 }
 function closeSubScreen(fromButton, fromKeyboard){
   if (!subScreen) return;
@@ -6428,6 +6603,25 @@ function closeSubScreen(fromButton, fromKeyboard){
   scrollToY(subReturnScroll);
   // what an undo brought back: shown once the scroll is back where it was
   if (pendingHighlight) setTimeout(applyPendingHighlight, 60);
+}
+// ⚙ Configurações: everything that is set once (the names, the online account, the look, the
+// password, backups and copies), out of the main screen
+function settingsCardsHtml(){
+  return renderCloudCard() + renderNamesCard() + renderAppearance() + renderPinSettings() + renderBackup() + renderProtectionCard();
+}
+// on this computer only: the tests of the older rounds keep the settings on the main screen
+function settingsInline(){
+  if (!/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return false;
+  try { return localStorage.getItem('nfTestSettingsInline') === '1'; } catch(e) { return false; }
+}
+function renderSettingsScreen(){
+  return '<div class="shell charts-shell settings-shell">' + subHeader('Configurações') +
+    settingsCardsHtml() +
+    '<p class="footer-note">Toque no título de uma seção para recolher ou abrir.</p>' +
+  '</div>';
+}
+function renderShareScreen(){
+  return '<div class="shell charts-shell share-shell">' + subHeader('Enviar resumo') + renderShare() + '</div>';
 }
 function subHeader(title){
   return '<header class="header charts-header">' +
@@ -6491,7 +6685,7 @@ function auditEntryHtml(e){
   if (many){
     html += '<button type="button" class="link-btn au-more" data-action="audit-toggle" data-id="' + esc(e.id) + '" aria-expanded="' + (open ? 'true' : 'false') + '">' + (open ? 'Esconder os detalhes' : 'Ver o que mudou (' + e.count + ')') + '</button>';
     if (open){
-      if (!e.changes) html += '<p class="lg-hint">São muitas alterações para guardar uma a uma. Para voltar tudo, use uma cópia automática (Ajustes → Cópias automáticas).</p>';
+      if (!e.changes) html += '<p class="lg-hint">São muitas alterações para guardar uma a uma. Para voltar tudo, use uma cópia automática (⚙ Configurações → Cópias automáticas).</p>';
       html += '<ul class="au-parts">' + (e.lines || []).map(function(l, i){
         var done = e.undone || (e.undoneParts && e.undoneParts[i]);
         return '<li><span class="au-part-icon" aria-hidden="true">' + (AUDIT_VERB_ICON[l.verb] || '✎') + '</span><span class="au-part-text">' + esc(maskMoneyText(l.text)) +
@@ -6540,7 +6734,7 @@ function renderAuditScreen(){
 }
 function renderSnapshotsCard(){
   var body;
-  if (idbBroken || !window.indexedDB) body = '<p class="empty-note">Este aparelho não deixa o app guardar cópias automáticas. Faça backups de vez em quando (Ajustes → Backup).</p>';
+  if (idbBroken || !window.indexedDB) body = '<p class="empty-note">Este aparelho não deixa o app guardar cópias automáticas. Faça backups de vez em quando (⚙ Configurações → Backup).</p>';
   else if (!snapLoaded) body = '<p class="empty-note">Carregando…</p>';
   else if (!snapIndex.length) body = '<p class="empty-note">Nenhuma cópia ainda: a primeira é feita hoje, assim que houver algo lançado.</p>';
   else {
@@ -7129,7 +7323,7 @@ function updatePinDots(){
 // restored from that copy (the next start finishes the erasing instead).
 function wipeThisPhone(){
   try {
-    [STORAGE_KEY, STORAGE_KEY + 'Danificado', PIN_KEY, PIN_PROMPTED_KEY, PIN_WAIT_KEY, LAST_BACKUP_KEY, CLOUD_SESSION_KEY, CLOUD_SYNC_KEY].forEach(function(k){ localStorage.removeItem(k); });
+    [STORAGE_KEY, STORAGE_KEY + 'Danificado', PIN_KEY, PIN_PROMPTED_KEY, PIN_WAIT_KEY, LAST_BACKUP_KEY, CLOUD_SESSION_KEY, CLOUD_SYNC_KEY, 'gflowFinancasBankInfo'].forEach(function(k){ localStorage.removeItem(k); });
     localStorage.setItem(WIPE_KEY, '1');
   } catch(e) {}
   STATE = defaultState();
@@ -7152,7 +7346,7 @@ function renderPinScreen(){
   if (f.mode === 'offer'){
     keypad = false;
     title = 'Proteger o app com senha?';
-    text = 'Crie uma senha de 6 dígitos para abrir o app neste aparelho. Ela fica só aqui (não vai no backup) e você pode trocar ou desativar em Ajustes.';
+    text = 'Crie uma senha de 6 dígitos para abrir o app neste aparelho. Ela fica só aqui (não vai no backup) e você pode trocar ou desativar em ⚙ Configurações.';
     extra = '<div class="pin-actions">' +
       '<button type="button" class="btn primary" data-action="pin-start-create">Criar senha</button>' +
       '<button type="button" class="btn ghost" data-action="pin-skip">Agora não</button>' +
@@ -7161,7 +7355,7 @@ function renderPinScreen(){
     keypad = false;
     title = 'Esqueceu a senha?';
     text = cloudOn() ? 'Por segurança, a senha não pode ser recuperada. O jeito é apagar os dados deste celular e entrar de novo com o e-mail, a senha e o código: os dados voltam da nuvem. Só se perde o que ainda não tinha sido enviado.' :
-      'Por segurança, a senha não pode ser recuperada. O único jeito é apagar os dados deste aparelho e depois importar o último backup (Ajustes → Importar backup). Lançamentos feitos aqui depois desse backup serão perdidos.';
+      'Por segurança, a senha não pode ser recuperada. O único jeito é apagar os dados deste aparelho e depois importar o último backup (⚙ Configurações → Backup → Importar backup). Lançamentos feitos aqui depois desse backup serão perdidos.';
     extra = '<form data-action="pin-wipe-form">' +
       '<div class="field" style="margin:14px 0 0"><label for="wipe-confirm">Para confirmar, digite APAGAR</label><input id="wipe-confirm" name="wipeConfirm" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" placeholder="APAGAR"></div>' +
       '<div class="pin-actions">' +
@@ -7271,13 +7465,12 @@ function renderQuickNav(isCurrent, mv){
   items = items.concat([
     ['sec-renda','Renda'], ['sec-fixas','Fixas'],
     ['sec-variaveis','Variáveis'], ['sec-investimentos','Investimentos'],
-    ['sec-historico','Histórico'], ['sec-ajustes','Ajustes']
+    ['sec-historico','Histórico']
   ]);
   return '<nav class="quicknav" aria-label="Navegação rápida entre seções">' +
     '<button type="button" class="qn-pill qn-charts" data-action="open-charts"><span aria-hidden="true">📊</span> Gráficos</button>' +
     (viewMonth <= monthKeyToday() ? '<button type="button" class="qn-pill qn-cash" data-action="open-cash" data-month="' + viewMonth + '"><span aria-hidden="true">🏦</span> Saldo da conta</button>' : '') +
-    '<a class="qn-pill qn-share" href="#sec-compartilhar"><span aria-hidden="true">📤</span> Enviar resumo</a>' +
-    '<button type="button" class="qn-pill qn-wheel" data-action="open-wheel"><span aria-hidden="true">🎡</span> Roleta</button>' +
+    '<button type="button" class="qn-pill qn-share" data-action="open-share"><span aria-hidden="true">📤</span> Enviar resumo</button>' +
     '<button type="button" class="qn-pill qn-audit" data-action="open-audit"><span aria-hidden="true">🕘</span> Alterações</button>' +
     items.map(function(it){ return '<a class="qn-pill' + (it[2] ? ' ' + it[2] : '') + '" href="#' + it[0] + '">' + it[1] + '</a>'; }).join('') +
   '</nav>';
@@ -7346,7 +7539,7 @@ function renderAlerts(mv, totals){
       '<span class="alert-icon" aria-hidden="true">⚠️</span>' +
       '<div class="alert-body">' +
         '<div class="alert-title">Não consegui gravar as últimas alterações neste aparelho.</div>' +
-        'Pode ser falta de espaço ou navegação privada. Exporte um backup agora pra não perder nada — <a class="link-btn" href="#sec-ajustes">fazer backup</a>.' +
+        'Pode ser falta de espaço ou navegação privada. Exporte um backup agora pra não perder nada — <button type="button" class="link-btn" data-action="open-settings" data-target="sec-backup">fazer backup</button>.' +
       '</div>' +
     '</div>';
   }
@@ -7371,7 +7564,7 @@ function renderAlerts(mv, totals){
       '<span class="alert-icon" aria-hidden="true">💾</span>' +
       '<div class="alert-body">' +
         '<div class="alert-title">' + esc(backupInfo.text) + '</div>' +
-        'Os dados vivem só neste aparelho — <a class="link-btn" href="#sec-ajustes">fazer backup agora</a>.' +
+        'Os dados vivem só neste aparelho — <button type="button" class="link-btn" data-action="open-settings" data-target="sec-backup">fazer backup agora</button>.' +
       '</div>' +
     '</div>';
   }
@@ -7396,7 +7589,7 @@ function renderHeader(h, isCurrent){
         '<h1 class="app-name">Nossas Finanças</h1>' +
         '<div class="names">' + esc(h.person1Name) + ' &amp; ' + esc(h.person2Name) + '</div>' +
       '</div>' +
-      eyeButtonHtml() +
+      '<div class="hdr-btns">' + wheelButtonHtml() + gearButtonHtml() + eyeButtonHtml() + '</div>' +
     '</div>' +
   '</header>' +
   renderMonthBar();
@@ -7419,6 +7612,14 @@ function valuesHidden(){ return hideValues && !showRealValues; }
 var HIDDEN_MONEY = 'R$ ••••';
 var EYE_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
 var EYE_OFF_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.9 10.9 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2M6.6 6.6C3.9 8.3 2 12 2 12s3.6 7 10 7a10.6 10.6 0 0 0 5.4-1.4"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+var GEAR_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Z" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.6-2-3.4-2.4.9a7.7 7.7 0 0 0-2.6-1.5L14 2.4h-4l-.4 2.5A7.7 7.7 0 0 0 7 6.4l-2.4-.9-2 3.4 2 1.6a7.6 7.6 0 0 0 0 3l-2 1.6 2 3.4 2.4-.9a7.7 7.7 0 0 0 2.6 1.5l.4 2.5h4l.4-2.5a7.7 7.7 0 0 0 2.6-1.5l2.4.9 2-3.4-2-1.6Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+var WHEEL_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 3.4v17.2M3.4 12h17.2M5.9 5.9l12.2 12.2M18.1 5.9 5.9 18.1" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="12" cy="12" r="2.1" fill="currentColor"/></svg>';
+function wheelButtonHtml(){
+  return '<button type="button" class="gear-btn wheel-btn" data-action="open-wheel" aria-label="Roleta">' + WHEEL_SVG + '</button>';
+}
+function gearButtonHtml(){
+  return '<button type="button" class="gear-btn" data-action="open-settings" aria-label="Configurações">' + GEAR_SVG + '</button>';
+}
 function eyeButtonHtml(){
   return '<button type="button" class="eye-btn" data-action="toggle-values" aria-pressed="' + (hideValues ? 'true' : 'false') + '" aria-label="' + (hideValues ? 'Mostrar os valores' : 'Esconder os valores') + '">' + (hideValues ? EYE_OFF_SVG : EYE_SVG) + '</button>';
 }
@@ -7657,6 +7858,8 @@ function cashBlock(totals, key){
   }
   var startLabel = cashStartLabel(c, true);
   var hints = [];        // warnings: shown even with the account closed
+  var bankLine = bankInfoHtml(key, c);
+  if (bankLine) hints.push(bankLine);
   // a month that already ended, told before its last day
   if (key < todayKey && c.partial){
     hints.push('<p class="lg-hint warn">Esse é o saldo de ' + esc(fmtDate(c.on)) + ', não o do fim do mês. <button type="button" class="link-btn" data-action="open-cash" data-month="' + key + '">Informe quanto sobrou em ' + esc(fmtDate(lastDayIso(key))) + '</button>.</p>');
@@ -8917,12 +9120,30 @@ function amortOfferHtml(){
     }).join('<span aria-hidden="true"> · </span>') + '</p>';
 }
 function renderShare(){
+  var anyText = shareAnyText(), anyPart = shareAnyPart();
+  var onlyCharts = anyPart && !anyText;
+  var presets = '<div class="chip-group share-presets" role="group" aria-label="Modelos prontos">' + SHARE_PRESETS.map(function(pr){
+    var on = SHARE_PARTS.every(function(p){ return sharePart(p[0]) === (pr[2].indexOf(p[0]) >= 0); });
+    return '<button type="button" class="chip' + (on ? ' active' : '') + '" data-action="share-preset" data-value="' + pr[0] + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + esc(pr[1]) + '</button>';
+  }).join('') + '</div>';
+  function partBtn(p){
+    var on = sharePart(p[0]);
+    return '<button type="button" class="share-part' + (on ? ' on' : '') + '" data-action="share-part" data-part="' + p[0] + '" role="checkbox" aria-checked="' + (on ? 'true' : 'false') + '">' +
+      '<span class="sp-box" aria-hidden="true">' + (on ? '✓' : '') + '</span><span class="sp-icon" aria-hidden="true">' + p[1] + '</span>' +
+      '<span class="sp-text"><span class="sp-label">' + esc(p[2]) + '</span><span class="sp-desc">' + esc(p[3]) + '</span></span></button>';
+  }
+  var parts = '<p class="share-group-title">Partes do resumo</p><div class="share-parts" role="group" aria-label="Partes do resumo">' +
+      SHARE_PARTS.slice(0, SHARE_TEXT_PARTS.length).map(partBtn).join('') + '</div>' +
+    '<p class="share-group-title">Gráficos <span class="lg-count">(enviados somente na imagem)</span></p><div class="share-parts" role="group" aria-label="Gráficos">' +
+      SHARE_PARTS.slice(SHARE_TEXT_PARTS.length).map(partBtn).join('') + '</div>';
   var html = '<section class="card" id="sec-compartilhar">' +
-    '<div class="card-head"><div class="card-head-main"><span class="card-icon" aria-hidden="true">💬</span><h2 class="card-title">Compartilhar resumo</h2></div></div>' +
-
-    '<div class="sheet-actions" style="margin-top:0">' +
-      '<button type="button" class="btn primary" data-action="share-summary-text">Enviar como texto</button>' +
-      '<button type="button" class="btn ghost" data-action="share-summary-image">Enviar como imagem</button>' +
+    '<div class="card-head"><div class="card-head-main"><span class="card-icon" aria-hidden="true">💬</span><h2 class="card-title">Resumo de ' + esc(monthLabel(viewMonth)) + '</h2></div></div>' +
+    '<p class="card-sub">Escolha o que enviar. O app guarda a escolha neste celular.</p>' +
+    '<p class="share-group-title">Modelos prontos</p>' + presets + parts +
+    (!anyPart ? '<p class="lg-hint share-warn">Escolha pelo menos uma parte para enviar.</p>' : (onlyCharts ? '<p class="lg-hint share-warn">Os gráficos são enviados somente como imagem.</p>' : '')) +
+    '<div class="sheet-actions">' +
+      '<button type="button" class="btn primary" data-action="share-summary-text"' + (anyText ? '' : ' disabled') + '>Enviar como texto</button>' +
+      '<button type="button" class="btn ghost" data-action="share-summary-image"' + (anyPart ? '' : ' disabled') + '>Enviar como imagem</button>' +
     '</div>';
   if (shareTextPreview){
     html += '<div class="field" style="margin-top:14px;margin-bottom:6px"><label>Texto do resumo</label><textarea readonly rows="10">' + esc(shareTextPreview) + '</textarea></div>' +
@@ -8946,7 +9167,7 @@ function renderBackup(){
   } else {
     installTip = '<p class="install-tip"><strong>No iPhone:</strong> abra o link no Safari e toque em Compartilhar → <strong>"Adicionar à Tela de Início"</strong>.</p>';
   }
-  return '<section class="card">' +
+  return '<section class="card" id="sec-backup">' +
     '<div class="card-head"><div class="card-head-main"><span class="card-icon" aria-hidden="true">💾</span><h2 class="card-title">Backup</h2></div></div>' +
     (cloudOn() && cloudSession ? '<p class="empty-note" style="padding-bottom:10px">Os dados já ficam na nuvem e neste celular. O backup em arquivo é opcional: uma cópia a mais, guardada por você.</p>' :
     '<p class="empty-note" style="padding-bottom:6px">Os dados ficam só neste aparelho. Para juntar com o outro celular, exporte aqui e importe lá.</p>' +
@@ -10208,6 +10429,8 @@ function codeSubmit(form){
 function cloudLogout(){
   var s = cloudSession;
   if (s) cloudHttp('POST', '/auth/v1/logout?scope=local', {}, s.access_token, null, function(){});
+  bankInfo = null;
+  try { localStorage.removeItem(BANK_INFO_KEY); } catch(e) {}
   cloudSignedOut('');
 }
 /* -- sync -- */
@@ -10297,12 +10520,40 @@ function cloudRun(tries){
 // is when Meu Pluggy read it at the bank (atualizado_banco: once a day, e.g. 01:24), not when the
 // server fetched it from Meu Pluggy: what left the account after that time is not in it.
 var cloudBankAt = 0;
+var BANK_INFO_KEY = 'gflowFinancasBankInfo';
+var bankInfo = loadPref(BANK_INFO_KEY, null, function(v){ return !!v && typeof v.saldo === 'number' && typeof v.buscado === 'string'; });
+// the schedule on the server: 06:15 and 18:15 (Brasília)
+function nextBankFetchText(nowMs){
+  var d = new Date(nowMs), mins = d.getHours() * 60 + d.getMinutes();
+  if (mins < 6 * 60 + 15) return 'hoje às 06:15';
+  if (mins < 18 * 60 + 15) return 'hoje às 18:15';
+  return 'amanhã às 06:15';
+}
+// "Banco do Brasil (pelo Meu Pluggy): R$ 50,00, lido no banco em 18/11 às 01:24 · buscado às 06:15"
+function bankInfoHtml(key, c){
+  if (!cloudOn() || !cloudSession || !bankInfo || key !== monthKeyToday()) return '';
+  var readAt = bankInfo.lido || bankInfo.buscado;
+  var txt = 'Banco do Brasil (pelo Meu Pluggy): ' + fmtMoney(bankInfo.saldo) + ', lido no banco em ' + fmtDate(localDay(readAt)) + ' às ' + auditTime(readAt) +
+    ' · buscado em ' + fmtDate(localDay(bankInfo.buscado)) + ' às ' + auditTime(bankInfo.buscado) + '. Próxima busca: ' + nextBankFetchText(Date.now()) + '.';
+  var told = cashOf(STATE, key);
+  if (told && told.by !== 'Banco do Brasil' && told.updatedAt && told.updatedAt > readAt) txt += ' Vale o saldo informado à mão (' + fmtDate(localDay(told.updatedAt)) + ' às ' + auditTime(told.updatedAt) + '), que é mais novo.';
+  return '<p class="lg-hint bank-info">🏦 ' + esc(txt) + ' <span class="bank-info-why">O Meu Pluggy lê o BB uma vez por dia, de madrugada: o que entrar ou sair hoje aparece na leitura de amanhã.</span></p>';
+}
 function cloudBankStep(tok, next){
   if (Date.now() - cloudBankAt < 600000){ next(); return; }
   cloudHttp('GET', '/rest/v1/nf_saldo_banco?id=eq.1&select=saldo,buscado_em,atualizado_banco', null, tok, null, function(st, rows){
     if (st === 200) cloudBankAt = Date.now();
     var r = st === 200 && Array.isArray(rows) ? rows[0] : null;
-    if (r && typeof r.saldo === 'number' && isFinite(r.saldo) && typeof r.buscado_em === 'string' && !isNaN(new Date(r.buscado_em).getTime())) applyBankBalance(r);
+    if (r && typeof r.saldo === 'string' && r.saldo !== '' && isFinite(Number(r.saldo))) r.saldo = Number(r.saldo);
+    if (r && typeof r.saldo === 'number' && isFinite(r.saldo) && typeof r.buscado_em === 'string' && !isNaN(new Date(r.buscado_em).getTime())){
+      var lido = typeof r.atualizado_banco === 'string' && !isNaN(new Date(r.atualizado_banco).getTime()) ? new Date(r.atualizado_banco).toISOString() : null;
+      var info = {saldo: round2(r.saldo), buscado: new Date(r.buscado_em).toISOString(), lido: lido};
+      var changedInfo = !bankInfo || bankInfo.saldo !== info.saldo || bankInfo.buscado !== info.buscado || bankInfo.lido !== info.lido;
+      bankInfo = info;
+      savePref(BANK_INFO_KEY, bankInfo);
+      applyBankBalance(r);
+      if (changedInfo && !uiBusy()) render();
+    }
     next();
   });
 }
@@ -10488,7 +10739,8 @@ function renderNow(){
   var prevSheetEl = appEl.querySelector('.sheet');
   var prevSheetScroll = prevSheetEl ? prevSheetEl.scrollTop : 0;
   // "Gráficos" is a screen of its own: the main screen is not drawn behind it
-  var html = chartsOpen ? renderChartsScreen() : (subScreen === 'audit' ? renderAuditScreen() : (subScreen === 'wheel' ? renderWheelScreen() : renderMainScreen(!!prevSheetEl)));
+  var html = chartsOpen ? renderChartsScreen() : (subScreen === 'audit' ? renderAuditScreen() : (subScreen === 'wheel' ? renderWheelScreen() :
+    (subScreen === 'settings' ? renderSettingsScreen() : (subScreen === 'share' ? renderShareScreen() : renderMainScreen(!!prevSheetEl)))));
   if (chartsOpen && amortSheet){
     // a payment in advance can be fixed from its history, in "Gráficos"
     if (findInstallment(amortSheet.instId)) html += renderAmortSheet(!!prevSheetEl);
@@ -10579,16 +10831,8 @@ function renderMainScreen(sheetWasOpen){
   html += renderFixed(h, mv, isCurrent);
   html += renderVariable(h, mv, isCurrent);
   html += renderInvestments(h, mv);
-  html += '<p class="section-divider">Ajustes</p>';
-  html += '<div id="sec-ajustes">' +
-    renderCloudCard() +
-    renderNamesCard() +
-    renderAppearance() +
-    renderPinSettings() +
-    renderShare() +
-    renderBackup() +
-    renderProtectionCard() +
-  '</div>';
+  // the automatic tests of the older rounds still find the settings here (only on this computer)
+  if (settingsInline()) html += '<p class="section-divider">Ajustes</p><div id="sec-ajustes">' + settingsCardsHtml() + renderShare() + '</div>';
   html += footerHtml();
   html += '</div>';
   if (sheetOpen) html += renderSheet(h, sheetWasOpen);
@@ -10943,7 +11187,14 @@ function onClick(ev){
       break;
     case 'open-wheel':
       wheelUi.editing = null; wheelUi.result = null;
-      openSubScreen('wheel', '.quicknav [data-action="open-wheel"]', !!ev && ev.detail === 0);
+      openSubScreen('wheel', '.header [data-action="open-wheel"]', !!ev && ev.detail === 0);
+      break;
+    case 'open-settings':
+      if (subScreen === 'settings'){ unfoldTarget(el.getAttribute('data-target')); break; }
+      openSubScreen('settings', '.header [data-action="open-settings"]', !!ev && ev.detail === 0, el.getAttribute('data-target'));
+      break;
+    case 'open-share':
+      openSubScreen('share', '.quicknav [data-action="open-share"]', !!ev && ev.detail === 0);
       break;
     case 'wheel-pick':
       if (wheelUi.spinning) break;
@@ -11346,9 +11597,28 @@ function onClick(ev){
       if (inputEl) inputEl.click();
       break;
     case 'share-summary-text':
+      if (!shareAnyText()) break;
       shareSummaryText();
       break;
+    case 'share-part':
+      var spk = el.getAttribute('data-part');
+      if (sharePart(spk)) delete shareParts[spk]; else shareParts[spk] = true;
+      savePref(SHARE_PARTS_KEY, shareParts);
+      shareTextPreview = null; sharedImagePreview = null;
+      render();
+      break;
+    case 'share-preset':
+      SHARE_PRESETS.forEach(function(pr){
+        if (pr[0] !== el.getAttribute('data-value')) return;
+        shareParts = {};
+        pr[2].forEach(function(k){ shareParts[k] = true; });
+      });
+      savePref(SHARE_PARTS_KEY, shareParts);
+      shareTextPreview = null; sharedImagePreview = null;
+      render();
+      break;
     case 'share-summary-image':
+      if (!shareAnyPart()) break;
       shareSummaryImage();
       break;
     case 'hide-share-text':
@@ -11418,7 +11688,7 @@ function onClick(ev){
         pinPrompted = true;
       }
       if (pinFlow && pinFlow.mode === 'unlock') break; // the lock screen itself can't be dismissed
-      finishPinFlow(action === 'pin-skip' ? 'Tudo bem. Se quiser, crie a senha depois em Ajustes.' : null);
+      finishPinFlow(action === 'pin-skip' ? 'Tudo bem. Se quiser, crie a senha depois em ⚙ Configurações.' : null);
       break;
     case 'pin-forgot':
       startPinFlow('forgot');
@@ -11433,7 +11703,7 @@ function onClick(ev){
         if (pinFlow) pinFlow.error = '';
         var hint = appEl.querySelector('.pin-text');
         if (wipeInput){ wipeInput.focus(); wipeInput.setAttribute('aria-invalid', 'true'); }
-        if (hint) hint.textContent = 'Para apagar, digite APAGAR no campo abaixo. Por segurança, a senha não pode ser recuperada; depois de apagar, importe o último backup em Ajustes.';
+        if (hint) hint.textContent = 'Para apagar, digite APAGAR no campo abaixo. Por segurança, a senha não pode ser recuperada; depois de apagar, importe o último backup em ⚙ Configurações.';
         break;
       }
       wipeThisPhone();
